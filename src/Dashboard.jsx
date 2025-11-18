@@ -2,7 +2,7 @@
 import { useAuth } from './AuthContext';
 import { LogOut, Users, Building2, BarChart3, Settings } from 'lucide-react';
 
-const Dashboard = () => {
+const Dashboard = ({ onNavigate }) => {
   const { user, logout } = useAuth();
 
   return (
@@ -84,7 +84,15 @@ const Dashboard = () => {
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ActionButton title="Manage Users" description="Add, edit, or remove users" />
+            <button 
+              onClick={() => onNavigate('users')}
+              className="text-left p-4 border-2 border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+            >
+              <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-emerald-600">
+                Manage Users
+              </h4>
+              <p className="text-sm text-gray-500">Add, edit, or remove users</p>
+            </button>
             <ActionButton title="View Institutions" description="Monitor institution data" />
             <ActionButton title="Generate Report" description="Create waste management reports" />
           </div>

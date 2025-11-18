@@ -1,10 +1,13 @@
 // src/App.jsx
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import WasteLogin from './WasteLogin';
 import Dashboard from './Dashboard';
+import Users from './Users';
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   if (loading) {
     return (
@@ -17,7 +20,16 @@ function AppContent() {
     );
   }
 
-  return user ? <Dashboard /> : <WasteLogin />;
+  if (!user) {
+    return <WasteLogin />;
+  }
+
+  // Navigation
+  if (currentPage === 'users') {
+    return <Users onBack={() => setCurrentPage('dashboard')} />;
+  }
+
+  return <Dashboard onNavigate={setCurrentPage} />;
 }
 
 function App() {
