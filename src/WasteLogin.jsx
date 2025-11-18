@@ -1,15 +1,12 @@
 // src/WasteLogin.jsx
 import { useState } from 'react';
 import { Trash2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-// src/WasteLogin.jsx - modifică doar funcția handleSubmit
 import { useAuth } from './AuthContext';
 
 const API_URL = 'https://waste-backend-3u9c.onrender.com';
 
-// La început, adaugă:
-const { login } = useAuth();
-
 const WasteLogin = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -34,12 +31,11 @@ const WasteLogin = () => {
 
       const data = await response.json();
 
-      // În handleSubmit, înlocuiește partea de success cu:
-if (data.success) {
-  // Folosește AuthContext
-  login(data.data.user, data.data.accessToken, data.data.refreshToken);
-  // Nu mai e nevoie de alert, redirect-ul se va face automat
-} else {
+      if (data.success) {
+        // Folosește AuthContext login
+        login(data.data.user, data.data.accessToken, data.data.refreshToken);
+        // Redirect-ul se face automat prin App.jsx
+      } else {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
@@ -60,7 +56,6 @@ if (data.success) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo & Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-2xl mb-4 shadow-lg">
             <Trash2 className="w-8 h-8 text-white" />
@@ -73,13 +68,11 @@ if (data.success) {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm bg-opacity-95">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">
             Bine ai revenit!
           </h2>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
               <AlertCircle className="w-5 h-5" />
@@ -87,18 +80,15 @@ if (data.success) {
             </div>
           )}
 
-          {/* Test Credentials Button */}
           <button
             type="button"
             onClick={fillTestCredentials}
             className="w-full mb-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
           >
-            🧪 Fill Test Credentials (admin@test.ro)
+            🧪 Fill Test Credentials
           </button>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -116,7 +106,6 @@ if (data.success) {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Parolă
@@ -141,7 +130,6 @@ if (data.success) {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -151,9 +139,8 @@ if (data.success) {
             </button>
           </form>
 
-          {/* Footer */}
           <p className="mt-6 text-center text-sm text-gray-500">
-            WasteApp © 2025
+            WasteApp © 2024
           </p>
         </div>
       </div>
