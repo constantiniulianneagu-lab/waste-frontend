@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import WasteLogin from './WasteLogin';
 import Dashboard from './Dashboard';
 import Users from './Users';
+import Institutions from './Institutions';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -27,6 +28,10 @@ function AppContent() {
   // Navigation
   if (currentPage === 'users') {
     return <Users onBack={() => setCurrentPage('dashboard')} />;
+  }
+
+  if (currentPage === 'institutions') {
+    return <Institutions onBack={() => setCurrentPage('dashboard')} />;
   }
 
   return <Dashboard onNavigate={setCurrentPage} />;

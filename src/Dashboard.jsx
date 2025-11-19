@@ -93,7 +93,15 @@ const Dashboard = ({ onNavigate }) => {
               </h4>
               <p className="text-sm text-gray-500">Add, edit, or remove users</p>
             </button>
-            <ActionButton title="View Institutions" description="Monitor institution data" />
+            <button 
+  onClick={() => onNavigate('institutions')}
+  className="text-left p-4 border-2 border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all group"
+>
+  <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-emerald-600">
+    View Institutions
+  </h4>
+  <p className="text-sm text-gray-500">Monitor institution data</p>
+</button>
             <ActionButton title="Generate Report" description="Create waste management reports" />
           </div>
         </div>
