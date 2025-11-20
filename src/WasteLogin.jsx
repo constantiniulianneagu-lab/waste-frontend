@@ -19,7 +19,7 @@ const WasteLogin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
@@ -28,16 +28,15 @@ const WasteLogin = () => {
         },
         body: JSON.stringify(formData)
       });
-
+  
       const data = await response.json();
-
+  
       if (data.success) {
-        // Folosește AuthContext login
+        // Folosește AuthContext login - FIX: adaugă .tokens
         login(data.data.user, data.data.tokens.accessToken, data.data.tokens.refreshToken);
         // Redirect-ul se face automat prin App.jsx
       } else {
         setError(data.message || 'Login failed');
-      }
       }
     } catch (err) {
       console.error('Login error:', err);
