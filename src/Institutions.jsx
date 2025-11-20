@@ -116,12 +116,22 @@ const Institutions = ({ onBack }) => {
 
   const typeLabels = {
     MUNICIPALITY: 'Municipality',
-    WASTE_OPERATOR: 'Waste Operator'
+    GOVERNMENT: 'Government',
+    WASTE_OPERATOR: 'Waste Operator',
+    TMB_OPERATOR: 'TMB Operator',
+    RECYCLING_CLIENT: 'Recycling Client',
+    RECOVERY_CLIENT: 'Recovery Client',
+    DISPOSAL_CLIENT: 'Disposal Client'
   };
 
   const typeColors = {
     MUNICIPALITY: 'bg-blue-100 text-blue-700',
-    WASTE_OPERATOR: 'bg-emerald-100 text-emerald-700'
+    GOVERNMENT: 'bg-purple-100 text-purple-700',
+    WASTE_OPERATOR: 'bg-emerald-100 text-emerald-700',
+    TMB_OPERATOR: 'bg-teal-100 text-teal-700',
+    RECYCLING_CLIENT: 'bg-green-100 text-green-700',
+    RECOVERY_CLIENT: 'bg-orange-100 text-orange-700',
+    DISPOSAL_CLIENT: 'bg-red-100 text-red-700'
   };
 
   return (
@@ -296,7 +306,7 @@ const Institutions = ({ onBack }) => {
                   <option value="4">Sector 4</option>
                   <option value="5">Sector 5</option>
                   <option value="6">Sector 6</option>
-                  <option value="NULL">N/A</option>
+                  <option value="București">N/A</option>
                 </select>
               </div>
 
