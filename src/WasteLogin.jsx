@@ -33,7 +33,7 @@ const WasteLogin = () => {
   
       if (data.success) {
         // Folosește AuthContext login - FIX: adaugă .tokens
-        login(data.data.user, data.data.tokens.accessToken, data.data.tokens.refreshToken);
+        login(data.data.user, data.data.accessToken, data.data.refreshToken);
         // Redirect-ul se face automat prin App.jsx
       } else {
         setError(data.message || 'Login failed');
