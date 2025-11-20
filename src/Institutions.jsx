@@ -278,18 +278,23 @@ const Institutions = ({ onBack }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="MUNICIPALITY">Municipality</option>
-                  <option value="WASTE_OPERATOR">Waste Operator</option>
-                </select>
-              </div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Type
+  </label>
+  <select
+    value={formData.type}
+    onChange={(e) => setFormData({...formData, type: e.target.value})}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+  >
+    <option value="MUNICIPALITY">Municipality</option>
+    <option value="GOVERNMENT">Government</option>
+    <option value="WASTE_OPERATOR">Waste Operator</option>
+    <option value="TMB_OPERATOR">TMB Operator</option>
+    <option value="RECYCLING_CLIENT">Recycling Client</option>
+    <option value="RECOVERY_CLIENT">Recovery Client</option>
+    <option value="DISPOSAL_CLIENT">Disposal Client</option>
+  </select>
+</div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
