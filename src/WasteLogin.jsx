@@ -30,17 +30,28 @@ const WasteLogin = () => {
       });
   
       const data = await response.json();
+      
+      console.log('📦 Login response:', data); // DEBUG
   
       if (data.success) {
-        // Folosește AuthContext login - FIX: adaugă .tokens
-        login(data.data.user, data.data.accessToken, data.data.refreshToken);
-        // Redirect-ul se face automat prin App.jsx
+        // ✅ BACKWARD COMPATIBLE - funcționează cu AMBELE structuri
+        const accessToken = data.data.tokens?.accessToken || data.data.accessToken;
+        const refreshToken = data.data.tokens?.refreshToken || data.data.refreshToken;
+        
+        console.log('🔑 Access Token exists:', !!accessToken); // DEBUG
+        console.log('🔑 Refresh Token exists:', !!refreshToken); // DEBUG
+        
+        if (!accessToken || !refreshToken) {
+          throw new Error('Tokens missing from response');
+        }
+        
+        login(data.data.user, accessToken, refreshToken);
       } else {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Failed to connect to server');
+      console.error('💥 Login error:', err);
+      setError(err.message || 'Failed to connect to server');
     } finally {
       setLoading(false);
     }
