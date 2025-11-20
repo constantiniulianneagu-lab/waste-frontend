@@ -1,66 +1,34 @@
 // src/userService.js
-const API_URL = 'https://waste-backend-3u9c.onrender.com';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('wasteAccessToken');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  };
-};
+import { apiGet, apiPost, apiPut, apiDelete } from './api/apiClient';
 
 export const userService = {
   // Get all users
   getAllUsers: async (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await fetch(`${API_URL}/api/users?${queryString}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiGet('/api/users', params);
   },
 
   // Get user by ID
   getUserById: async (id) => {
-    const response = await fetch(`${API_URL}/api/users/${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiGet(`/api/users/${id}`);
   },
 
   // Create user
   createUser: async (userData) => {
-    const response = await fetch(`${API_URL}/api/users`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(userData)
-    });
-    return response.json();
+    return apiPost('/api/users', userData);
   },
 
   // Update user
   updateUser: async (id, userData) => {
-    const response = await fetch(`${API_URL}/api/users/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(userData)
-    });
-    return response.json();
+    return apiPut(`/api/users/${id}`, userData);
   },
 
   // Delete user
   deleteUser: async (id) => {
-    const response = await fetch(`${API_URL}/api/users/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiDelete(`/api/users/${id}`);
   },
 
   // Get stats
   getUserStats: async () => {
-    const response = await fetch(`${API_URL}/api/users/stats`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiGet('/api/users/stats');
   }
 };
