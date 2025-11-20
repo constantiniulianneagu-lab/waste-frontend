@@ -33,10 +33,11 @@ const WasteLogin = () => {
 
       if (data.success) {
         // Folosește AuthContext login
-        login(data.data.user, data.data.accessToken, data.data.refreshToken);
+        login(data.data.user, data.data.tokens.accessToken, data.data.tokens.refreshToken);
         // Redirect-ul se face automat prin App.jsx
       } else {
         setError(data.message || 'Login failed');
+      }
       }
     } catch (err) {
       console.error('Login error:', err);
