@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { Trash2, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import ThemeToggle from './components/dashboard/ThemeToggle';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'https://waste-backend-3u9c.onrender.com';
 
 const WasteLogin = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -47,6 +50,9 @@ const WasteLogin = () => {
         }
         
         login(data.data.user, accessToken, refreshToken);
+
+        // 👇 după login reușit, mergem la dashboard
+        navigate('/', { replace: true });
       } else {
         setError(data.message || 'Login failed');
       }
