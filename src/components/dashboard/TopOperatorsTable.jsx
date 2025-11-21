@@ -20,7 +20,7 @@
 
 import React, { useState } from 'react';
 import { Building2, MapPin } from 'lucide-react';
-import { formatTons, formatPercent, getSectorIconClasses } from '../utils/dashboardUtils';
+import { formatTons, formatPercent, getSectorIconClasses } from '../../utils/dashboardUtils.js';
 
 const TopOperatorsTable = ({ data = [], loading = false }) => {
   const [showAll, setShowAll] = useState(false);

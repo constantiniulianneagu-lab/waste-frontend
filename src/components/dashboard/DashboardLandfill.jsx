@@ -19,18 +19,23 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, RefreshCw, TrendingUp } from 'lucide-react';
-import { getLandfillStats } from '../services/dashboardLandfillService';
-import { getTodayDate, getYearStart } from '../utils/dashboardUtils';
+// src/components/dashboard/DashboardLandfill.jsx
 
-// Components
-import DashboardFilters from '../components/dashboard/DashboardFilters';
-import WasteCategoryCards from '../components/dashboard/WasteCategoryCards';
-import MonthlyEvolutionChart from '../components/dashboard/MonthlyEvolutionChart';
-import SectorStatsTable from '../components/dashboard/SectorStatsTable';
-import TopOperatorsTable from '../components/dashboard/TopOperatorsTable';
-import RecentTicketsTable from '../components/dashboard/RecentTicketsTable';
+import React, { useState, useEffect } from "react";
+import { AlertCircle, RefreshCw, TrendingUp } from "lucide-react";
+
+// ✅ Services & Utils (2 niveluri sus: ../../)
+import { getLandfillStats } from "../../services/dashboardLandfillService";
+import { getTodayDate, getYearStart } from "../../utils/dashboardUtils";
+
+// ✅ Dashboard Components (același folder: ./)
+import DashboardFilters from "./DashboardFilters";
+import WasteCategoryCards from "./WasteCategoryCards";
+import MonthlyEvolutionChart from "./MonthlyEvolutionChart";
+import SectorStatsTable from "./SectorStatsTable";
+import TopOperatorsTable from "./TopOperatorsTable";
+import RecentTicketsTable from "./RecentTicketsTable";
+import ThemeToggle from "./ThemeToggle";
 
 const DashboardLandfill = () => {
   // ========================================================================

@@ -21,7 +21,7 @@
 
 import React, { useState } from 'react';
 import { Calendar, Truck, FileText, Package } from 'lucide-react';
-import { formatDateTime, truncateText, getSectorIconClasses } from '../utils/dashboardUtils';
+import { formatDateTime, truncateText, getSectorIconClasses } from '../../utils/dashboardUtils.js';
 
 const RecentTicketsTable = ({ data = [], loading = false }) => {
   const [showAll, setShowAll] = useState(false);

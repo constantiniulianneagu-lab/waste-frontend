@@ -17,7 +17,7 @@
 
 import React, { useState } from 'react';
 import { Calendar, MapPin, RotateCcw } from 'lucide-react';
-import { getTodayDate, getYearStart } from '../utils/dashboardUtils';
+import { getTodayDate, getYearStart } from '../../utils/dashboardUtils.js';
 
 const DashboardFilters = ({ filters, onFilterChange, sectors = [], loading = false }) => {
   const [localFilters, setLocalFilters] = useState(filters);

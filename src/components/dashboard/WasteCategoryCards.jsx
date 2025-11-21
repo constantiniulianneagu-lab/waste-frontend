@@ -19,7 +19,7 @@
  */
 
 import React from 'react';
-import { formatTons, formatPercent, getWasteCodeIcon } from '../utils/dashboardUtils';
+import { formatTons, formatPercent, getWasteCodeIcon } from '../../utils/dashboardUtils.js';
 
 const WasteCategoryCards = ({ categories = [], loading = false }) => {
   /**

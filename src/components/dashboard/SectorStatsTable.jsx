@@ -19,7 +19,7 @@
 
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { formatTons, formatPercent, getSectorIconClasses } from '../utils/dashboardUtils';
+import { formatTons, formatPercent, getSectorIconClasses } from '../../utils/dashboardUtils.js';
 
 const SectorStatsTable = ({ data = [], loading = false }) => {
   /**
