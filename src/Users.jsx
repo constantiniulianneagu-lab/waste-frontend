@@ -13,9 +13,11 @@ import {
   EyeOff,
   ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const Users = ({ onBack }) => {
+const Users = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,12 +91,10 @@ const Users = ({ onBack }) => {
     try {
       let response;
       if (editingUser) {
-        // Update
         const updateData = { ...formData };
         if (!updateData.password) delete updateData.password;
         response = await userService.updateUser(editingUser.id, updateData);
       } else {
-        // Create
         response = await userService.createUser(formData);
       }
 
@@ -134,7 +134,6 @@ const Users = ({ onBack }) => {
     REGULATOR_VIEWER: 'Regulator Viewer'
   };
 
-  // culori adaptate pentru light + dark
   const roleColors = {
     PLATFORM_ADMIN: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     INSTITUTION_ADMIN: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -149,7 +148,7 @@ const Users = ({ onBack }) => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={onBack}
+              onClick={() => navigate('/')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />

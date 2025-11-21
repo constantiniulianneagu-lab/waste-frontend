@@ -1,19 +1,27 @@
 // src/App.jsx
-import { useState } from 'react';
+import React from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './AuthContext';
+
+import Navbar from './components/Navbar';
 import WasteLogin from './WasteLogin';
 import Dashboard from './Dashboard';
+import DashboardLandfill from './components/dashboard/DashboardLandfill';
 import Users from './Users';
 import Institutions from './Institutions';
-import { ThemeProvider } from './contexts/ThemeContext';
 
-function AppContent() {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState('dashboard');
 
   if (loading) {
     return (
-      // 🎨 Adaptat pentru dark/light mode
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -23,30 +31,63 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    return <WasteLogin />;
-  }
-
-  // Navigation
-  if (currentPage === 'users') {
-    return <Users onBack={() => setCurrentPage('dashboard')} />;
-  }
-
-  if (currentPage === 'institutions') {
-    return <Institutions onBack={() => setCurrentPage('dashboard')} />;
-  }
-
-  return <Dashboard onNavigate={setCurrentPage} />;
-}
+  return user ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
-    // 🎨 PASUL 1: ThemeProvider (cel mai extern - theme e global)
     <ThemeProvider>
-      {/* PASUL 2: AuthProvider (auth logic) */}
       <AuthProvider>
-        {/* PASUL 3: AppContent (aplicația propriu-zisă) */}
-        <AppContent />
+        <Router>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+            <Navbar />
+
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<WasteLogin />} />
+
+              {/* Protected */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/dashboard/landfill"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLandfill />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute>
+                    <Users />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/institutions"
+                element={
+                  <ProtectedRoute>
+                    <Institutions />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

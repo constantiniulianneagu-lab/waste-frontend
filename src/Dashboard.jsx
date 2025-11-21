@@ -1,10 +1,12 @@
 // src/Dashboard.jsx
 import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { LogOut, Users, Building2, BarChart3, Settings } from 'lucide-react';
 import ThemeToggle from './components/dashboard/ThemeToggle';
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -89,7 +91,7 @@ const Dashboard = ({ onNavigate }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
-              onClick={() => onNavigate('users')}
+              onClick={() => navigate('/users')}
               className="text-left p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group bg-white dark:bg-gray-700"
             >
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
@@ -98,7 +100,7 @@ const Dashboard = ({ onNavigate }) => {
               <p className="text-sm text-gray-500 dark:text-gray-400">Add, edit, or remove users</p>
             </button>
             <button 
-              onClick={() => onNavigate('institutions')}
+              onClick={() => navigate('/institutions')}
               className="text-left p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group bg-white dark:bg-gray-700"
             >
               <h4 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
