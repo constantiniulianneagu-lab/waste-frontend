@@ -1,102 +1,31 @@
+// src/services/dashboardLandfillService.js
+
+import { apiGet } from '../api/apiClient';
+
 /**
  * ============================================================================
  * DASHBOARD LANDFILL SERVICE
  * ============================================================================
- * 
- * Service for fetching landfill dashboard statistics from backend API
- * 
- * Base URL: /api/dashboard/landfill
- * 
+ *
+ * Service pentru obținerea statisticilor de depozitare de la backend API.
+ *
+ * Base URL (relativ față de apiClient): /api/dashboard/landfill
+ *
  * Endpoints:
- * - GET /stats - Get comprehensive statistics
- * 
+ * - GET /stats - statistici agregate
+ *
  * Query Parameters:
- * - year: Filter by year
- * - from: Start date (YYYY-MM-DD)
- * - to: End date (YYYY-MM-DD)
- * - sector_id: Filter by sector UUID
- * 
+ * - year: filtrare după an
+ * - from: data de început (YYYY-MM-DD)
+ * - to: data de sfârșit (YYYY-MM-DD)
+ * - sector_id: filtrare după UUID sector
+ *
  * Created: 2025-11-21
+ * Updated: 2025-11-22 – refactor pentru a folosi apiClient.js (apiGet)
  * ============================================================================
  */
 
-// Get API base URL from environment or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://waste-backend-3u9c.onrender.com';
-
-/**
- * Get authentication token from localStorage
- */
-const getAuthToken = () => {
-  const authData = localStorage.getItem('wasteapp-auth');
-  if (authData) {
-    try {
-      const parsed = JSON.parse(authData);
-      return parsed.accessToken;
-    } catch (e) {
-      console.error('Failed to parse auth data:', e);
-      return null;
-    }
-  }
-  return null;
-};
-
-/**
- * Build query string from params object
- */
-const buildQueryString = (params) => {
-  const filtered = Object.entries(params)
-    .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-    .join('&');
-  
-  return filtered ? `?${filtered}` : '';
-};
-
-/**
- * Make authenticated API request
- */
-const apiRequest = async (endpoint, options = {}) => {
-  const token = getAuthToken();
-  
-  if (!token) {
-    throw new Error('No authentication token found. Please login.');
-  }
-
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const config = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  };
-
-  try {
-    const response = await fetch(url, config);
-    
-    // Handle 401 Unauthorized
-    if (response.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('wasteapp-auth');
-      window.location.href = '/login';
-      throw new Error('Session expired. Please login again.');
-    }
-
-    // Handle other error status codes
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('API Request failed:', error);
-    throw error;
-  }
-};
+const BASE_PATH = '/api/dashboard/landfill';
 
 /**
  * ============================================================================
@@ -105,16 +34,16 @@ const apiRequest = async (endpoint, options = {}) => {
  */
 
 /**
- * Get comprehensive landfill statistics
- * 
- * @param {Object} filters - Query filters
- * @param {number} filters.year - Year filter
- * @param {string} filters.from - Start date (YYYY-MM-DD)
- * @param {string} filters.to - End date (YYYY-MM-DD)
- * @param {string} filters.sector_id - Sector UUID filter
- * 
- * @returns {Promise<Object>} Dashboard statistics data
- * 
+ * Obține statisticile de depozitare (landfill) pentru dashboard.
+ *
+ * @param {Object} filters - Filtre pentru query
+ * @param {number} [filters.year] - Anul
+ * @param {string} [filters.from] - Data de început (YYYY-MM-DD)
+ * @param {string} [filters.to] - Data de sfârșit (YYYY-MM-DD)
+ * @param {string} [filters.sector_id] - UUID sector
+ *
+ * @returns {Promise<any>} Datele de statistici returnate de backend/apiClient
+ *
  * @example
  * const stats = await getLandfillStats({
  *   year: 2025,
@@ -125,21 +54,15 @@ const apiRequest = async (endpoint, options = {}) => {
  */
 export const getLandfillStats = async (filters = {}) => {
   try {
-    const queryString = buildQueryString(filters);
-    const endpoint = `/api/dashboard/landfill/stats${queryString}`;
-    
-    const response = await apiRequest(endpoint, {
-      method: 'GET',
-    });
+    console.log('🔍 Fetching landfill stats with params:', filters);
 
-    // Validate response structure
-    if (!response.success) {
-      throw new Error(response.message || 'Failed to fetch statistics');
-    }
+    // ✅ apiGet folosește automat apiClient care adaugă baseURL + token corect + query params
+    const response = await apiGet(`${BASE_PATH}/stats`, filters);
 
-    return response.data;
+    console.log('✅ Stats received:', response);
+    return response;
   } catch (error) {
-    console.error('getLandfillStats error:', error);
+    console.error('❌ getLandfillStats error:', error);
     throw error;
   }
 };
@@ -151,21 +74,31 @@ export const getLandfillStats = async (filters = {}) => {
  */
 
 /**
- * Format error message for display
+ * Formatează un mesaj de eroare pentru afișare în UI
+ *
+ * @param {any} error
+ * @returns {string}
  */
 export const formatErrorMessage = (error) => {
   if (typeof error === 'string') return error;
-  if (error.message) return error.message;
-  return 'An unexpected error occurred';
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.message) return error.message;
+  return 'A apărut o eroare neașteptată.';
 };
 
 /**
- * Check if API is reachable
+ * Verifică dacă API-ul este accesibil.
+ * Folosește același apiClient (și deci aceeași configurație de baseURL).
+ *
+ * @returns {Promise<boolean>}
  */
 export const checkApiHealth = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
-    return response.ok;
+    // Ajustează endpoint-ul în funcție de cum e definit în backend:
+    // - '/health' sau
+    // - '/api/health'
+    await apiGet('/health');
+    return true;
   } catch (error) {
     console.error('API health check failed:', error);
     return false;
@@ -173,7 +106,7 @@ export const checkApiHealth = async () => {
 };
 
 /**
- * Export service object
+ * Export serviciu ca obiect
  */
 const dashboardLandfillService = {
   getLandfillStats,
