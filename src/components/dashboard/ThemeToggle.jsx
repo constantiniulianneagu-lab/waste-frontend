@@ -2,26 +2,10 @@
  * ============================================================================
  * THEME TOGGLE COMPONENT
  * ============================================================================
- * 
- * Toggle button for switching between dark and light mode
- * 
- * Features:
- * - Smooth animation on toggle
- * - Icon transition (Moon ↔ Sun)
- * - Tooltip on hover
- * - Accessible (keyboard navigation, ARIA labels)
- * 
- * Position: Usually in header/navbar (top-right)
- * 
- * Usage:
- * <ThemeToggle />
- * 
- * Created: 2025-11-21
- * ============================================================================
  */
 
 import React from 'react';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../../hooks/useTheme';  // ✅ CORECTAT: 2 nivele
 
 const ThemeToggle = () => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -43,7 +27,6 @@ const ThemeToggle = () => {
       aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDarkMode ? 'Mod luminos' : 'Mod întunecat'}
     >
-      {/* Icon Container with rotation animation */}
       <div className="relative w-6 h-6">
         {/* Sun Icon (Light Mode) */}
         <svg
@@ -94,7 +77,6 @@ const ThemeToggle = () => {
         </svg>
       </div>
 
-      {/* Optional: Ripple effect on click */}
       <span className="sr-only">
         {isDarkMode ? 'Schimbă la mod luminos' : 'Schimbă la mod întunecat'}
       </span>
