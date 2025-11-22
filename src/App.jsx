@@ -1,8 +1,7 @@
-
 // src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import WasteLogin from './WasteLogin';
 import Dashboard from './Dashboard';
 import DashboardLandfill from './components/dashboard/DashboardLandfill';
@@ -23,53 +22,58 @@ return (
 return user ? children : <Navigate to="/login" replace />;
 };
 function App() {
+const { user } = useAuth();
 return (
 <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-<Navbar />
-  <Routes>
-    {/* Public Route */}
-    <Route path="/login" element={<WasteLogin />} />
+{/* Sidebar - Se afișează doar când user e logat */}
+<Sidebar />
+  {/* Content - Cu margin pentru sidebar când e logat */}
+  <div className={user && location.pathname !== '/login' ? 'ml-72 transition-all duration-300' : ''}>
+    <Routes>
+      {/* Public Route */}
+      <Route path="/login" element={<WasteLogin />} />
 
-    {/* Protected Routes */}
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      }
-    />
+      {/* Protected Routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-    <Route
-      path="/dashboard/landfill"
-      element={
-        <ProtectedRoute>
-          <DashboardLandfill />
-        </ProtectedRoute>
-      }
-    />
+      <Route
+        path="/dashboard/landfill"
+        element={
+          <ProtectedRoute>
+            <DashboardLandfill />
+          </ProtectedRoute>
+        }
+      />
 
-    <Route
-      path="/users"
-      element={
-        <ProtectedRoute>
-          <Users />
-        </ProtectedRoute>
-      }
-    />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <Users />
+          </ProtectedRoute>
+        }
+      />
 
-    <Route
-      path="/institutions"
-      element={
-        <ProtectedRoute>
-          <Institutions />
-        </ProtectedRoute>
-      }
-    />
+      <Route
+        path="/institutions"
+        element={
+          <ProtectedRoute>
+            <Institutions />
+          </ProtectedRoute>
+        }
+      />
 
-    {/* Fallback Route */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
+      {/* Fallback Route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </div>
 </div>
 );
 }
