@@ -56,14 +56,14 @@ function App() {
                 }
               />
 
-              <Route
-                path="/dashboard/landfill"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLandfill />
-                  </ProtectedRoute>
-                }
-              />
+<Route 
+  path="/dashboard/landfill" 
+  element={
+    <ProtectedRoute>
+      <DashboardLandfill />
+    </ProtectedRoute>
+  } 
+/>
 
               <Route
                 path="/users"

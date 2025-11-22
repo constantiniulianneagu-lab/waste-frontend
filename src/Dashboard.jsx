@@ -90,6 +90,18 @@ const Dashboard = () => {
             Quick Actions
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
+  onClick={() => navigate('/dashboard/landfill')}
+  className="text-left p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group bg-white dark:bg-gray-700"
+>
+  <h4 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+    Dashboard Landfill
+  </h4>
+  <p className="text-sm text-gray-500 dark:text-gray-400">
+    View landfill statistics and reports
+  </p>
+</button>
+
             <button 
               onClick={() => navigate('/users')}
               className="text-left p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all group bg-white dark:bg-gray-700"
