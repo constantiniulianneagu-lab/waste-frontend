@@ -1,80 +1,92 @@
 // src/App.jsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './AuthContext';
-import Sidebar from './components/Sidebar';
-import WasteLogin from './WasteLogin';
-import Dashboard from './Dashboard';
-import DashboardLandfill from './components/dashboard/DashboardLandfill';
-import Users from './Users';
-import Institutions from './Institutions';
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+
+import Sidebar from "./components/Sidebar";
+import WasteLogin from "./WasteLogin";
+import DashboardLandfill from "./components/dashboard/DashboardLandfill";
+import Users from "./Users";
+import Institutions from "./Institutions";
+
 const ProtectedRoute = ({ children }) => {
-const { user, loading } = useAuth();
-if (loading) {
-return (
-<div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-<div className="text-center">
-<div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-<p className="text-gray-600 dark:text-gray-300">Loading...</p>
-</div>
-</div>
-);
-}
-return user ? children : <Navigate to="/login" replace />;
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
 };
+
 function App() {
-const { user } = useAuth();
-return (
-<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-{/* Sidebar - Se afișează doar când user e logat */}
-<Sidebar />
-  {/* Content - Cu margin pentru sidebar când e logat */}
-  <div className={user && location.pathname !== '/login' ? 'ml-72 transition-all duration-300' : ''}>
-    <Routes>
-      {/* Public Route */}
-      <Route path="/login" element={<WasteLogin />} />
+  const { user } = useAuth();
+  const location = useLocation();
 
-      {/* Protected Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+  const showSidebar = user && location.pathname !== "/login";
 
-      <Route
-        path="/dashboard/landfill"
-        element={
-          <ProtectedRoute>
-            <DashboardLandfill />
-          </ProtectedRoute>
-        }
-      />
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1419] transition-colors">
+      <Sidebar />
+      <div className={showSidebar ? "ml-60 transition-all duration-300" : ""}>
+        <Routes>
+          {/* Public route */}
+          <Route path="/login" element={<WasteLogin />} />
 
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <Users />
-          </ProtectedRoute>
-        }
-      />
+          {/* Redirect root → dashboard landfill */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard/landfill" replace />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/institutions"
-        element={
-          <ProtectedRoute>
-            <Institutions />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/dashboard/landfill"
+            element={
+              <ProtectedRoute>
+                <DashboardLandfill />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* Fallback Route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  </div>
-</div>
-);
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/institutions"
+            element={
+              <ProtectedRoute>
+                <Institutions />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback */}
+          <Route
+            path="*"
+            element={<Navigate to="/dashboard/landfill" replace />}
+          />
+        </Routes>
+      </div>
+    </div>
+  );
 }
+
 export default App;
