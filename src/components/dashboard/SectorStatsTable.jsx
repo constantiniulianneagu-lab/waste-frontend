@@ -1,165 +1,115 @@
-/**
- * ============================================================================
- * SECTOR STATS TABLE COMPONENT
- * ============================================================================
- * 
- * Table showing waste quantities per sector with:
- * - Colored circular icons with sector numbers
- * - Total tons per sector
- * - Percentage of total
- * - Year-over-year variation
- * 
- * Props:
- * - data: Array of sector statistics
- * - loading: Loading state
- * 
- * Created: 2025-11-21
- * ============================================================================
- */
+// src/components/dashboard/SectorStatsTable.jsx
+import { TrendingUp, TrendingDown } from "lucide-react";
 
-import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { formatTons, formatPercent, getSectorIconClasses } from '../../utils/dashboardUtils.js';
+const sectorGradientMap = {
+  1: "from-violet-500 to-violet-600",
+  2: "from-slate-300 to-slate-400",
+  3: "from-emerald-500 to-emerald-600",
+  4: "from-amber-500 to-amber-600",
+  5: "from-pink-500 to-pink-600",
+  6: "from-cyan-500 to-cyan-600",
+};
 
 const SectorStatsTable = ({ data = [], loading = false }) => {
-  /**
-   * Get variation icon and color
-   */
-  const getVariationDisplay = (variation, direction) => {
-    if (variation === 0) {
-      return {
-        icon: Minus,
-        color: 'text-gray-500 dark:text-gray-400',
-        bg: 'bg-gray-50 dark:bg-gray-800',
-      };
-    }
+  const total = data.reduce(
+    (sum, s) => sum + (Number(s.total_tons) || 0),
+    0
+  );
 
-    const isPositive = direction === 'up';
-    return {
-      icon: isPositive ? TrendingUp : TrendingDown,
-      color: isPositive 
-        ? 'text-emerald-600 dark:text-emerald-400' 
-        : 'text-red-600 dark:text-red-400',
-      bg: isPositive
-        ? 'bg-emerald-50 dark:bg-emerald-900/20'
-        : 'bg-red-50 dark:bg-red-900/20',
-    };
-  };
-
-  /**
-   * Loading skeleton
-   */
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
+        <div className="mb-4 h-5 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="space-y-3 mt-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-14 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse"
+            />
           ))}
         </div>
       </div>
     );
   }
 
-  /**
-   * Empty state
-   */
-  if (!data || data.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 text-center">
-        <p className="text-gray-600 dark:text-gray-400">
-          Nu există date per sector pentru perioada selectată
-        </p>
-      </div>
-    );
-  }
-
-  /**
-   * Calculate total for footer
-   */
-  const totalTons = data.reduce((sum, sector) => sum + sector.total_tons, 0);
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+    <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
       {/* Header */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
           Cantități per sector
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Distribuție pe sectoare
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Distribuția cantităților depozitate pe sectoare (tone)
         </p>
       </div>
 
-      {/* Table Header */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-        <div className="col-span-4">Sector</div>
-        <div className="col-span-3 text-right">Cantitate (tone)</div>
-        <div className="col-span-3 text-right">Variație</div>
-        <div className="col-span-2 text-right">%</div>
+      {/* Table header */}
+      <div className="grid grid-cols-[2fr,1.2fr,1fr] gap-3 pb-2 border-b border-gray-200 dark:border-gray-800 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <span>Sector</span>
+        <span className="text-right">Cantitate (t)</span>
+        <span className="text-right">Variație</span>
       </div>
 
-      {/* Table Body */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      {/* Rows – maxim 6, fără scroll */}
+      <div className="mt-3 space-y-2 flex-1">
         {data.map((sector) => {
-          const variation = getVariationDisplay(sector.variation_percent, sector.variation_direction);
-          const VariationIcon = variation.icon;
+          const grad =
+            sectorGradientMap[sector.sector_number] ||
+            "from-gray-300 to-gray-400";
+          const positive = (sector.variation_percent || 0) >= 0;
 
           return (
             <div
               key={sector.sector_id}
-              className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="relative grid grid-cols-[2fr,1.2fr,1fr] gap-3 items-center px-3 py-3 rounded-xl bg-gray-50/80 dark:bg-[#0f172a] border border-gray-200/70 dark:border-gray-800 hover:border-emerald-500/70 transition-all"
             >
-              {/* Sector Name with Icon */}
-              <div className="col-span-1 md:col-span-4 flex items-center gap-3">
-                {/* Circular Icon with Number */}
-                <div className={`
-                  w-10 h-10 rounded-full flex items-center justify-center
-                  font-bold text-lg
-                  ${getSectorIconClasses(sector.sector_number)}
-                `}>
+              {/* Accent bar left */}
+              <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+              {/* Sector badge + text */}
+              <div className="flex items-center gap-3 pl-1">
+                <div
+                  className={`w-9 h-9 rounded-lg bg-gradient-to-tr ${grad} flex items-center justify-center text-xs font-bold text-white shadow-sm`}
+                >
                   {sector.sector_number}
                 </div>
-                
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {sector.sector_name}
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Sector {sector.sector_number}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {sector.city}
-                  </p>
-                </div>
-              </div>
-
-              {/* Total Tons */}
-              <div className="col-span-1 md:col-span-3 flex md:justify-end items-center">
-                <div className="text-left md:text-right">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    {sector.total_tons_formatted}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {sector.ticket_count} {sector.ticket_count === 1 ? 'tichet' : 'tichete'}
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {sector.city || "București"}
                   </p>
                 </div>
               </div>
 
-              {/* Variation */}
-              <div className="col-span-1 md:col-span-3 flex md:justify-end items-center">
-                <div className={`
-                  inline-flex items-center gap-2 px-3 py-1 rounded-full
-                  ${variation.bg}
-                `}>
-                  <VariationIcon className={`w-4 h-4 ${variation.color}`} />
-                  <span className={`text-sm font-semibold ${variation.color}`}>
-                    {Math.abs(sector.variation_percent).toFixed(1)}%
-                  </span>
-                </div>
+              {/* Cantitate */}
+              <div className="text-right">
+                <p className="text-sm font-semibold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+                  {sector.total_tons_formatted ??
+                    Number(sector.total_tons || 0).toLocaleString("ro-RO", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                </p>
               </div>
 
-              {/* Percentage */}
-              <div className="col-span-1 md:col-span-2 flex md:justify-end items-center">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {formatPercent(sector.percentage_of_total)}
+              {/* Variație */}
+              <div className="text-right">
+                <span
+                  className={`inline-flex items-center justify-end gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                    positive
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : "bg-rose-500/10 text-rose-400"
+                  }`}
+                >
+                  {positive ? (
+                    <TrendingUp className="w-3 h-3" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3" />
+                  )}
+                  {Math.abs(Number(sector.variation_percent || 0)).toFixed(1)}%
                 </span>
               </div>
             </div>
@@ -167,21 +117,20 @@ const SectorStatsTable = ({ data = [], loading = false }) => {
         })}
       </div>
 
-      {/* Footer with Total */}
-      <div className="mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4">
-          <div className="col-span-1 md:col-span-4">
-            <p className="font-bold text-gray-900 dark:text-white text-lg">
-              Total
-            </p>
-          </div>
-          <div className="col-span-1 md:col-span-3 md:text-right">
-            <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-              {formatTons(totalTons)}
-            </p>
-          </div>
-          <div className="col-span-1 md:col-span-5" />
-        </div>
+      {/* Footer total */}
+      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 grid grid-cols-[2fr,1.2fr,1fr] gap-3 items-center">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+          Total
+        </p>
+        <p className="text-right text-base font-bold bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+          {total.toLocaleString("ro-RO", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
+        <p className="text-right text-[11px] text-gray-500 dark:text-gray-400">
+          tone
+        </p>
       </div>
     </div>
   );

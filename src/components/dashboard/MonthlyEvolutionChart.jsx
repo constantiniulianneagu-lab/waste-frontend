@@ -1,228 +1,368 @@
-/**
- * ============================================================================
- * MONTHLY EVOLUTION CHART COMPONENT
- * ============================================================================
- * 
- * Area chart showing monthly waste collection trends
- * with statistics (max, min, average, trending)
- * 
- * Library: Recharts
- * 
- * Props:
- * - data: Monthly evolution data
- * - stats: Monthly statistics (max, min, avg, trending)
- * - loading: Loading state
- * 
- * Created: 2025-11-21
- * ============================================================================
- */
-
-import React from 'react';
+// src/components/dashboard/MonthlyEvolutionChart.jsx
+import { useState } from "react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
-import { monthlyEvolutionConfig } from '../../utils/chartConfig';
-import { formatNumber } from '../../utils/dashboardUtils';
+} from "recharts";
+import { Activity, BarChart3, TrendingUp } from "lucide-react";
 
 const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
-  const { isDarkMode } = useTheme();
-  const config = monthlyEvolutionConfig(isDarkMode);
+  const [chartType, setChartType] = useState("area"); // 'area' | 'bar' | 'line'
 
-  /**
-   * Custom tooltip
-   */
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-            {data.month} {data.year}
-          </p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-            {formatNumber(data.total_tons)} tone
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const hasData = Array.isArray(data) && data.length > 0;
+  const yearLabel = hasData ? data[0]?.year : null;
 
-  /**
-   * Loading skeleton
-   */
+  const chartModes = [
+    { id: "area", label: "Area", icon: Activity },
+    { id: "bar", label: "Bare", icon: BarChart3 },
+    { id: "line", label: "Linie", icon: TrendingUp },
+  ];
+
+  // ─────────────────────────────────────────────────────────────
+  // LOADING STATE
+  // ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Se încarcă graficul...
+          </p>
+        </div>
       </div>
     );
   }
 
-  /**
-   * Empty state
-   */
-  if (!data || data.length === 0) {
+  // ─────────────────────────────────────────────────────────────
+  // EMPTY STATE
+  // ─────────────────────────────────────────────────────────────
+  if (!hasData) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 text-center">
-        <BarChart3 className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">
-          Nu există date de evoluție pentru perioada selectată
-        </p>
+      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+            <Activity className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Nu există suficiente date pentru a afișa evoluția lunară.
+          </p>
+        </div>
       </div>
     );
   }
 
-  /**
-   * Get trending display
-   */
-  const getTrendingDisplay = () => {
-    if (!stats.trending) return null;
-
-    const { value, direction } = stats.trending;
-    const isPositive = direction === 'up' && value > 0;
-    const isNegative = direction === 'down' || value < 0;
-
-    return {
-      icon: isPositive ? TrendingUp : TrendingDown,
-      color: isPositive
-        ? 'text-emerald-600 dark:text-emerald-400'
-        : 'text-red-600 dark:text-red-400',
-      bg: isPositive
-        ? 'bg-emerald-50 dark:bg-emerald-900/20'
-        : 'bg-red-50 dark:bg-red-900/20',
-    };
-  };
-
-  const trending = getTrendingDisplay();
-
+  // ─────────────────────────────────────────────────────────────
+  // MAIN RENDER
+  // ─────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+    <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 shadow-sm flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-            Evoluție lunară
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+            Evoluție lunară a cantităților depozitate
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Cantități depozitate pe categorii - {data[0]?.year}
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Cantități nete (tone) pe luni
+            {yearLabel ? <> – <span className="font-medium">{yearLabel}</span></> : null}
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
-            Vizualizare
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
-            Refresh
-          </button>
+        {/* Chart type switcher */}
+        <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-1">
+          {chartModes.map(({ id, label, icon: Icon }) => {
+            const active = chartType === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setChartType(id)}
+                className={[
+                  "inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-all",
+                  active
+                    ? "bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-md"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/70",
+                ].join(" ")}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={350}>
-        <AreaChart data={data} margin={config.margin}>
-          <defs>
-            <linearGradient
-              id={config.gradient.id}
-              x1={config.gradient.x1}
-              y1={config.gradient.y1}
-              x2={config.gradient.x2}
-              y2={config.gradient.y2}
-            >
-              {config.gradient.stops.map((stop, index) => (
-                <stop
-                  key={index}
-                  offset={stop.offset}
-                  stopColor={stop.stopColor}
-                  stopOpacity={stop.stopOpacity}
-                />
-              ))}
-            </linearGradient>
-          </defs>
-
-          <CartesianGrid {...config.grid} />
-          
-          <XAxis {...config.xAxis} />
-          
-          <YAxis {...config.yAxis} />
-          
-          <Tooltip content={<CustomTooltip />} />
-          
-          <Area {...config.area} />
-        </AreaChart>
-      </ResponsiveContainer>
-
-      {/* Statistics Footer */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-          {/* Maximum */}
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Maximum
-            </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {formatNumber(stats.maximum?.value || 0)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {stats.maximum?.month || 'N/A'}
-            </p>
-          </div>
-
-          {/* Minimum */}
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Minimum
-            </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {formatNumber(stats.minimum?.value || 0)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {stats.minimum?.month || 'N/A'}
-            </p>
-          </div>
-
-          {/* Average */}
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Medie lunară
-            </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {formatNumber(stats.average_monthly || 0)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              tone/lună
-            </p>
-          </div>
-
-          {/* Trending */}
-          {trending && stats.trending && (
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                Trending
-              </p>
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${trending.bg}`}>
-                <trending.icon className={`w-4 h-4 ${trending.color}`} />
-                <span className={`text-lg font-bold ${trending.color}`}>
-                  {Math.abs(stats.trending.value).toFixed(1)}%
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                vs {stats.trending.vs_period}
-              </p>
-            </div>
+      <div className="w-full h-[260px] sm:h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          {chartType === "area" && (
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="landfillArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.9} />
+                  <stop offset="95%" stopColor="#0f172a" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e5e7eb"
+                className="dark:stroke-gray-800"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                padding={{ left: 10, right: 10 }}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+                tickFormatter={(value) =>
+                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#020617",
+                  borderRadius: 12,
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
+                  padding: 12,
+                  color: "#e5e7eb",
+                }}
+                labelStyle={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  marginBottom: 4,
+                }}
+                itemStyle={{
+                  fontSize: 12,
+                }}
+                formatter={(value) => [
+                  `${Number(value).toLocaleString("ro-RO")} t`,
+                  "Cantitate",
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="total_tons"
+                stroke="#10b981"
+                strokeWidth={3}
+                fill="url(#landfillArea)"
+                animationDuration={900}
+              />
+            </AreaChart>
           )}
+
+          {chartType === "bar" && (
+            <BarChart data={data}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e5e7eb"
+                className="dark:stroke-gray-800"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                padding={{ left: 10, right: 10 }}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+                tickFormatter={(value) =>
+                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#020617",
+                  borderRadius: 12,
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
+                  padding: 12,
+                  color: "#e5e7eb",
+                }}
+                labelStyle={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  marginBottom: 4,
+                }}
+                itemStyle={{
+                  fontSize: 12,
+                }}
+                formatter={(value) => [
+                  `${Number(value).toLocaleString("ro-RO")} t`,
+                  "Cantitate",
+                ]}
+              />
+              <Bar
+                dataKey="total_tons"
+                radius={[8, 8, 0, 0]}
+                className="fill-emerald-500 dark:fill-emerald-400"
+                animationDuration={900}
+              />
+            </BarChart>
+          )}
+
+          {chartType === "line" && (
+            <LineChart data={data}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e5e7eb"
+                className="dark:stroke-gray-800"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                padding={{ left: 10, right: 10 }}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{
+                  fontSize: 12,
+                  fill: "#6b7280",
+                }}
+                tickFormatter={(value) =>
+                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#020617",
+                  borderRadius: 12,
+                  border: "1px solid rgba(148, 163, 184, 0.3)",
+                  padding: 12,
+                  color: "#e5e7eb",
+                }}
+                labelStyle={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  marginBottom: 4,
+                }}
+                itemStyle={{
+                  fontSize: 12,
+                }}
+                formatter={(value) => [
+                  `${Number(value).toLocaleString("ro-RO")} t`,
+                  "Cantitate",
+                ]}
+              />
+              <Line
+                type="monotone"
+                dataKey="total_tons"
+                stroke="#38bdf8"
+                strokeWidth={3}
+                dot={{ r: 3.5, strokeWidth: 0, fill: "#38bdf8" }}
+                activeDot={{ r: 6 }}
+                animationDuration={900}
+              />
+            </LineChart>
+          )}
+        </ResponsiveContainer>
+      </div>
+
+      {/* Stats footer */}
+      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Max */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Maximum
+          </p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            {stats.maximum?.value
+              ? stats.maximum.value.toLocaleString("ro-RO")
+              : "0"}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {stats.maximum?.month || "N/A"}
+          </p>
         </div>
-      )}
+
+        {/* Min */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Minimum
+          </p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            {stats.minimum?.value
+              ? stats.minimum.value.toLocaleString("ro-RO")
+              : "0"}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {stats.minimum?.month || "N/A"}
+          </p>
+        </div>
+
+        {/* Average */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Medie lunară
+          </p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            {stats.average_monthly
+              ? stats.average_monthly.toLocaleString("ro-RO")
+              : "0"}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            tone / lună
+          </p>
+        </div>
+
+        {/* Trending */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Trending
+          </p>
+          <p
+            className={[
+              "text-lg font-semibold",
+              stats.trending?.direction === "down"
+                ? "text-rose-500"
+                : "text-emerald-500",
+            ].join(" ")}
+          >
+            {stats.trending?.direction === "down" ? "↓" : "↑"}{" "}
+            {Math.abs(stats.trending?.value || 0).toLocaleString("ro-RO")}%
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            vs {stats.trending?.vs_period || "--"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
