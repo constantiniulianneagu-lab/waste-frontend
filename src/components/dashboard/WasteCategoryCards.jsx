@@ -1,72 +1,90 @@
+// src/components/dashboard/WasteCategoryCards.jsx
 /**
  * ============================================================================
- * WASTE CATEGORY CARDS COMPONENT
- * ============================================================================
- * 
- * Displays 5 large colored cards for waste categories:
- * - 20 03 01 (Deșeuri municipale)
- * - 20 03 03 (Reziduuri străzi)
- * - 19 * * (Deșeuri de sortare - aggregated)
- * - 17 09 04 (Construcții)
- * - ALTELE (Other categories)
- * 
- * Props:
- * - categories: Array of waste category data
- * - loading: Loading state
- * 
- * Created: 2025-11-21
+ * WASTE CATEGORY CARDS – PREMIUM TAILWIND
  * ============================================================================
  */
 
-import React from 'react';
-import { formatTons, formatPercent, getWasteCodeIcon } from '../../utils/dashboardUtils.js';
+import React from "react";
+import {
+  formatPercent,
+  getWasteCodeIcon,
+} from "../../utils/dashboardUtils.js";
 
 const WasteCategoryCards = ({ categories = [], loading = false }) => {
   /**
-   * Get card color classes by waste code
+   * Color presets per waste code
    */
-  const getCardClasses = (wasteCode) => {
-    const colorMap = {
-      '20 03 01': {
-        bg: 'from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700',
-        icon: 'bg-purple-600 dark:bg-purple-700',
-        progress: 'bg-purple-700 dark:bg-purple-800',
+  const getColorConfig = (wasteCode) => {
+    const map = {
+      "20 03 01": {
+        // deșeuri municipale
+        gradient:
+          "from-purple-500 via-purple-500/90 to-violet-500 dark:from-purple-500 dark:via-purple-600 dark:to-violet-600",
+        chipBg: "bg-purple-500/15 dark:bg-purple-400/15",
+        chipText: "text-purple-200 dark:text-purple-100",
+        barBg: "bg-purple-500",
+        ring: "ring-purple-500/40",
+        glow: "shadow-[0_0_25px_rgba(168,85,247,0.45)]",
       },
-      '20 03 03': {
-        bg: 'from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-700',
-        icon: 'bg-emerald-600 dark:bg-emerald-700',
-        progress: 'bg-emerald-700 dark:bg-emerald-800',
+      "20 03 03": {
+        // reziduuri străzi
+        gradient:
+          "from-emerald-500 via-emerald-500/90 to-teal-500 dark:from-emerald-500 dark:via-emerald-600 dark:to-teal-600",
+        chipBg: "bg-emerald-500/15 dark:bg-emerald-400/15",
+        chipText: "text-emerald-100",
+        barBg: "bg-emerald-400",
+        ring: "ring-emerald-500/40",
+        glow: "shadow-[0_0_25px_rgba(16,185,129,0.45)]",
       },
-      '19 * *': {
-        bg: 'from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700',
-        icon: 'bg-orange-600 dark:bg-orange-700',
-        progress: 'bg-orange-700 dark:bg-orange-800',
+      "19 * *": {
+        // deșeuri de sortare
+        gradient:
+          "from-orange-500 via-amber-500 to-yellow-400 dark:from-orange-500 dark:via-amber-500 dark:to-yellow-400",
+        chipBg: "bg-amber-500/15 dark:bg-amber-400/20",
+        chipText: "text-amber-100",
+        barBg: "bg-amber-400",
+        ring: "ring-amber-400/50",
+        glow: "shadow-[0_0_25px_rgba(245,158,11,0.4)]",
       },
-      '17 09 04': {
-        bg: 'from-pink-500 to-pink-600 dark:from-pink-600 dark:to-pink-700',
-        icon: 'bg-pink-600 dark:bg-pink-700',
-        progress: 'bg-pink-700 dark:bg-pink-800',
+      "17 09 04": {
+        // construcții
+        gradient:
+          "from-pink-500 via-rose-500 to-red-400 dark:from-pink-500 dark:via-rose-500 dark:to-red-400",
+        chipBg: "bg-pink-500/15 dark:bg-pink-400/20",
+        chipText: "text-pink-100",
+        barBg: "bg-pink-400",
+        ring: "ring-pink-500/40",
+        glow: "shadow-[0_0_25px_rgba(236,72,153,0.45)]",
       },
-      'ALTELE': {
-        bg: 'from-cyan-500 to-cyan-600 dark:from-cyan-600 dark:to-cyan-700',
-        icon: 'bg-cyan-600 dark:bg-cyan-700',
-        progress: 'bg-cyan-700 dark:bg-cyan-800',
+      ALTELE: {
+        // alte fluxuri
+        gradient:
+          "from-cyan-500 via-sky-500 to-blue-500 dark:from-cyan-500 dark:via-sky-500 dark:to-blue-500",
+        chipBg: "bg-cyan-500/15 dark:bg-cyan-400/20",
+        chipText: "text-cyan-100",
+        barBg: "bg-cyan-400",
+        ring: "ring-cyan-400/40",
+        glow: "shadow-[0_0_25px_rgba(56,189,248,0.45)]",
       },
     };
-    return colorMap[wasteCode] || colorMap['ALTELE'];
+
+    return map[wasteCode] || map.ALTELE;
   };
 
   /**
-   * Loading skeleton
+   * Loading skeleton (5 cards)
    */
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-48 animate-pulse"
-          />
+            className="h-48 rounded-2xl bg-gradient-to-br from-slate-200/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 border border-slate-200/80 dark:border-slate-700/80 animate-pulse"
+          >
+            <div className="h-full w-full bg-slate-200/40 dark:bg-slate-800/40 rounded-2xl" />
+          </div>
         ))}
       </div>
     );
@@ -77,95 +95,172 @@ const WasteCategoryCards = ({ categories = [], loading = false }) => {
    */
   if (!categories || categories.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 text-center">
-        <div className="text-gray-400 dark:text-gray-500 mb-2">
-          <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      <div className="mb-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md px-8 py-10 flex flex-col items-center justify-center text-center shadow-[0_18px_45px_rgba(15,23,42,0.25)]">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-300 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 text-slate-500 dark:text-slate-300 shadow-lg">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-8 w-8"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path
+              d="M3 7h18M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10 11v4M14 11v4"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
-        <p className="text-gray-600 dark:text-gray-400">
-          Nu există date pentru perioada selectată
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
+          Nu există date pentru perioada selectată.
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Ajustează filtrele de perioadă sau sector pentru a vedea distribuția
+          categoriilor de deșeuri.
         </p>
       </div>
     );
   }
 
+  /**
+   * Main cards
+   */
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-      {categories.map((category) => {
-        const colors = getCardClasses(category.waste_code);
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+      {categories.slice(0, 5).map((category) => {
+        const {
+          gradient,
+          chipBg,
+          chipText,
+          barBg,
+          ring,
+          glow,
+        } = getColorConfig(category.waste_code);
         const icon = getWasteCodeIcon(category.waste_code);
+        const percentage = Math.min(
+          Number(category.percentage_of_total || 0),
+          100,
+        );
 
         return (
-          <div
+          <article
             key={category.waste_code}
             className={`
-              relative overflow-hidden rounded-2xl shadow-lg 
-              hover:shadow-xl transition-all duration-300 hover:scale-105
-              bg-gradient-to-br ${colors.bg}
+              relative group overflow-hidden rounded-2xl border border-slate-200/80 
+              dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 
+              backdrop-blur-lg shadow-[0_18px_45px_rgba(15,23,42,0.22)]
+              transition-all duration-500 ease-out
+              hover:-translate-y-1.5 hover:shadow-[0_26px_60px_rgba(15,23,42,0.35)]
+              hover:border-transparent hover:${ring}
             `}
           >
-            {/* Card Content */}
-            <div className="relative p-6 text-white">
-              {/* Icon */}
-              <div className={`
-                w-12 h-12 rounded-xl ${colors.icon} 
-                flex items-center justify-center mb-4
-                shadow-lg
-              `}>
-                <span className="text-2xl">{icon}</span>
+            {/* Decorative gradient halo */}
+            <div
+              className={`
+                pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full 
+                bg-gradient-to-br ${gradient} opacity-20 blur-2 transition-opacity 
+                duration-500 group-hover:opacity-40
+              `}
+            />
+            <div
+              className={`
+                pointer-events-none absolute -left-8 bottom-0 h-24 w-24 rounded-full 
+                bg-gradient-to-tl ${gradient} opacity-10 blur group-hover:opacity-25
+              `}
+            />
+
+            {/* Inner content */}
+            <div className="relative z-10 flex h-full flex-col p-5">
+              {/* Header */}
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span
+                    className={`
+                      inline-flex items-center rounded-full px-2.5 py-1 text-[0.68rem] font-semibold
+                      uppercase tracking-[0.08em] ${chipBg} ${chipText}
+                      ring-1 ring-inset ring-white/10
+                    `}
+                  >
+                    {category.waste_code}
+                  </span>
+                  <p className="max-w-[12rem] text-xs font-medium leading-snug text-slate-600 dark:text-slate-200/90">
+                    {category.waste_description}
+                  </p>
+                </div>
+
+                {/* Icon */}
+                <div
+                  className={`
+                    flex h-11 w-11 items-center justify-center rounded-xl 
+                    bg-gradient-to-br ${gradient} text-xl text-white
+                    shadow-lg ${glow}
+                    ring-2 ring-white/30 dark:ring-slate-900/40
+                  `}
+                >
+                  <span className="drop-shadow-sm">{icon}</span>
+                </div>
               </div>
 
-              {/* Waste Code */}
-              <div className="mb-1">
-                <p className="text-xs font-medium opacity-90">
-                  {category.waste_code}
-                </p>
-              </div>
-
-              {/* Description */}
-              <h3 className="text-sm font-semibold mb-4 line-clamp-2">
-                {category.waste_description}
-              </h3>
-
-              {/* Total Tons - Large Display */}
+              {/* Total tons */}
               <div className="mb-4">
-                <p className="text-3xl font-bold">
+                <p
+                  className={`
+                    bg-gradient-to-r ${gradient}
+                    bg-clip-text text-3xl font-extrabold tracking-tight
+                    text-transparent drop-shadow-sm
+                  `}
+                >
                   {category.total_tons_formatted}
                 </p>
-                <p className="text-xs opacity-75 mt-1">
-                  {category.ticket_count} {category.ticket_count === 1 ? 'tichet' : 'tichete'}
+                <p className="mt-1 text-[0.7rem] font-medium text-slate-500 dark:text-slate-400">
+                  {category.ticket_count}{" "}
+                  {category.ticket_count === 1 ? "tichet" : "tichete"} •{" "}
+                  {Number(category.total_tons || 0).toFixed(2)} tone
                 </p>
               </div>
 
-              {/* Percentage from Total */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium opacity-90">
-                    DIN TOTAL
+              {/* Progress + percentage */}
+              <div className="mt-auto space-y-2">
+                <div className="flex items-center justify-between text-[0.7rem]">
+                  <span className="font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                    Din total
                   </span>
-                  <span className="text-sm font-bold">
+                  <span
+                    className={`
+                      bg-gradient-to-r ${gradient}
+                      bg-clip-text text-sm font-bold text-transparent
+                    `}
+                  >
                     {formatPercent(category.percentage_of_total)}
                   </span>
                 </div>
-                
-                {/* Progress Bar */}
-                <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800/90">
                   <div
-                    className={`h-full ${colors.progress} rounded-full transition-all duration-500`}
-                    style={{ width: `${Math.min(category.percentage_of_total, 100)}%` }}
+                    className={`
+                      h-full rounded-full bg-gradient-to-r ${gradient} ${barBg}
+                      transition-all duration-[1100ms] ease-out
+                    `}
+                    style={{ width: `${percentage}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Decorative Background Pattern */}
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <circle cx="50" cy="50" r="40" fill="white" />
-              </svg>
-            </div>
-          </div>
+            {/* Corner status dot */}
+            <div
+              className={`
+                pointer-events-none absolute left-3 top-3 h-2.5 w-2.5 rounded-full 
+                bg-gradient-to-br ${gradient} shadow-[0_0_0_3px_rgba(15,23,42,0.7)]
+                animate-pulse
+              `}
+            />
+          </article>
         );
       })}
     </div>
