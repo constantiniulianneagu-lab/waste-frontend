@@ -11,13 +11,26 @@ const DashboardFilters = ({
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
 
-  // sincronizează localFilters dacă se schimbă din exterior
+  // Sincronizează localFilters dacă se schimbă din exterior
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
 
   const handleApply = () => {
-    onFilterChange(localFilters);
+    // 🔧 FIX: Nu trimite sector_id dacă e empty string
+    const cleanFilters = {
+      ...localFilters,
+      // Doar includem sector_id dacă e un număr valid
+      ...(localFilters.sector_id && { sector_id: localFilters.sector_id })
+    };
+    
+    // Dacă sector_id e "", îl eliminăm complet din obiect
+    if (!cleanFilters.sector_id) {
+      delete cleanFilters.sector_id;
+    }
+    
+    console.log('🔍 Applying filters:', cleanFilters);
+    onFilterChange(cleanFilters);
   };
 
   const handleReset = () => {
@@ -25,10 +38,37 @@ const DashboardFilters = ({
       year: new Date().getFullYear(),
       from: getYearStart(),
       to: getTodayDate(),
-      sector_id: "",
+      sector_id: null, // 🔧 FIX: null în loc de ""
     };
     setLocalFilters(defaultFilters);
     onFilterChange(defaultFilters);
+  };
+
+  // 🔧 FIX: Handler pentru sector cu validare
+  const handleSectorChange = (e) => {
+    const value = e.target.value;
+    
+    // Dacă e empty string, setăm null
+    if (value === "" || value === "all") {
+      setLocalFilters({
+        ...localFilters,
+        sector_id: null
+      });
+      return;
+    }
+    
+    // Altfel, convertim la integer
+    const sectorId = parseInt(value, 10);
+    
+    if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
+      console.log('✅ Valid sector selected:', sectorId);
+      setLocalFilters({
+        ...localFilters,
+        sector_id: sectorId
+      });
+    } else {
+      console.warn('⚠️ Invalid sector value:', value);
+    }
   };
 
   return (
@@ -103,13 +143,8 @@ const DashboardFilters = ({
             Locație
           </label>
           <select
-            value={localFilters.sector_id}
-            onChange={(e) => setLocalFilters({
-              ...localFilters,
-              sector_id: parseInt(e.target.value, 10) || ""
-            })
-            
-            }
+            value={localFilters.sector_id || ""} // 🔧 FIX: default la ""
+            onChange={handleSectorChange} // 🔧 FIX: folosim handler-ul nou
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           >
@@ -153,18 +188,17 @@ const DashboardFilters = ({
           <span className="font-bold">{localFilters.year}</span> • Perioada:{" "}
           <span className="font-bold">{localFilters.from}</span> -{" "}
           <span className="font-bold">{localFilters.to}</span>
-          {localFilters.sector_id &&
-            (() => {
-              const s = sectors.find(
-                (sec) => String(sec.sector_id) === String(localFilters.sector_id)
-              );
-              return s ? (
-                <>
-                  {" "}
-                  • Locație: <span className="font-bold">Sector {s.sector_number}</span>
-                </>
-              ) : null;
-            })()}
+          {localFilters.sector_id && (() => {
+            // 🔧 FIX: Căutăm după sector_number nu sector_id
+            const s = sectors.find(
+              (sec) => sec.sector_number === localFilters.sector_id
+            );
+            return s ? (
+              <>
+                {" "}• Locație: <span className="font-bold">Sector {s.sector_number}</span>
+              </>
+            ) : null;
+          })()}
         </p>
       </div>
     </div>

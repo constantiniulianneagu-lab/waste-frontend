@@ -1,7 +1,14 @@
 // src/components/dashboard/DashboardLandfill.jsx
 /**
  * ============================================================================
- * DASHBOARD DEPOZITARE - FULL WIDTH + DARK MODE
+ * DASHBOARD DEPOZITARE - FULL WIDTH + DARK MODE - FIXED v2
+ * ============================================================================
+ * 
+ * 🔧 CHANGES:
+ * - Fixed initial state (sector_id: null instead of "")
+ * - Better filter handling
+ * - Console logging for debugging
+ * 
  * ============================================================================
  */
 
@@ -21,11 +28,12 @@ const DashboardLandfill = () => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
 
+  // 🔧 FIX: sector_id inițial null, nu ""
   const [filters, setFilters] = useState({
     year: new Date().getFullYear(),
     from: getYearStart(),
     to: getTodayDate(),
-    sector_id: "",
+    sector_id: null, // 🔧 FIX: null în loc de ""
   });
 
   const fetchDashboardData = async (filterParams = filters) => {
@@ -34,22 +42,24 @@ const DashboardLandfill = () => {
       setError(null);
   
       console.log("📊 Fetching dashboard data with filters:", filterParams);
+      
       const res = await getLandfillStats(filterParams);
+      
       console.log("✅ Raw response from API:", res);
   
       if (!res) {
         throw new Error("Empty response from API");
       }
   
-      // 👉 dacă backend-ul trimite { success, data }
+      // Backend trimite { success, data }
       if (typeof res === "object" && "success" in res) {
         if (!res.success) {
           throw new Error(res.message || "API responded with success=false");
         }
         console.log("✅ Using res.data for dashboard:", res.data);
-        setData(res.data); // 👈 AICI E SCHIMBAREA CHEIE
+        setData(res.data);
       } else {
-        // fallback – în caz că ai alt format
+        // Fallback - în caz că ai alt format
         console.log("⚠️ Using response as data directly");
         setData(res);
       }
@@ -60,7 +70,6 @@ const DashboardLandfill = () => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchDashboardData();
@@ -68,11 +77,13 @@ const DashboardLandfill = () => {
   }, []);
 
   const handleFilterChange = (newFilters) => {
+    console.log('🔄 Filter change requested:', newFilters);
     setFilters(newFilters);
     fetchDashboardData(newFilters);
   };
 
   const handleRefresh = () => {
+    console.log('🔄 Manual refresh with current filters:', filters);
     fetchDashboardData(filters);
   };
 
@@ -313,7 +324,6 @@ const DashboardLandfill = () => {
                       Până la 50 de tichete recente
                     </p>
                   </div>
-                  {/* placeholder buton view all */}
                   <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
                     Vezi toate
                   </button>
@@ -324,7 +334,7 @@ const DashboardLandfill = () => {
                     <div className="divide-y divide-gray-200 dark:divide-gray-800">
                       {data.recent_tickets.map((ticket) => (
                         <div
-                          key={ticket.id}
+                          key={ticket.ticket_id}
                           className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
                         >
                           <div className="flex items-center gap-4">
@@ -359,7 +369,7 @@ const DashboardLandfill = () => {
                                 {ticket.net_weight_tons_formatted}
                               </p>
                               <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {ticket.time_ago}
+                                tone
                               </p>
                             </div>
                           </div>
