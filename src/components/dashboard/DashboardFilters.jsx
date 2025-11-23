@@ -104,15 +104,18 @@ const DashboardFilters = ({
           </label>
           <select
             value={localFilters.sector_id}
-            onChange={(e) =>
-              setLocalFilters({ ...localFilters, sector_id: e.target.value })
+            onChange={(e) => setLocalFilters({
+              ...localFilters,
+              sector_id: parseInt(e.target.value, 10) || ""
+            })
+            
             }
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           >
             <option value="">București (Toate sectoarele)</option>
             {sectors.map((sector) => (
-              <option key={sector.sector_id} value={sector.sector_id}>
+              <option key={sector.sector_id} value={sector.sector_number}>
                 Sector {sector.sector_number}
               </option>
             ))}
