@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  Package,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -33,10 +34,9 @@ const Sidebar = () => {
     },
     {
       title: "Tratare",
-      icon: LayoutDashboard,
+      icon: Package,
       path: "/dashboard/tmb",
       color: "emerald",
-      disabled: true,
     },
     {
       title: "Rapoarte",
@@ -91,8 +91,8 @@ const Sidebar = () => {
               <Trash2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-white">SAMD</h1>
-              <p className="text-[10px] text-gray-400">Monitorizare Deșeuri</p>
+              <h1 className="text-base font-bold text-white">SAMD București</h1>
+              <p className="text-[10px] text-gray-400">Sistem Automatizat de Monitorizare Deșeuri</p>
             </div>
           </div>
         ) : (
@@ -125,7 +125,7 @@ const Sidebar = () => {
                 onClick={(e) => item.disabled && e.preventDefault()}
               >
                 {active && !isCollapsed && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald-500 rounded-r-full" />
                 )}
 
                 <Icon className="w-5 h-5 flex-shrink-0" />

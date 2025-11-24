@@ -5,6 +5,7 @@ import { useAuth } from "./AuthContext";
 import Sidebar from "./components/Sidebar";
 import WasteLogin from "./WasteLogin";
 import DashboardLandfill from "./components/dashboard/DashboardLandfill";
+import DashboardTmb from './components/dashboard/DashboardTmb';
 import Users from "./Users";
 import Institutions from "./Institutions";
 
@@ -51,6 +52,7 @@ function App() {
             }
           />
 
+          {/* Dashboard Routes */}
           <Route
             path="/dashboard/landfill"
             element={
@@ -60,6 +62,16 @@ function App() {
             }
           />
 
+          <Route
+            path="/dashboard/tmb"
+            element={
+              <ProtectedRoute>
+                <DashboardTmb />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Management Routes */}
           <Route
             path="/users"
             element={
