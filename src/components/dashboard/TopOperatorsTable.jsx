@@ -1,204 +1,175 @@
-/**
- * ============================================================================
- * TOP OPERATORS TABLE COMPONENT
- * ============================================================================
- * 
- * Table showing ALL operators sorted by waste volume (descending)
- * with:
- * - Colored circular icons with sector numbers
- * - Operator name and sectors
- * - Total tons collected
- * - Percentage of total
- * 
- * Props:
- * - data: Array of operator statistics
- * - loading: Loading state
- * 
- * Created: 2025-11-21
- * ============================================================================
- */
-
-import React, { useState } from 'react';
-import { Building2, MapPin } from 'lucide-react';
-import { formatTons, formatPercent, getSectorIconClasses } from '../../utils/dashboardUtils.js';
+// src/components/dashboard/TopOperatorsTable.jsx
+import React from "react";
 
 const TopOperatorsTable = ({ data = [], loading = false }) => {
-  const [showAll, setShowAll] = useState(false);
+  // Culori uniforme pe sectoare (la fel ca în restul dashboard-ului)
+  const sectorColors = {
+    1: {
+      gradient: "from-violet-500 to-violet-600",
+      shadow: "shadow-violet-500/40",
+    },
+    2: {
+      gradient: "from-slate-200 to-slate-300",
+      shadow: "shadow-slate-400/40",
+    },
+    3: {
+      gradient: "from-emerald-500 to-emerald-600",
+      shadow: "shadow-emerald-500/40",
+    },
+    4: {
+      gradient: "from-amber-500 to-amber-600",
+      shadow: "shadow-amber-500/40",
+    },
+    5: {
+      gradient: "from-pink-500 to-rose-500",
+      shadow: "shadow-pink-500/40",
+    },
+    6: {
+      gradient: "from-cyan-500 to-sky-500",
+      shadow: "shadow-cyan-500/40",
+    },
+  };
 
-  // Show top 10 by default, or all if showAll is true
-  const displayData = showAll ? data : data.slice(0, 10);
+  const getColorConfig = (sectorNum) =>
+    sectorColors[sectorNum] || sectorColors[1];
 
-  /**
-   * Loading skeleton
-   */
+  /* LOADING SKELETON */
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-        <div className="space-y-4">
+      <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1a1f2e]">
+        <div className="mb-6">
+          <div className="h-5 w-48 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+        </div>
+
+        <div className="flex flex-1 flex-col gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div
+              key={i}
+              className="h-[72px] animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800"
+            />
           ))}
         </div>
       </div>
     );
   }
 
-  /**
-   * Empty state
-   */
-  if (!data || data.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 text-center">
-        <Building2 className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">
-          Nu există date despre operatori pentru perioada selectată
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+    <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1a1f2e]">
+      {/* HEADER */}
+      <div className="mb-6 flex-shrink-0">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Top operatori salubrizare
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Cantități depozitate în perioada selectată
         </p>
       </div>
 
-      {/* Table Header */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-        <div className="col-span-1">#</div>
-        <div className="col-span-5">Operator</div>
-        <div className="col-span-3 text-right">Cantitate (tone)</div>
-        <div className="col-span-3 text-right">Din total</div>
-      </div>
+      {/* LISTĂ CU SCROLL */}
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden pr-1 max-h-[420px]">
+        {data.map((operator, idx) => {
+          const firstSectorNum =
+            operator.sector_numbers?.[0] ||
+            operator.sectors?.[0] ||
+            1;
 
-      {/* Table Body */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        {displayData.map((operator, index) => (
-          <div
-            key={operator.institution_id}
-            className="grid grid-cols-1 md:grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-          >
-            {/* Rank */}
-            <div className="hidden md:flex col-span-1 items-center">
-              <span className="text-lg font-bold text-gray-400 dark:text-gray-500">
-                {index + 1}
-              </span>
-            </div>
+          const colorConfig = getColorConfig(firstSectorNum);
 
-            {/* Operator Info with Sector Icons */}
-            <div className="col-span-1 md:col-span-5 flex items-center gap-3">
-              {/* Sector Icons (can be multiple) */}
-              <div className="flex -space-x-2">
-                {operator.sector_numbers.map((sectorNum, idx) => (
-                  <div
-                    key={idx}
-                    className={`
-                      w-8 h-8 rounded-full flex items-center justify-center
-                      font-bold text-sm border-2 border-white dark:border-gray-800
-                      ${getSectorIconClasses(sectorNum)}
-                    `}
-                    title={`Sector ${sectorNum}`}
-                  >
-                    {sectorNum}
+          const sectors =
+            operator.sector_numbers ||
+            operator.sectors ||
+            [firstSectorNum];
+
+          const displaySectors = sectors.slice(0, 3);
+          const extraCount =
+            sectors.length > 3 ? sectors.length - 3 : 0;
+
+          return (
+            <div
+              key={operator.institution_id || idx}
+              className="group relative flex flex-shrink-0 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm shadow-xs transition-all duration-300 hover:-translate-x-1 hover:border-gray-200 hover:bg-white hover:shadow-lg dark:border-gray-800 dark:bg-[#0f1419] dark:hover:border-gray-700 dark:hover:bg-[#101623]"
+            >
+              {/* Bară colorată stânga */}
+              <div
+                className={`absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b ${colorConfig.gradient}`}
+              />
+
+              {/* Badge-uri de sector */}
+              <div className="ml-3 flex flex-shrink-0 items-center gap-1.5">
+                {displaySectors.map((sectorNum, i) => {
+                  const cfg = getColorConfig(sectorNum);
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        flex h-9 w-9 items-center justify-center rounded-xl 
+                        bg-gradient-to-br ${cfg.gradient}
+                        text-xs font-semibold text-white shadow-md
+                      `}
+                    >
+                      {sectorNum}
+                    </div>
+                  );
+                })}
+                {extraCount > 0 && (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-dashed border-gray-400/40 text-[11px] font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-300">
+                    +{extraCount}
                   </div>
-                ))}
+                )}
               </div>
 
-              {/* Operator Name */}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 dark:text-white truncate">
+              {/* Info operator */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-gray-900 dark:text-white">
                   {operator.institution_name}
                 </p>
-                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>
-                    Sector {operator.sector_numbers_display}
-                  </span>
-                  <span className="ml-2">
-                    • {operator.ticket_count} {operator.ticket_count === 1 ? 'tichet' : 'tichete'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Tons */}
-            <div className="col-span-1 md:col-span-3 flex md:justify-end items-center">
-              <div className="text-left md:text-right">
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {operator.total_tons_formatted}
+                <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                  Sector{" "}
+                  {operator.sector_numbers_display ||
+                    sectors.join(", ")}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+              </div>
+
+              {/* Cantitate totală */}
+              <div className="flex flex-shrink-0 flex-col items-end">
+                <p
+                  className={`
+                    bg-gradient-to-r ${colorConfig.gradient}
+                    bg-clip-text text-base font-bold text-transparent
+                  `}
+                >
+                  {operator.total_tons_formatted ||
+                    operator.total_tons?.toLocaleString("ro-RO", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                </p>
+                <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
                   tone
                 </p>
               </div>
             </div>
+          );
+        })}
 
-            {/* Percentage */}
-            <div className="col-span-1 md:col-span-3 flex md:justify-end items-center">
-              <div className="flex items-center gap-2">
-                {/* Percentage Bar */}
-                <div className="hidden md:block w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 dark:bg-emerald-600 rounded-full"
-                    style={{ width: `${Math.min(operator.percentage_of_total, 100)}%` }}
-                  />
-                </div>
-                
-                {/* Percentage Text */}
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 w-12 text-right">
-                  {formatPercent(operator.percentage_of_total)}
-                </span>
-              </div>
-            </div>
+        {data.length === 0 && (
+          <div className="flex flex-1 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+            Nu există operatori pentru perioada selectată.
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Show More/Less Button */}
-      {data.length > 10 && (
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="px-6 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 
-                     hover:bg-emerald-50 dark:hover:bg-emerald-900/20 
-                     rounded-lg transition-colors"
-          >
-            {showAll ? (
-              <>Arată mai puțin ({data.length - 10} ascunși)</>
-            ) : (
-              <>Arată toți ({data.length - 10} mai mult)</>
-            )}
-          </button>
+      {/* FOOTER */}
+      {data.length > 0 && (
+        <div className="mt-4 flex-shrink-0 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-2 text-center text-xs text-gray-500 dark:border-gray-700 dark:bg-[#0f1419] dark:text-gray-400">
+          Total{" "}
+          <span className="font-semibold text-gray-800 dark:text-gray-100">
+            {data.length}
+          </span>{" "}
+          operatori afișați
         </div>
       )}
-
-      {/* Summary Footer */}
-      <div className="mt-6 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-        <div className="flex items-center justify-between px-4">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Total operatori
-            </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {data.length}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Total cantitate
-            </p>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {formatTons(data.reduce((sum, op) => sum + op.total_tons, 0))}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

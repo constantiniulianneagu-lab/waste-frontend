@@ -408,197 +408,168 @@ const Users = () => {
           )}
         </div>
 
-        {/* ADD / EDIT SIDEBAR (DRAWER DREAPTA) */}
+        {/* ADD / EDIT MODAL */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex">
-            {/* overlay click-to-close */}
-            <div
-              className="flex-1 bg-black/60"
-              onClick={() => setShowModal(false)}
-            />
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {editingUser ? "Editează utilizator" : "Adaugă utilizator"}
+                </h2>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
 
-            {/* panou dreapta */}
-            <div className="w-full max-w-xl bg-white dark:bg-[#1a1f2e] border-l border-gray-200 dark:border-gray-800 shadow-xl flex flex-col">
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col h-full"
-              >
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              {formError && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    E-mail
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="user@example.com"
+                  />
+                </div>
+
+                {/* Parolă */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Parolă {editingUser && "(opțional)"}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder={
+                        editingUser ? "Lasă gol pentru a nu schimba" : "••••••••"
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-300"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Prenume / Nume */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                      {editingUser
-                        ? "Editează utilizator"
-                        : "Adaugă utilizator nou"}
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Completează toate câmpurile obligatorii
-                    </p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Prenume
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.firstName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          firstName: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Ion"
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Nume
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lastName: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Popescu"
+                    />
+                  </div>
+                </div>
+
+                {/* Rol */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Rol
+                  </label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData({ ...formData, role: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </button>
+                    <option value="PLATFORM_ADMIN">
+                      Administrator platformă
+                    </option>
+                    <option value="INSTITUTION_ADMIN">
+                      Administrator instituție
+                    </option>
+                    <option value="INSTITUTION_EDITOR">
+                      Editor instituție
+                    </option>
+                    <option value="REGULATOR_VIEWER">
+                      Vizualizare regulator
+                    </option>
+                  </select>
                 </div>
 
-                {/* Content scrollabil */}
-                <div className="px-6 py-4 flex-1 overflow-y-auto">
-                  {formError && (
-                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
-                      {formError}
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    {/* Email */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        E-mail
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        placeholder="user@example.com"
-                      />
-                    </div>
-
-                    {/* Parolă */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Parolă {editingUser && "(opțional)"}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={formData.password}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              password: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder={
-                            editingUser
-                              ? "Lasă gol pentru a nu schimba"
-                              : "••••••••"
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-300"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Prenume / Nume */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Prenume
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.firstName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              firstName: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="Ion"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Nume
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.lastName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              lastName: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="Popescu"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Rol */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Rol
-                      </label>
-                      <select
-                        value={formData.role}
-                        onChange={(e) =>
-                          setFormData({ ...formData, role: e.target.value })
-                        }
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      >
-                        <option value="PLATFORM_ADMIN">
-                          Administrator platformă
-                        </option>
-                        <option value="INSTITUTION_ADMIN">
-                          Administrator instituție
-                        </option>
-                        <option value="INSTITUTION_EDITOR">
-                          Editor instituție
-                        </option>
-                        <option value="REGULATOR_VIEWER">
-                          Vizualizare regulator
-                        </option>
-                      </select>
-                    </div>
-
-                    {/* Activ */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="isActive"
-                        type="checkbox"
-                        checked={formData.isActive}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            isActive: e.target.checked,
-                          })
-                        }
-                        className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-700 rounded focus:ring-emerald-500"
-                      />
-                      <label
-                        htmlFor="isActive"
-                        className="text-sm text-gray-700 dark:text-gray-300"
-                      >
-                        Activ
-                      </label>
-                    </div>
-                  </div>
+                {/* Activ */}
+                <div className="flex items-center gap-2">
+                  <input
+                    id="isActive"
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isActive: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-700 rounded focus:ring-emerald-500"
+                  />
+                  <label
+                    htmlFor="isActive"
+                    className="text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Activ
+                  </label>
                 </div>
 
-                {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex gap-3">
+                {/* Buttons */}
+                <div className="flex gap-3 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
