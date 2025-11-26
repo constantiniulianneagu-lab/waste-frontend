@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import ReportsFilters from './ReportsFilters';
 import ReportsSidebar from './ReportsSidebar';
-import { ExportDropdown } from '../../utils/exportUtils';
+import ExportDropdown from '../../components/reports/ExportDropdown';
 import { 
   getLandfillReports, 
   getAuxiliaryData,
