@@ -1,14 +1,15 @@
 /**
  * ============================================================================
- * REPORTS LANDFILL COMPONENT
+ * REPORTS LANDFILL COMPONENT - VERSIUNE FINALĂ
  * ============================================================================
- * Componenta principală pentru rapoarte depozitare
- * Orchestrează: Filters, Summary Cards, Table, Sidebar
+ * Include sidebar pentru add/edit și export functionality
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
 import ReportsFilters from './ReportsFilters';
+import ReportsSidebar from './ReportsSidebar';
+import { ExportDropdown } from '../../utils/exportUtils';
 import { 
   getLandfillReports, 
   getAuxiliaryData,
@@ -42,10 +43,10 @@ const ReportsLandfill = () => {
 
   // Sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState('create'); // 'create' | 'edit'
+  const [sidebarMode, setSidebarMode] = useState('create');
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  // Expanded rows (pentru tabel)
+  // Expanded rows
   const [expandedRows, setExpandedRows] = useState(new Set());
 
   // ========================================================================
@@ -58,7 +59,7 @@ const ReportsLandfill = () => {
 
   useEffect(() => {
     fetchReports();
-  }, [filters.page]); // Re-fetch când se schimbă pagina
+  }, [filters.page]);
 
   const fetchAuxiliaryData = async () => {
     try {
@@ -100,7 +101,7 @@ const ReportsLandfill = () => {
   // ========================================================================
 
   const handleApplyFilters = () => {
-    setFilters(prev => ({ ...prev, page: 1 })); // Reset la pagina 1
+    setFilters(prev => ({ ...prev, page: 1 }));
     fetchReports();
   };
 
@@ -135,7 +136,7 @@ const ReportsLandfill = () => {
       const response = await deleteLandfillTicket(ticketId);
       if (response.success) {
         alert('Înregistrare ștearsă cu succes!');
-        fetchReports(); // Refresh data
+        fetchReports();
       } else {
         alert('Eroare la ștergere: ' + response.message);
       }
@@ -158,7 +159,7 @@ const ReportsLandfill = () => {
   const handleSidebarSuccess = () => {
     setSidebarOpen(false);
     setSelectedTicket(null);
-    fetchReports(); // Refresh data
+    fetchReports();
   };
 
   const toggleExpandRow = (ticketId) => {
@@ -220,7 +221,7 @@ const ReportsLandfill = () => {
         onReset={handleResetFilters}
       />
 
-      {/* Summary Cards - PLACEHOLDER */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card 1: Perioada analizată */}
         <div className="bg-white dark:bg-[#242b3d] rounded-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -269,7 +270,7 @@ const ReportsLandfill = () => {
           </div>
         </div>
 
-        {/* Card 2: Furnizori - PLACEHOLDER */}
+        {/* Card 2: Furnizori */}
         <div className="bg-white dark:bg-[#242b3d] rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
@@ -308,7 +309,7 @@ const ReportsLandfill = () => {
           </div>
         </div>
 
-        {/* Card 3: Tipuri deșeuri - PLACEHOLDER */}
+        {/* Card 3: Tipuri deșeuri */}
         <div className="bg-white dark:bg-[#242b3d] rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
@@ -361,15 +362,10 @@ const ReportsLandfill = () => {
                 Adaugă înregistrare
               </button>
               
-              <button
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg 
-                         transition-colors duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Export date
-              </button>
+              <ExportDropdown 
+                tickets={tickets} 
+                summaryData={summaryData} 
+              />
             </div>
           </div>
         </div>
@@ -533,33 +529,17 @@ const ReportsLandfill = () => {
         )}
       </div>
 
-      {/* Sidebar - PLACEHOLDER */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={handleSidebarClose}></div>
-          <div className="absolute right-0 top-0 h-full w-[480px] bg-white dark:bg-[#242b3d] shadow-xl">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {sidebarMode === 'create' ? 'Adaugă înregistrare' : 'Editează înregistrare'}
-                </h2>
-                <button
-                  onClick={handleSidebarClose}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <p className="text-gray-600 dark:text-gray-400">
-                Form placeholder - va fi implementat în următoarea etapă
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Sidebar */}
+      <ReportsSidebar
+        isOpen={sidebarOpen}
+        mode={sidebarMode}
+        ticket={selectedTicket}
+        wasteCodes={wasteCodes}
+        operators={operators}
+        sectors={sectors}
+        onClose={handleSidebarClose}
+        onSuccess={handleSidebarSuccess}
+      />
     </div>
   );
 };
