@@ -8,6 +8,8 @@ import DashboardLandfill from "./components/dashboard/DashboardLandfill";
 import DashboardTmb from './components/dashboard/DashboardTmb';
 import Users from "./Users";
 import Institutions from "./Institutions";
+import ReportsMain from './components/reports/ReportsMain';
+
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -67,6 +69,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardTmb />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reports Route - ADAUGĂ ProtectedRoute aici! */}
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <ReportsMain />
               </ProtectedRoute>
             }
           />
