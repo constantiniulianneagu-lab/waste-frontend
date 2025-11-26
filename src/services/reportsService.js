@@ -12,7 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://waste-backend
 
 // Create axios instance with auth token
 const createAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('wasteAccessToken');  // ✅ SCHIMBĂ AICI
   return {
     headers: {
       'Authorization': `Bearer ${token}`,
