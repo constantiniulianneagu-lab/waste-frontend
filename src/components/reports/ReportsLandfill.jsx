@@ -395,16 +395,16 @@ const ReportsLandfill = () => {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                <th className="px-4 py-3">Tichet Cântar</th>
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Ora</th>
-                <th className="px-4 py-3">Furnizor</th>
-                <th className="px-4 py-3">Cod Deșeu</th>
-                <th className="px-4 py-3">Proveniență</th>
-                <th className="px-4 py-3">Generator</th>
-                <th className="px-4 py-3">Nr. Auto</th>
-                <th className="px-4 py-3">Tone Net</th>
-                <th className="px-4 py-3">Contract</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Tichet Cântar</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[80px]">Ora</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[150px]">Generator</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Contract</th>
                 <th className="px-4 py-3 text-center w-20"></th>
               </tr>
             </thead>
@@ -413,39 +413,39 @@ const ReportsLandfill = () => {
                 <React.Fragment key={ticket.id}>
                   {/* Main Row */}
                   <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                    <td className="px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
                       {ticket.ticket_number}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.ticket_time}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.supplier_name}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                         {ticket.waste_code}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.sector_name}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.generator}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.vehicle_number}
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                       {formatNumberRO(ticket.net_weight_tons)} t
                     </td>
-                    <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400">
+                    <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400 whitespace-nowrap">
                       {ticket.contract}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
                         onClick={() => toggleExpandRow(ticket.id)}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
