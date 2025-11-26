@@ -43,7 +43,6 @@ const Sidebar = () => {
       icon: FileText,
       path: "/reports",
       color: "purple",
-      disabled: true,
     },
     {
       title: "Operatori",
