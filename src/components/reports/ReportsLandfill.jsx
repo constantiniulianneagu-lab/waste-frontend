@@ -383,7 +383,7 @@ const ReportsLandfill = () => {
               </button>
               
               <ExportDropdown 
-                tickets={tickets} 
+                filters={filters}
                 summaryData={summaryData} 
               />
             </div>

@@ -1,8 +1,8 @@
 /**
  * ============================================================================
- * REPORTS SERVICE
+ * REPORTS SERVICE - VERSIUNE ACTUALIZATĂ
  * ============================================================================
- * API calls pentru rapoarte
+ * Adăugat: exportLandfillReports (pentru export ALL filtered data)
  * ============================================================================
  */
 
@@ -10,9 +10,9 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://waste-backend-3u9c.onrender.com/api';
 
-// Create axios instance with auth token
+// Helper pentru headers cu autentificare
 const createAuthHeaders = () => {
-  const token = localStorage.getItem('wasteAccessToken');  // ✅ SCHIMBĂ AICI
+  const token = localStorage.getItem('wasteAccessToken');
   return {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -22,149 +22,142 @@ const createAuthHeaders = () => {
 };
 
 /**
- * GET LANDFILL REPORTS
- * @param {Object} filters - { year, from, to, sector_id, page, per_page }
- * @returns {Promise} - Reports data
+ * GET LANDFILL REPORTS (cu paginare)
  */
-export const getLandfillReports = async (filters = {}) => {
+export const getLandfillReports = async (filters) => {
   try {
-    const params = new URLSearchParams();
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      from: filters.from,
+      to: filters.to,
+      page: filters.page,
+      per_page: filters.per_page
+    });
     
-    if (filters.year) params.append('year', filters.year);
-    if (filters.from) params.append('from', filters.from);
-    if (filters.to) params.append('to', filters.to);
-    if (filters.sector_id) params.append('sector_id', filters.sector_id);
-    if (filters.page) params.append('page', filters.page);
-    if (filters.per_page) params.append('per_page', filters.per_page);
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
 
     const response = await axios.get(
-      `${API_BASE_URL}/reports/landfill?${params.toString()}`,
-      createAuthHeaders()
+      `${API_BASE_URL}/reports/landfill?${params}`,
+      headers
     );
-
+    
     return response.data;
   } catch (error) {
     console.error('❌ getLandfillReports error:', error);
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
 /**
- * GET AUXILIARY DATA
- * Dropdown data: waste codes, operators, sectors
- * @returns {Promise} - Auxiliary data
+ * EXPORT LANDFILL REPORTS (toate înregistrările filtrate, fără paginare)
+ */
+export const exportLandfillReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      from: filters.from,
+      to: filters.to
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/landfill/export?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ exportLandfillReports error:', error);
+    throw error;
+  }
+};
+
+/**
+ * GET AUXILIARY DATA (pentru dropdowns)
  */
 export const getAuxiliaryData = async () => {
   try {
+    const headers = createAuthHeaders();
     const response = await axios.get(
       `${API_BASE_URL}/reports/landfill/auxiliary`,
-      createAuthHeaders()
+      headers
     );
-
+    
     return response.data;
   } catch (error) {
     console.error('❌ getAuxiliaryData error:', error);
-    throw error.response?.data || error;
-  }
-};
-
-/**
- * CREATE LANDFILL TICKET
- * @param {Object} ticketData - Ticket fields
- * @returns {Promise} - Created ticket
- */
-export const createLandfillTicket = async (ticketData) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/tickets/landfill`,
-      ticketData,
-      createAuthHeaders()
-    );
-
-    return response.data;
-  } catch (error) {
-    console.error('❌ createLandfillTicket error:', error);
-    throw error.response?.data || error;
-  }
-};
-
-/**
- * UPDATE LANDFILL TICKET
- * @param {string} id - Ticket ID
- * @param {Object} ticketData - Updated fields
- * @returns {Promise} - Updated ticket
- */
-export const updateLandfillTicket = async (id, ticketData) => {
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/tickets/landfill/${id}`,
-      ticketData,
-      createAuthHeaders()
-    );
-
-    return response.data;
-  } catch (error) {
-    console.error('❌ updateLandfillTicket error:', error);
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
 /**
  * DELETE LANDFILL TICKET
- * @param {string} id - Ticket ID
- * @returns {Promise} - Delete confirmation
  */
-export const deleteLandfillTicket = async (id) => {
+export const deleteLandfillTicket = async (ticketId) => {
   try {
+    const headers = createAuthHeaders();
     const response = await axios.delete(
-      `${API_BASE_URL}/tickets/landfill/${id}`,
-      createAuthHeaders()
+      `${API_BASE_URL}/waste-tickets/landfill/${ticketId}`,
+      headers
     );
-
+    
     return response.data;
   } catch (error) {
     console.error('❌ deleteLandfillTicket error:', error);
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
 /**
- * EXPORT REPORTS TO EXCEL
- * @param {Array} data - Report data to export
- * @param {string} filename - File name
+ * CREATE LANDFILL TICKET
  */
-export const exportToExcel = (data, filename = 'raport_depozitare.xlsx') => {
-  // Will implement with xlsx library
-  console.log('📤 Export to Excel:', filename, data);
+export const createLandfillTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/waste-tickets/landfill`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ createLandfillTicket error:', error);
+    throw error;
+  }
 };
 
 /**
- * EXPORT REPORTS TO CSV
- * @param {Array} data - Report data to export
- * @param {string} filename - File name
+ * UPDATE LANDFILL TICKET
  */
-export const exportToCSV = (data, filename = 'raport_depozitare.csv') => {
-  // Will implement CSV export
-  console.log('📤 Export to CSV:', filename, data);
-};
-
-/**
- * EXPORT REPORTS TO PDF
- * @param {Array} data - Report data to export
- * @param {string} filename - File name
- */
-export const exportToPDF = (data, filename = 'raport_depozitare.pdf') => {
-  // Will implement with jsPDF
-  console.log('📤 Export to PDF:', filename, data);
+export const updateLandfillTicket = async (ticketId, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/waste-tickets/landfill/${ticketId}`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ updateLandfillTicket error:', error);
+    throw error;
+  }
 };
 
 export default {
   getLandfillReports,
+  exportLandfillReports,
   getAuxiliaryData,
   createLandfillTicket,
   updateLandfillTicket,
-  deleteLandfillTicket,
-  exportToExcel,
-  exportToCSV,
-  exportToPDF
+  deleteLandfillTicket
 };
