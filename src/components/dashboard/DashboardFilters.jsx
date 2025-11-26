@@ -148,7 +148,7 @@ const DashboardFilters = ({
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           >
-            <option value="">București (Toate sectoarele)</option>
+            <option value="">București</option>
             {sectors.map((sector) => (
               <option key={sector.sector_id} value={sector.sector_number}>
                 Sector {sector.sector_number}

@@ -79,7 +79,7 @@ Sistem Avansat de Monitorizare Deșeuri
       </div>
 
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-        Bine ai revenit!
+        Bine ai venit!
       </h2>
 
       {error && (
@@ -152,7 +152,7 @@ Sistem Avansat de Monitorizare Deșeuri
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        SAMD © 2024 - Sistem Avansat de Monitorizare Deșeuri
+        SAMD © 2025 - Sistem Avansat de Monitorizare Deșeuri
       </p>
     </div>
   </div>
