@@ -18,8 +18,8 @@ const Dashboard = () => {
               <span className="text-white font-bold text-lg">W</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">WasteApp</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Waste Management System</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">SAMD</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Sistem Avansat de Monitorizare Deșeuri</p>
             </div>
           </div>
           
@@ -49,7 +49,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-2xl p-8 text-white mb-8">
           <h2 className="text-3xl font-bold mb-2">
-            Bine ai revenit, {user?.firstName}! 👋
+            Bine ai venit, {user?.firstName}! 👋
           </h2>
           <p className="text-emerald-50 dark:text-emerald-100">
             Role: {user?.role} | Email: {user?.email}
