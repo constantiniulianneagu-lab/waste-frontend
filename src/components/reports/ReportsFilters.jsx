@@ -1,8 +1,10 @@
 /**
  * ============================================================================
- * REPORTS FILTERS COMPONENT
+ * REPORTS FILTERS COMPONENT - VERSIUNE ACTUALIZATĂ
  * ============================================================================
- * Filtre pentru rapoarte: An, Date, UAT (sector)
+ * - Butoane inline cu inputurile (nu separat)
+ * - Dropdown sectoare (fără "București" în text)
+ * - Design consistent cu Dashboard
  * ============================================================================
  */
 
@@ -17,17 +19,17 @@ const ReportsFilters = ({ filters, setFilters, sectors, onApply, onReset }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#242b3d] rounded-lg p-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+      <div className="flex items-end gap-3">
         {/* An */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             An
           </label>
           <select
-            value={filters.year || currentYear}
+            value={filters.year}
             onChange={(e) => handleChange('year', e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
                      rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                      transition-colors"
           >
@@ -38,72 +40,83 @@ const ReportsFilters = ({ filters, setFilters, sectors, onApply, onReset }) => {
         </div>
 
         {/* Data început */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Data început
           </label>
           <input
             type="date"
-            value={filters.from || ''}
+            value={filters.from}
             onChange={(e) => handleChange('from', e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
                      rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                      transition-colors"
           />
         </div>
 
         {/* Data sfârșit */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Data sfârșit
           </label>
           <input
             type="date"
-            value={filters.to || ''}
+            value={filters.to}
             onChange={(e) => handleChange('to', e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
                      rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                      transition-colors"
           />
         </div>
 
-        {/* U.A.T. (Sector) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            U.A.T. (Locație)
+        {/* Locație */}
+        <div className="flex-[1.5]">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Locație
           </label>
           <select
-            value={filters.sector_id || ''}
+            value={filters.sector_id}
             onChange={(e) => handleChange('sector_id', e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
                      rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                      transition-colors"
           >
-            <option value="">București (toate sectoarele)</option>
-            {sectors.map(sector => (
-              <option key={sector.id} value={sector.id}>
-                {sector.name}
-              </option>
-            ))}
+            <option value="">București</option>
+            {sectors
+              .sort((a, b) => a.sector_number - b.sector_number)
+              .map(sector => (
+                <option key={sector.id} value={sector.id}>
+                  Sector {sector.sector_number}
+                </option>
+              ))
+            }
           </select>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 mt-4">
+        {/* Buton Filtrează */}
         <button
           onClick={onApply}
-          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg 
-                   transition-colors duration-200 shadow-md hover:shadow-lg"
+          className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-indigo-500 to-indigo-600 
+                   text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 
+                   transition-all duration-200 shadow-md flex items-center gap-1.5 whitespace-nowrap"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
           Filtrează
         </button>
+
+        {/* Buton Reset */}
         <button
           onClick={onReset}
-          className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 
-                   text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors duration-200"
+          title="Reset filtre"
+          className="px-3 py-2 text-sm font-medium bg-gray-200 dark:bg-gray-700 
+                   text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
+                   transition-colors duration-200 flex items-center justify-center"
         >
-          Reset
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
         </button>
       </div>
     </div>
