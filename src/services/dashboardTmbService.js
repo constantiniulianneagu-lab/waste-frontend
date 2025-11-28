@@ -4,7 +4,7 @@
 // Service pentru apeluri API către dashboard TMB
 // ============================================================================
 
-import { apiGet } from './apiClient';
+import { apiGet } from '../api/apiClient';
 
 /**
  * Get TMB statistics
