@@ -10,7 +10,7 @@
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { getTmbStats, getOutputDetails, getTmbOperatorsBySector } from "../services/dashboardTmbService";
+import { getTmbStats, getOutputDetails, getTmbOperatorsBySector } from "../../services/dashboardTmbService";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
