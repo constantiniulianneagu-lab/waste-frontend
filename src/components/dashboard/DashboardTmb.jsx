@@ -155,7 +155,7 @@ const DashboardTMB = () => {
     name: item.sector_name,
     tratate: parseFloat(item.tmb_tons) || 0,
     depozitate: parseFloat(item.landfill_tons) || 0
-  })).filter(item => (item.tratate + item.depozitate) > 0) || [];
+  })) || [];
 
   const ProgressBar = ({ value, color }) => (
     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
