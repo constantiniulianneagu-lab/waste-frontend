@@ -1,519 +1,518 @@
-// ============================================================================
-// RAPORTARE TMB - COMPONENT COMPLET
-// ============================================================================
+/**
+ * ============================================================================
+ * REPORTS TMB COMPONENT - VERSIUNE FINALĂ
+ * ============================================================================
+ * - Format românesc pentru numere (1.234,56)
+ * - Cards scrollable cu dimensiune fixă
+ * - Total alături de nume la furnizori/operatori
+ * - Pagination dropdown (10/20/50/100)
+ * - Traduceri corecte
+ * - Expand button în dreapta (fără coloană Acțiuni)
+ * - Gradient buttons
+ * - API REAL conectat
+ * ============================================================================
+ */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Factory, Trash2, Calendar, ChevronDown, ChevronUp,
-  Download, Plus, Edit2, Trash, Filter, RotateCcw
-} from 'lucide-react';
+import ReportsFilters from './ReportsFilters';
 
 const ReportTMB = () => {
-  const [activeTab, setActiveTab] = useState('tmb');
+  // State
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
-  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [error, setError] = useState(null);
   
-  const currentYear = new Date().getFullYear();
-  const startOfYear = `${currentYear}-01-01`;
-  const today = new Date().toISOString().split('T')[0];
-  
+  // Filters
   const [filters, setFilters] = useState({
-    year: currentYear.toString(),
-    start_date: startOfYear,
-    end_date: today,
+    year: new Date().getFullYear(),
+    from: `${new Date().getFullYear()}-01-01`,
+    to: new Date().toISOString().split('T')[0],
     sector_id: '',
     page: 1,
-    limit: 10
+    per_page: 10
   });
 
-  const [sectors] = useState([
-    { id: '', name: 'București' },
-    { id: '1', name: 'Sector 1' },
-    { id: '2', name: 'Sector 2' },
-    { id: '3', name: 'Sector 3' },
-    { id: '4', name: 'Sector 4' },
-    { id: '5', name: 'Sector 5' },
-    { id: '6', name: 'Sector 6' }
-  ]);
+  // Data
+  const [summaryData, setSummaryData] = useState(null);
+  const [tickets, setTickets] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  
+  // Auxiliary data
+  const [sectors, setSectors] = useState([]);
 
-  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  // Expanded rows
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
-  const tabs = [
-    { id: 'tmb', label: 'Deșeuri trimise la tratare mecano-biologică', icon: Factory },
-    { id: 'recycling', label: 'Deșeuri trimise la reciclare', icon: Trash2 },
-    { id: 'recovery', label: 'Deșeuri trimise la valorificare energetică', icon: Trash2 },
-    { id: 'disposal', label: 'Deșeuri trimise la depozitare', icon: Trash2 },
-    { id: 'rejected', label: 'Deșeuri refuzate/neacceptate în instalația TMB', icon: Trash2 }
-  ];
+  // ========================================================================
+  // FORMAT ROMÂNESC
+  // ========================================================================
 
   const formatNumberRO = (number) => {
     if (!number && number !== 0) return '0,00';
+    
     const num = typeof number === 'string' ? parseFloat(number) : number;
     const formatted = num.toFixed(2);
     const [intPart, decPart] = formatted.split('.');
     const intWithDots = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    
     return `${intWithDots},${decPart}`;
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ro-RO');
-  };
+  // ========================================================================
+  // FETCH DATA
+  // ========================================================================
 
   useEffect(() => {
-    fetchData();
-  }, [activeTab, filters.page, filters.limit]);
+    fetchSectors();
+  }, []);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    fetchReports();
+  }, [filters.page, filters.per_page]);
+
+  const fetchSectors = async () => {
+    setSectors([
+      { id: '', name: 'București' },
+      { id: '1', name: 'Sector 1' },
+      { id: '2', name: 'Sector 2' },
+      { id: '3', name: 'Sector 3' },
+      { id: '4', name: 'Sector 4' },
+      { id: '5', name: 'Sector 5' },
+      { id: '6', name: 'Sector 6' }
+    ]);
+  };
+
+  const fetchReports = async () => {
     try {
       setLoading(true);
-      
-      // Mock data pentru development
-      const mockData = {
-        summary: {
-          total_tickets: 20,
-          total_tons: '14114.14'
-        },
-        suppliers: [
-          { id: 1, name: 'SUPERCOM S.A.', sector_name: 'Sector 2', code: '20 03 01', total_tons: '54.90' },
-          { id: 2, name: 'URBAN S.A.', sector_name: 'Sector 6', code: '20 03 01', total_tons: '21.08' },
-          { id: 3, name: 'UNITED WASTE SOLUTIONS SRL', sector_name: 'Sector 4', code: '20 03 01', total_tons: '20.92' },
-          { id: 4, name: 'SALUBRIZARE SECTOR 5 S.A.', sector_name: 'Sector 5', code: '20 03 01', total_tons: '20.38' }
-        ],
-        operators: [
-          { id: 21, name: 'ROM WASTE SOLUTIONS SA TMB-S2', total_tons: '30.98' },
-          { id: 22, name: 'IRIDEX GROUP SRL TMB-S2', total_tons: '23.92' },
-          { id: 23, name: 'ROM WASTE SOLUTIONS SA TMB-S4', total_tons: '20.92' },
-          { id: 24, name: 'ECO SUD SA TMB-S5', total_tons: '20.38' },
-          { id: 25, name: 'IRIDEX GROUP SRL TMB-S3', total_tons: '16.10' }
-        ],
-        tickets: [
-          {
-            id: 1,
-            ticket_number: '4107260',
-            ticket_date: '2025-01-02',
-            ticket_time: '23:42:00',
-            operator_name: 'ROM WASTE SOLUTIONS SA TMB-S1',
-            waste_code: '20 03 01',
-            waste_description: 'deșeuri municipale amestecate',
-            sector_name: 'Sector 1',
-            sector_number: 1,
-            generator_type: 'NON-CASNIC',
-            vehicle_number: 'B110FFC',
-            net_weight_tons: '0.44',
-            supplier_name: 'ROMPREST SERVICE SA'
-          }
-        ],
-        pagination: {
-          current_page: 1,
-          per_page: 10,
-          total_records: 20,
-          total_pages: 2
-        }
-      };
+      setError(null);
 
-      setData(mockData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+      const token = localStorage.getItem('token');
+      
+      // Build query params
+      const params = new URLSearchParams({
+        year: filters.year,
+        start_date: filters.from,
+        end_date: filters.to,
+        page: filters.page,
+        limit: filters.per_page
+      });
+
+      if (filters.sector_id) {
+        params.append('sector_id', filters.sector_id);
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/reports/tmb/tmb?${params}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Transform data pentru summary cards
+        const summary = {
+          total_quantity: result.data.summary.total_tons,
+          period: {
+            year: filters.year,
+            date_from: new Date(filters.from).toLocaleDateString('ro-RO'),
+            date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
+            sector: sectors.find(s => s.id === filters.sector_id)?.name || 'București'
+          },
+          suppliers: result.data.suppliers.map(supplier => ({
+            name: supplier.name,
+            total: supplier.total_tons,
+            codes: [{ 
+              code: supplier.code || supplier.waste_code || '20 03 01', 
+              quantity: supplier.total_tons 
+            }]
+          })),
+          operators: result.data.operators.map(operator => ({
+            name: operator.name,
+            total: operator.total_tons
+          }))
+        };
+
+        setSummaryData(summary);
+        setTickets(result.data.tickets);
+        setPagination({
+          page: result.data.pagination.current_page,
+          per_page: result.data.pagination.per_page,
+          total_pages: result.data.pagination.total_pages,
+          total_count: result.data.pagination.total_records
+        });
+      } else {
+        setError(result.message || 'Eroare la încărcarea datelor');
+      }
+    } catch (err) {
+      console.error('❌ getTmbReports error:', err);
+      setError(err.message || 'Eroare la încărcarea datelor');
     } finally {
       setLoading(false);
     }
   };
 
+  // ========================================================================
+  // HANDLERS
+  // ========================================================================
+
   const handleApplyFilters = () => {
-    setFilters({ ...filters, page: 1 });
-    fetchData();
+    setFilters(prev => ({ ...prev, page: 1 }));
+    fetchReports();
   };
 
   const handleResetFilters = () => {
+    const now = new Date();
     setFilters({
-      year: currentYear.toString(),
-      start_date: startOfYear,
-      end_date: today,
+      year: now.getFullYear(),
+      from: `${now.getFullYear()}-01-01`,
+      to: now.toISOString().split('T')[0],
       sector_id: '',
       page: 1,
-      limit: 10
+      per_page: 10
     });
   };
 
-  const toggleRow = (ticketId) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(ticketId)) {
-      newExpanded.delete(ticketId);
-    } else {
-      newExpanded.add(ticketId);
-    }
-    setExpandedRows(newExpanded);
+  const handlePageChange = (newPage) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
   };
 
-  if (loading) {
+  const handlePerPageChange = (newPerPage) => {
+    setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }));
+  };
+
+  const toggleExpandRow = (ticketId) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ticketId)) {
+        newSet.delete(ticketId);
+      } else {
+        newSet.add(ticketId);
+      }
+      return newSet;
+    });
+  };
+
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
+  if (loading && !summaryData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Se încarcă...</p>
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            Se încarcă rapoartele TMB...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+          <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+            Eroare la încărcarea datelor
+          </h3>
+          <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
+          <button
+            onClick={fetchReports}
+            className="px-4 py-2 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
+                     text-white rounded-lg transition-all duration-200 shadow-md"
+          >
+            Încearcă din nou
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-[1800px] mx-auto space-y-6">
-        
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Raportare detaliată privind tratarea mecano-biologică a deșeurilor
-          </h1>
+    <div className="space-y-6">
+      {/* Filters */}
+      <ReportsFilters
+        filters={filters}
+        setFilters={setFilters}
+        sectors={sectors}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+      />
 
-          {/* Tabs */}
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 rounded-lg font-medium text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
-                    activeTab === tab.id
-                      ? 'bg-emerald-500 text-white shadow-lg'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Card 1: Perioada analizată */}
+        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">Perioada analizată</h3>
+                <p className="text-2xl font-bold truncate">{formatNumberRO(summaryData?.total_quantity || 0)} tone</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">An:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.year}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Data început:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.date_from}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Data sfârșit:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.date_to}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Locație:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.sector}</span>
+            </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-5">
-          <div className="grid grid-cols-4 gap-4">
-            
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">An</label>
-              <select
-                value={filters.year}
-                onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                className="w-full px-4 py-2.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {years.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Data de început</label>
-              <input
-                type="date"
-                value={filters.start_date}
-                onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
-                className="w-full px-4 py-2.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Data de sfârșit</label>
-              <input
-                type="date"
-                value={filters.end_date}
-                onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
-                className="w-full px-4 py-2.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Locație</label>
-              <select
-                value={filters.sector_id}
-                onChange={(e) => setFilters({ ...filters, sector_id: e.target.value })}
-                className="w-full px-4 py-2.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {sectors.map(sector => (
-                  <option key={sector.id} value={sector.id}>{sector.name}</option>
-                ))}
-              </select>
+        {/* Card 2: Furnizori (colectori) - SCROLLABLE cu total alături */}
+        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-4 flex-shrink-0">
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold">Furnizori (colectori)</h3>
             </div>
           </div>
-
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleApplyFilters}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium 
-                       transition-colors flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filtrează
-            </button>
-            <button
-              onClick={handleResetFilters}
-              className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium 
-                       transition-colors flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Resetează
-            </button>
-          </div>
-        </div>
-
-        {/* 3 Cards */}
-        <div className="grid grid-cols-3 gap-6">
-          
-          {/* Card 1 - Perioada analizată */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-semibold">Perioada analizată</h3>
-            </div>
-            
-            <p className="text-4xl font-bold mb-6">
-              {formatNumberRO(data?.summary?.total_tons || 0)} tone
-            </p>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-blue-100">An:</span>
-                <span className="font-medium">{filters.year}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-100">Data început:</span>
-                <span className="font-medium">{formatDate(filters.start_date)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-100">Data sfârșit:</span>
-                <span className="font-medium">{formatDate(filters.end_date)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-100">Locație:</span>
-                <span className="font-medium">
-                  {sectors.find(s => s.id === filters.sector_id)?.name || 'București'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2 - Furnizori (colectori) */}
-          <div className="bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-xl p-6 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Trash2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-semibold">Furnizori (colectori)</h3>
-            </div>
-
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {data?.suppliers?.map((supplier, idx) => (
-                <div key={idx} className="border-b border-white/10 pb-3 last:border-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{supplier.name}</p>
-                      <p className="text-xs text-cyan-100">{supplier.sector_name}</p>
-                    </div>
-                    <p className="text-lg font-bold">{formatNumberRO(supplier.total_tons)} t</p>
+          <div className="p-4 overflow-y-auto flex-1">
+            <div className="space-y-3">
+              {summaryData?.suppliers?.map((supplier, idx) => (
+                <div key={idx} className="border-l-3 border-cyan-500 pl-3">
+                  <div className="flex justify-between items-start gap-2 mb-1">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
+                      {supplier.name}
+                    </p>
+                    <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap">
+                      {formatNumberRO(supplier.total)} t
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {supplier.codes?.map((code, codeIdx) => (
+                      <div key={codeIdx} className="flex justify-between text-xs gap-2">
+                        <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code.code}</span>
+                        <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                          {formatNumberRO(code.quantity)} t
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Card 3 - Prestatori (operatori TMB) */}
-          <div className="bg-gradient-to-br from-pink-600 to-pink-700 rounded-xl p-6 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Factory className="w-6 h-6" />
+        {/* Card 3: Prestatori (operatori TMB) - SCROLLABLE */}
+        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-4 flex-shrink-0">
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
               </div>
-              <h3 className="text-lg font-semibold">Prestatori (operatori TMB)</h3>
+              <h3 className="text-sm font-semibold">Prestatori (operatori TMB)</h3>
             </div>
-
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {data?.operators?.map((operator, idx) => (
-                <div key={idx} className="flex justify-between items-center border-b border-white/10 pb-3 last:border-0">
-                  <p className="font-semibold text-sm flex-1">{operator.name}</p>
-                  <p className="text-lg font-bold">{formatNumberRO(operator.total_tons)} t</p>
+          </div>
+          <div className="p-4 overflow-y-auto flex-1">
+            <div className="space-y-2">
+              {summaryData?.operators?.map((operator, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{operator.name}</p>
+                  </div>
+                  <span className="text-sm font-bold text-pink-600 dark:text-pink-400 whitespace-nowrap">
+                    {formatNumberRO(operator.total)} t
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Table */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700">
-          
-          {/* Table Header */}
-          <div className="p-6 border-b border-gray-700 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Deșeuri trimise la TMB ({data?.summary?.total_tickets || 0})
-            </h2>
+      {/* Table Section */}
+      <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700">
+        {/* Table Header */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Deșeuri trimise la TMB ({pagination?.total_count || 0})
+            </h3>
             <div className="flex gap-3">
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium 
-                               transition-colors flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Adaugă înregistrare
-              </button>
-              <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium 
-                               transition-colors flex items-center gap-2">
-                <Download className="w-4 h-4" />
+              <button
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
+                         hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
+                         transition-all duration-200 shadow-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
                 Export date
-              </button>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-900 border-b border-gray-700">
-                <tr className="text-left text-xs text-gray-400 uppercase tracking-wider">
-                  <th className="px-6 py-4 font-medium">Ticket Cântar</th>
-                  <th className="px-6 py-4 font-medium">Data</th>
-                  <th className="px-6 py-4 font-medium">Ora</th>
-                  <th className="px-6 py-4 font-medium">Prestator</th>
-                  <th className="px-6 py-4 font-medium">Cod Deșeu</th>
-                  <th className="px-6 py-4 font-medium">Proveniență</th>
-                  <th className="px-6 py-4 font-medium">Generator</th>
-                  <th className="px-6 py-4 font-medium">Nr. Auto</th>
-                  <th className="px-6 py-4 font-medium text-right">Tone Net</th>
-                  <th className="px-6 py-4 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {data?.tickets?.map((ticket) => (
-                  <React.Fragment key={ticket.id}>
-                    {/* Main Row */}
-                    <tr className="hover:bg-gray-700/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => toggleRow(ticket.id)}
-                          className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-2"
-                        >
-                          {expandedRows.has(ticket.id) ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                          {ticket.ticket_number}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-gray-300">{formatDate(ticket.ticket_date)}</td>
-                      <td className="px-6 py-4 text-gray-300">{ticket.ticket_time}</td>
-                      <td className="px-6 py-4 text-white font-medium">{ticket.operator_name}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">
-                          {ticket.waste_code}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-300">{ticket.sector_name}</td>
-                      <td className="px-6 py-4 text-gray-300">{ticket.generator_type}</td>
-                      <td className="px-6 py-4 text-gray-300">{ticket.vehicle_number}</td>
-                      <td className="px-6 py-4 text-right text-emerald-400 font-bold">
-                        {formatNumberRO(ticket.net_weight_tons)} t
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => toggleRow(ticket.id)}
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          {expandedRows.has(ticket.id) ? (
-                            <ChevronUp className="w-5 h-5" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5" />
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-
-                    {/* Expanded Row */}
-                    {expandedRows.has(ticket.id) && (
-                      <tr className="bg-gray-900/50">
-                        <td colSpan="10" className="px-6 py-6">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Furnizor:</p>
-                              <p className="text-white font-medium">{ticket.supplier_name}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Cod deșeu complet:</p>
-                              <p className="text-white font-medium">
-                                {ticket.waste_code} - {ticket.waste_description}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-3 mt-6">
-                            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm 
-                                             font-medium transition-colors flex items-center gap-2">
-                              <Edit2 className="w-4 h-4" />
-                              Editează
-                            </button>
-                            <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm 
-                                             font-medium transition-colors flex items-center gap-2">
-                              <Trash className="w-4 h-4" />
-                              Șterge
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="p-6 border-t border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-400">
-              Afișare {((data?.pagination?.current_page - 1) * data?.pagination?.per_page) + 1}-
-              {Math.min(data?.pagination?.current_page * data?.pagination?.per_page, data?.pagination?.total_records)} din {data?.pagination?.total_records} înregistrări
-            </p>
-            
-            <div className="flex items-center gap-2">
-              <button
-                disabled={data?.pagination?.current_page === 1}
-                onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium 
-                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Anterior
-              </button>
-              
-              {Array.from({ length: Math.min(data?.pagination?.total_pages, 5) }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setFilters({ ...filters, page })}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    page === data?.pagination?.current_page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 hover:bg-gray-600 text-white'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-              
-              <button
-                disabled={data?.pagination?.current_page === data?.pagination?.total_pages}
-                onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium 
-                         transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Următorul
               </button>
             </div>
           </div>
         </div>
 
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-800/50">
+              <tr className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Tichet Cântar</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[80px]">Ora</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Prestator</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[150px]">Generator</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
+                <th className="px-4 py-3 text-center w-20"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {tickets.map((ticket) => (
+                <React.Fragment key={ticket.id}>
+                  {/* Main Row */}
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      {ticket.ticket_number}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.ticket_time}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.operator_name}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        {ticket.waste_code}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.sector_name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.generator_type}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.vehicle_number}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                      {formatNumberRO(ticket.net_weight_tons)} t
+                    </td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => toggleExpandRow(ticket.id)}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        title={expandedRows.has(ticket.id) ? "Ascunde detalii" : "Arată detalii"}
+                      >
+                        <svg 
+                          className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+
+                  {/* Expanded Row */}
+                  {expandedRows.has(ticket.id) && (
+                    <tr className="bg-gray-50 dark:bg-gray-800/30">
+                      <td colSpan="10" className="px-4 py-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.supplier_name}
+                            </p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.waste_code} - {ticket.waste_description}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {pagination && pagination.total_pages > 0 && (
+          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pagina {pagination.page} din {pagination.total_pages}
+                </p>
+                <select
+                  value={filters.per_page}
+                  onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
+                           rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                >
+                  <option value="10">10 / pagină</option>
+                  <option value="20">20 / pagină</option>
+                  <option value="50">50 / pagină</option>
+                  <option value="100">100 / pagină</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
+                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page === pagination.total_pages}
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
+                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Următorul
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
