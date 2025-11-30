@@ -9,6 +9,7 @@ import DashboardTmb from './components/dashboard/DashboardTmb';
 import Users from "./Users";
 import Institutions from "./Institutions";
 import ReportsMain from './components/reports/ReportsMain';
+import ReportTMB from './components/reports/ReportTMB'; // 🆕 NOU - Raportare TMB
 
 
 const ProtectedRoute = ({ children }) => {
@@ -73,12 +74,21 @@ function App() {
             }
           />
 
-          {/* Reports Route - ADAUGĂ ProtectedRoute aici! */}
+          {/* Reports Routes */}
           <Route
             path="/reports"
             element={
               <ProtectedRoute>
                 <ReportsMain />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports/tmb"
+            element={
+              <ProtectedRoute>
+                <ReportTMB />
               </ProtectedRoute>
             }
           />
