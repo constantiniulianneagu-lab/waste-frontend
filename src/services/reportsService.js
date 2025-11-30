@@ -1,8 +1,6 @@
 /**
  * ============================================================================
- * REPORTS SERVICE - VERSIUNE ACTUALIZATĂ
- * ============================================================================
- * Adăugat: exportLandfillReports (pentru export ALL filtered data)
+ * REPORTS SERVICE - CU TMB
  * ============================================================================
  */
 
@@ -22,8 +20,11 @@ const createAuthHeaders = () => {
 };
 
 /**
- * GET LANDFILL REPORTS (cu paginare)
+ * ============================================================================
+ * LANDFILL REPORTS
+ * ============================================================================
  */
+
 export const getLandfillReports = async (filters) => {
   try {
     const headers = createAuthHeaders();
@@ -51,9 +52,6 @@ export const getLandfillReports = async (filters) => {
   }
 };
 
-/**
- * EXPORT LANDFILL REPORTS (toate înregistrările filtrate, fără paginare)
- */
 export const exportLandfillReports = async (filters) => {
   try {
     const headers = createAuthHeaders();
@@ -79,9 +77,6 @@ export const exportLandfillReports = async (filters) => {
   }
 };
 
-/**
- * GET AUXILIARY DATA (pentru dropdowns)
- */
 export const getAuxiliaryData = async () => {
   try {
     const headers = createAuthHeaders();
@@ -97,9 +92,6 @@ export const getAuxiliaryData = async () => {
   }
 };
 
-/**
- * DELETE LANDFILL TICKET
- */
 export const deleteLandfillTicket = async (ticketId) => {
   try {
     const headers = createAuthHeaders();
@@ -115,9 +107,6 @@ export const deleteLandfillTicket = async (ticketId) => {
   }
 };
 
-/**
- * CREATE LANDFILL TICKET
- */
 export const createLandfillTicket = async (ticketData) => {
   try {
     const headers = createAuthHeaders();
@@ -134,9 +123,6 @@ export const createLandfillTicket = async (ticketData) => {
   }
 };
 
-/**
- * UPDATE LANDFILL TICKET
- */
 export const updateLandfillTicket = async (ticketId, ticketData) => {
   try {
     const headers = createAuthHeaders();
@@ -153,11 +139,45 @@ export const updateLandfillTicket = async (ticketId, ticketData) => {
   }
 };
 
+/**
+ * ============================================================================
+ * TMB REPORTS
+ * ============================================================================
+ */
+
+export const getTmbReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: filters.page,
+      limit: filters.per_page
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/tmb?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getTmbReports error:', error);
+    throw error;
+  }
+};
+
 export default {
   getLandfillReports,
   exportLandfillReports,
   getAuxiliaryData,
   createLandfillTicket,
   updateLandfillTicket,
-  deleteLandfillTicket
+  deleteLandfillTicket,
+  getTmbReports  // 🆕 NOU
 };

@@ -15,6 +15,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ReportsFilters from './ReportsFilters';
+import { getTmbReports } from '../../services/reportsService';
 
 const ReportTMB = () => {
   // State
@@ -86,44 +87,19 @@ const ReportTMB = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
+      const response = await getTmbReports(filters);
       
-      // Build query params
-      const params = new URLSearchParams({
-        year: filters.year,
-        start_date: filters.from,
-        end_date: filters.to,
-        page: filters.page,
-        limit: filters.per_page
-      });
-
-      if (filters.sector_id) {
-        params.append('sector_id', filters.sector_id);
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/reports/tmb/tmb?${params}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      const result = await response.json();
-      
-      if (result.success) {
+      if (response.success) {
         // Transform data pentru summary cards
         const summary = {
-          total_quantity: result.data.summary.total_tons,
+          total_quantity: response.data.summary.total_tons,
           period: {
             year: filters.year,
             date_from: new Date(filters.from).toLocaleDateString('ro-RO'),
             date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
             sector: sectors.find(s => s.id === filters.sector_id)?.name || 'București'
           },
-          suppliers: result.data.suppliers.map(supplier => ({
+          suppliers: response.data.suppliers.map(supplier => ({
             name: supplier.name,
             total: supplier.total_tons,
             codes: [{ 
@@ -131,22 +107,22 @@ const ReportTMB = () => {
               quantity: supplier.total_tons 
             }]
           })),
-          operators: result.data.operators.map(operator => ({
+          operators: response.data.operators.map(operator => ({
             name: operator.name,
             total: operator.total_tons
           }))
         };
 
         setSummaryData(summary);
-        setTickets(result.data.tickets);
+        setTickets(response.data.tickets);
         setPagination({
-          page: result.data.pagination.current_page,
-          per_page: result.data.pagination.per_page,
-          total_pages: result.data.pagination.total_pages,
-          total_count: result.data.pagination.total_records
+          page: response.data.pagination.current_page,
+          per_page: response.data.pagination.per_page,
+          total_pages: response.data.pagination.total_pages,
+          total_count: response.data.pagination.total_records
         });
       } else {
-        setError(result.message || 'Eroare la încărcarea datelor');
+        setError(response.message || 'Eroare la încărcarea datelor');
       }
     } catch (err) {
       console.error('❌ getTmbReports error:', err);
