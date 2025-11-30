@@ -172,6 +172,53 @@ export const getTmbReports = async (filters) => {
   }
 };
 
+export const createTmbTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/tickets/tmb`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ createTmbTicket error:', error);
+    throw error;
+  }
+};
+
+export const updateTmbTicket = async (ticketId, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/tickets/tmb/${ticketId}`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ updateTmbTicket error:', error);
+    throw error;
+  }
+};
+
+export const deleteTmbTicket = async (ticketId) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/tickets/tmb/${ticketId}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ deleteTmbTicket error:', error);
+    throw error;
+  }
+};
+
 export default {
   getLandfillReports,
   exportLandfillReports,
@@ -179,5 +226,8 @@ export default {
   createLandfillTicket,
   updateLandfillTicket,
   deleteLandfillTicket,
-  getTmbReports  // 🆕 NOU
+  getTmbReports,
+  createTmbTicket,
+  updateTmbTicket,
+  deleteTmbTicket
 };

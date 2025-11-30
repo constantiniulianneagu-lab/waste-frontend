@@ -15,7 +15,8 @@
 
 import React, { useState, useEffect } from 'react';
 import ReportsFilters from './ReportsFilters';
-import { getTmbReports } from '../../services/reportsService';
+import ReportsTmbSidebar from './ReportsTmbSidebar';
+import { getTmbReports, deleteTmbTicket } from '../../services/reportsService';
 
 const ReportTMB = () => {
   // State
@@ -39,6 +40,9 @@ const ReportTMB = () => {
   
   // Auxiliary data
   const [sectors, setSectors] = useState([]);
+  const [wasteCodes, setWasteCodes] = useState([]);
+  const [operators, setOperators] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
 
   // Sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -76,6 +80,7 @@ const ReportTMB = () => {
   }, [filters.page, filters.per_page]);
 
   const fetchSectors = async () => {
+    // Sectoare
     setSectors([
       { id: '', name: 'București' },
       { id: '1', name: 'Sector 1' },
@@ -84,6 +89,25 @@ const ReportTMB = () => {
       { id: '4', name: 'Sector 4' },
       { id: '5', name: 'Sector 5' },
       { id: '6', name: 'Sector 6' }
+    ]);
+
+    // TODO: Fetch real data from API
+    // Waste codes pentru TMB (20 03 01)
+    setWasteCodes([
+      { id: '1', code: '20 03 01', description: 'deșeuri municipale amestecate' }
+    ]);
+
+    // Operators TMB - TODO: fetch from /api/tmb/operators
+    setOperators([
+      { id: '21', name: 'ROM WASTE SOLUTIONS SA TMB-S1' },
+      { id: '22', name: 'IRIDEX GROUP SRL TMB-S2' },
+      { id: '23', name: 'ECO SUD SA TMB-S5' }
+    ]);
+
+    // Suppliers - TODO: fetch from API
+    setSuppliers([
+      { id: '1', name: 'ROMPREST SERVICE SA' },
+      { id: '2', name: 'SALUBRIZARE SECTOR 5 S.A.' }
     ]);
   };
 
@@ -196,13 +220,13 @@ const ReportTMB = () => {
     }
 
     try {
-      // TODO: Implementează funcția deleteTmbTicket în reportsService
-      // const response = await deleteTmbTicket(ticketId);
-      // if (response.success) {
-      //   alert('Înregistrare ștearsă cu succes!');
-      //   fetchReports();
-      // }
-      alert('Funcția de ștergere va fi implementată în curând');
+      const response = await deleteTmbTicket(ticketId);
+      if (response.success) {
+        alert('Înregistrare ștearsă cu succes!');
+        fetchReports();
+      } else {
+        alert('Eroare la ștergere: ' + response.message);
+      }
     } catch (err) {
       alert('Eroare la ștergere: ' + err.message);
     }
@@ -584,73 +608,18 @@ const ReportTMB = () => {
         )}
       </div>
 
-      {/* Sidebar pentru Add/Edit */}
-      {sidebarOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={handleSidebarClose}
-          ></div>
-
-          {/* Sidebar */}
-          <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-white dark:bg-[#242b3d] shadow-2xl z-50 overflow-y-auto">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {sidebarMode === 'create' ? 'Adaugă bon TMB' : 'Editează bon TMB'}
-                </h2>
-                <button
-                  onClick={handleSidebarClose}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    {sidebarMode === 'create' 
-                      ? 'Formularul pentru adăugare bon TMB va fi implementat în curând.'
-                      : 'Formularul pentru editare bon TMB va fi implementat în curând.'}
-                  </p>
-                  {selectedTicket && (
-                    <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
-                      <p><strong>Tichet:</strong> {selectedTicket.ticket_number}</p>
-                      <p><strong>Data:</strong> {new Date(selectedTicket.ticket_date).toLocaleDateString('ro-RO')}</p>
-                      <p><strong>Prestator:</strong> {selectedTicket.operator_name}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={handleSidebarSuccess}
-                    className="flex-1 px-4 py-2 bg-gradient-to-br from-emerald-500 to-emerald-600 
-                             hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
-                             transition-all duration-200 shadow-md font-medium"
-                  >
-                    Salvează
-                  </button>
-                  <button
-                    onClick={handleSidebarClose}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 
-                             text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium"
-                  >
-                    Anulează
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Sidebar pentru Add/Edit TMB */}
+      <ReportsTmbSidebar
+        isOpen={sidebarOpen}
+        mode={sidebarMode}
+        ticket={selectedTicket}
+        wasteCodes={wasteCodes}
+        operators={operators}
+        suppliers={suppliers}
+        sectors={sectors}
+        onClose={handleSidebarClose}
+        onSuccess={handleSidebarSuccess}
+      />
     </div>
   );
 };
