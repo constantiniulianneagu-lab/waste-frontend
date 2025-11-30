@@ -87,13 +87,16 @@ const ReportTMB = () => {
       if (response.success && response.data) {
         // Sectoare pentru filtre (cu București)
         const realSectors = response.data.sectors || [];
-        setSectors([
-          { id: '', name: 'București' },
-          ...realSectors.map(s => ({
-            id: s.id,
-            name: s.sector_name
-          }))
-        ]);
+setSectors([
+  { id: '', name: 'București', sector_number: 0 }, // Opțiunea pentru toate sectoarele
+  ...realSectors
+    .filter(s => s.sector_number >= 1 && s.sector_number <= 6) // Filtrează doar sectoarele 1-6
+    .map(s => ({
+      id: s.id,
+      name: s.sector_name,
+      sector_number: s.sector_number
+    }))
+]);
 
         // Waste codes
         const wasteCodesData = response.data.waste_codes || [];
@@ -120,7 +123,7 @@ const ReportTMB = () => {
       console.error('Error fetching auxiliary data:', error);
       // Fallback data
       setSectors([
-        { id: '', name: 'București' }
+        { id: '', name: 'București', sector_number: 0 }
       ]);
     }
   };
