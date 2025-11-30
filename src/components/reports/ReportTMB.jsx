@@ -16,7 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import ReportsFilters from './ReportsFilters';
 import ReportsTmbSidebar from './ReportsTmbSidebar';
-import { getTmbReports, deleteTmbTicket } from '../../services/reportsService';
+import { getTmbReports, deleteTmbTicket, getAuxiliaryData } from '../../services/reportsService';
 
 const ReportTMB = () => {
   // State
@@ -80,35 +80,49 @@ const ReportTMB = () => {
   }, [filters.page, filters.per_page]);
 
   const fetchSectors = async () => {
-    // Sectoare
-    setSectors([
-      { id: '', name: 'București' },
-      { id: '1', name: 'Sector 1' },
-      { id: '2', name: 'Sector 2' },
-      { id: '3', name: 'Sector 3' },
-      { id: '4', name: 'Sector 4' },
-      { id: '5', name: 'Sector 5' },
-      { id: '6', name: 'Sector 6' }
-    ]);
+    try {
+      // Fetch auxiliary data (sectoare, waste codes, operators)
+      const response = await getAuxiliaryData();
+      
+      if (response.success && response.data) {
+        // Sectoare pentru filtre (cu București)
+        const realSectors = response.data.sectors || [];
+        setSectors([
+          { id: '', name: 'București' },
+          ...realSectors.map(s => ({
+            id: s.id,
+            name: s.sector_name
+          }))
+        ]);
 
-    // TODO: Fetch real data from API
-    // Waste codes pentru TMB (20 03 01)
-    setWasteCodes([
-      { id: '1', code: '20 03 01', description: 'deșeuri municipale amestecate' }
-    ]);
+        // Waste codes
+        const wasteCodesData = response.data.waste_codes || [];
+        setWasteCodes(wasteCodesData.map(wc => ({
+          id: wc.id,
+          code: wc.code,
+          description: wc.description
+        })));
 
-    // Operators TMB - TODO: fetch from /api/tmb/operators
-    setOperators([
-      { id: '21', name: 'ROM WASTE SOLUTIONS SA TMB-S1' },
-      { id: '22', name: 'IRIDEX GROUP SRL TMB-S2' },
-      { id: '23', name: 'ECO SUD SA TMB-S5' }
-    ]);
+        // Operators (pentru sidebar) - folosim instituții tip operator
+        const operatorsData = response.data.operators || [];
+        setOperators(operatorsData.map(op => ({
+          id: op.id,
+          name: op.name
+        })));
 
-    // Suppliers - TODO: fetch from API
-    setSuppliers([
-      { id: '1', name: 'ROMPREST SERVICE SA' },
-      { id: '2', name: 'SALUBRIZARE SECTOR 5 S.A.' }
-    ]);
+        // Suppliers (folosim aceiași operatori pentru suppliers temporar)
+        setSuppliers(operatorsData.map(op => ({
+          id: op.id,
+          name: op.name
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching auxiliary data:', error);
+      // Fallback data
+      setSectors([
+        { id: '', name: 'București' }
+      ]);
+    }
   };
 
   const fetchReports = async () => {
