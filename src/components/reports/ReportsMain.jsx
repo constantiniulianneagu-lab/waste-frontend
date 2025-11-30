@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * REPORTS MAIN COMPONENT - VERSIUNE ACTUALIZATĂ
+ * REPORTS MAIN COMPONENT - CU TMB FUNCTIONAL
  * ============================================================================
  * Tab-uri separate (butoane individuale, nu în chenar)
  * ============================================================================
@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import ReportsLandfill from './ReportsLandfill';
+import ReportTMB from './ReportTMB'; // 🆕 IMPORT TMB
 
 const ReportsMain = () => {
   const [activeTab, setActiveTab] = useState('landfill');
@@ -70,23 +71,7 @@ const ReportsMain = () => {
         <div className="transition-opacity duration-200">
           {activeTab === 'landfill' && <ReportsLandfill />}
           
-          {activeTab === 'tmb' && (
-            <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  În curând
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Rapoartele pentru tratare mecano-biologică vor fi disponibile în curând.
-                </p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'tmb' && <ReportTMB />} {/* 🆕 COMPONENTA TMB COMPLETĂ */}
         </div>
       </div>
     </div>
