@@ -141,7 +141,7 @@ export const updateLandfillTicket = async (ticketId, ticketData) => {
 
 /**
  * ============================================================================
- * TMB REPORTS
+ * TMB REPORTS SERVICE - COMPLETE
  * ============================================================================
  */
 
@@ -168,6 +168,114 @@ export const getTmbReports = async (filters) => {
     return response.data;
   } catch (error) {
     console.error('❌ getTmbReports error:', error);
+    throw error;
+  }
+};
+
+export const getRecyclingReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: filters.page,
+      limit: filters.per_page
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/recycling?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getRecyclingReports error:', error);
+    throw error;
+  }
+};
+
+export const getRecoveryReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: filters.page,
+      limit: filters.per_page
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/recovery?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getRecoveryReports error:', error);
+    throw error;
+  }
+};
+
+export const getDisposalReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: filters.page,
+      limit: filters.per_page
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/disposal?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getDisposalReports error:', error);
+    throw error;
+  }
+};
+
+export const getRejectedReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: filters.page,
+      limit: filters.per_page
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/rejected?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getRejectedReports error:', error);
     throw error;
   }
 };
@@ -227,6 +335,10 @@ export default {
   updateLandfillTicket,
   deleteLandfillTicket,
   getTmbReports,
+  getRecyclingReports,
+  getRecoveryReports,
+  getDisposalReports,
+  getRejectedReports,
   createTmbTicket,
   updateTmbTicket,
   deleteTmbTicket
