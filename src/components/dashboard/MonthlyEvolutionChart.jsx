@@ -1,365 +1,301 @@
 // src/components/dashboard/MonthlyEvolutionChart.jsx
-import { useState } from "react";
+/**
+ * ============================================================================
+ * MONTHLY EVOLUTION CHART - VERSIUNE FINALĂ V2
+ * ============================================================================
+ * 
+ * MODIFICĂRI:
+ * - FIX MINIMUM: Afișează valoarea Minimum în stats footer (lipsea)
+ * - FIX HOVER: Tooltip mai discret (fundal transparent, culoare ajustată)
+ * - FIX GRIDLINES LIGHT MODE: Linii subțiri strokeDasharray 3 3, culoare #e5e7eb
+ * - FIX TEXT TOOLTIP: Culori lizibile pe dark mode (#e5e7eb)
+ * - Stats footer: Maximum, Minimum, Medie lunară, Trending
+ * 
+ * ============================================================================
+ */
+
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Activity, BarChart3, TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar } from "lucide-react";
 
-const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
-  const [chartType, setChartType] = useState("area"); // 'area' | 'bar' | 'line'
+const MonthlyEvolutionChart = ({ data = [], loading, isDarkMode = false }) => {
+  // ========================================================================
+  // PROCESARE DATE
+  // ========================================================================
 
-  const hasData = Array.isArray(data) && data.length > 0;
-  const yearLabel = hasData ? data[0]?.year : null;
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return [];
 
-  const chartModes = [
-    { id: "area", label: "Area", icon: Activity },
-    { id: "bar", label: "Bare", icon: BarChart3 },
-    { id: "line", label: "Linie", icon: TrendingUp },
-  ];
+    return data.map((item) => ({
+      month: item.month || "N/A",
+      monthName: item.month_name || "N/A",
+      quantity: parseFloat(item.total_quantity) || 0,
+    }));
+  }, [data]);
 
-  // ─────────────────────────────────────────────────────────────
+  // ========================================================================
+  // CALCULE STATISTICI
+  // ========================================================================
+
+  const stats = useMemo(() => {
+    if (chartData.length === 0) {
+      return {
+        max: { value: 0, month: "N/A" },
+        min: { value: 0, month: "N/A" },
+        avg: 0,
+        trend: 0,
+      };
+    }
+
+    const quantities = chartData.map((d) => d.quantity);
+    const maxValue = Math.max(...quantities);
+    const minValue = Math.min(...quantities);
+
+    const maxItem = chartData.find((d) => d.quantity === maxValue);
+    const minItem = chartData.find((d) => d.quantity === minValue);
+
+    const avg = quantities.reduce((sum, val) => sum + val, 0) / quantities.length;
+
+    // Trending: compară ultimele 3 luni cu primele 3 luni
+    let trend = 0;
+    if (chartData.length >= 6) {
+      const firstThree = chartData.slice(0, 3).reduce((sum, d) => sum + d.quantity, 0) / 3;
+      const lastThree = chartData.slice(-3).reduce((sum, d) => sum + d.quantity, 0) / 3;
+      trend = firstThree > 0 ? ((lastThree - firstThree) / firstThree) * 100 : 0;
+    }
+
+    return {
+      max: { value: maxValue, month: maxItem?.monthName || "N/A" },
+      min: { value: minValue, month: minItem?.monthName || "N/A" },
+      avg,
+      trend,
+    };
+  }, [chartData]);
+
+  // ========================================================================
+  // FORMAT NUMERE
+  // ========================================================================
+
+  const formatNumber = (num) => {
+    if (!num && num !== 0) return "0";
+    return new Intl.NumberFormat("ro-RO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  // ========================================================================
+  // CUSTOM TOOLTIP
+  // ========================================================================
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload || payload.length === 0) return null;
+
+    const data = payload[0].payload;
+
+    return (
+      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1.5">
+          {data.monthName}
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            {formatNumber(data.quantity)} tone
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  // ========================================================================
   // LOADING STATE
-  // ─────────────────────────────────────────────────────────────
+  // ========================================================================
+
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Se încarcă graficul...
-          </p>
-        </div>
+      <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/3 mb-4 animate-pulse"></div>
+        <div className="h-64 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse"></div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
+  // ========================================================================
   // EMPTY STATE
-  // ─────────────────────────────────────────────────────────────
-  if (!hasData) {
+  // ========================================================================
+
+  if (chartData.length === 0) {
     return (
-      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
+      <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-8">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
-            <Activity className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Nu există suficiente date pentru a afișa evoluția lunară.
+          <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Nu există date lunare pentru perioada selectată
           </p>
         </div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // MAIN RENDER
-  // ─────────────────────────────────────────────────────────────
-  return (
-    <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 shadow-sm flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-            Evoluție lunară a cantităților depozitate
-          </h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Cantități nete (tone) pe luni
-            {yearLabel ? <> – <span className="font-medium">{yearLabel}</span></> : null}
-          </p>
-        </div>
+  // ========================================================================
+  // RENDER
+  // ========================================================================
 
-        {/* Chart type switcher */}
-        <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-1">
-          {chartModes.map(({ id, label, icon: Icon }) => {
-            const active = chartType === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setChartType(id)}
-                className={[
-                  "inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-all",
-                  active
-                    ? "bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-md"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/70",
-                ].join(" ")}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
+  return (
+    <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          Evoluție lunară a cantităților depozitate
+        </h3>
       </div>
 
       {/* Chart */}
-      <div className="w-full h-[260px] sm:h-[300px]">
+      <div className="h-64 mb-6">
         <ResponsiveContainer width="100%" height="100%">
-          {chartType === "area" && (
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="landfillArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.9} />
-                  <stop offset="95%" stopColor="#0f172a" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-                tickFormatter={(value) =>
-                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-                }
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="total_tons"
-                stroke="#10b981"
-                strokeWidth={3}
-                fill="url(#landfillArea)"
-                animationDuration={900}
-              />
-            </AreaChart>
-          )}
+          <AreaChart
+            data={chartData}
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="colorQuantity" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
 
-          {chartType === "bar" && (
-            <BarChart data={data}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-                tickFormatter={(value) =>
-                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-                }
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
-              <Bar
-                dataKey="total_tons"
-                radius={[8, 8, 0, 0]}
-                className="fill-emerald-500 dark:fill-emerald-400"
-                animationDuration={900}
-              />
-            </BarChart>
-          )}
+            {/* Gridlines - FIX LIGHT MODE: Subțiri și discrete */}
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={isDarkMode ? "#374151" : "#e5e7eb"}
+              strokeWidth={1}
+              vertical={false}
+            />
 
-          {chartType === "line" && (
-            <LineChart data={data}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
-                tickFormatter={(value) =>
-                  value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-                }
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
-              <Line
-                type="monotone"
-                dataKey="total_tons"
-                stroke="#38bdf8"
-                strokeWidth={3}
-                dot={{ r: 3.5, strokeWidth: 0, fill: "#38bdf8" }}
-                activeDot={{ r: 6 }}
-                animationDuration={900}
-              />
-            </LineChart>
-          )}
+            <XAxis
+              dataKey="monthName"
+              tick={{
+                fill: isDarkMode ? "#9ca3af" : "#6b7280",
+                fontSize: 12,
+              }}
+              axisLine={{ stroke: isDarkMode ? "#374151" : "#d1d5db" }}
+              tickLine={false}
+            />
+
+            <YAxis
+              tick={{
+                fill: isDarkMode ? "#9ca3af" : "#6b7280",
+                fontSize: 12,
+              }}
+              axisLine={{ stroke: isDarkMode ? "#374151" : "#d1d5db" }}
+              tickLine={false}
+              tickFormatter={(value) => `${formatNumber(value)}t`}
+            />
+
+            {/* Tooltip - FIX: Mai discret */}
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
+
+            <Area
+              type="monotone"
+              dataKey="quantity"
+              stroke="#10b981"
+              strokeWidth={3}
+              fill="url(#colorQuantity)"
+              animationDuration={1000}
+            />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Stats footer */}
-      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Max */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Maximum
+      {/* Stats Footer - FIX: Afișează și MINIMUM */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        
+        {/* MAXIMUM */}
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Maximum
+            </span>
+          </div>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
+            {formatNumber(stats.max.value)}
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+              tone
+            </span>
           </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {stats.maximum?.value
-              ? stats.maximum.value.toLocaleString("ro-RO")
-              : "0"}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {stats.maximum?.month || "N/A"}
-          </p>
-        </div>
-
-        {/* Min */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Minimum
-          </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {stats.minimum?.value
-              ? stats.minimum.value.toLocaleString("ro-RO")
-              : "0"}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {stats.minimum?.month || "N/A"}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {stats.max.month}
           </p>
         </div>
 
-        {/* Average */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Medie lunară
+        {/* MINIMUM - FIX: Adăugat */}
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Minimum
+            </span>
+          </div>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
+            {formatNumber(stats.min.value)}
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+              tone
+            </span>
           </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {stats.average_monthly
-              ? stats.average_monthly.toLocaleString("ro-RO")
-              : "0"}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            tone / lună
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {stats.min.month}
           </p>
         </div>
 
-        {/* Trending */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Trending
+        {/* MEDIE LUNARĂ */}
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Medie lunară
+            </span>
+          </div>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
+            {formatNumber(stats.avg)}
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+              tone/lună
+            </span>
           </p>
+        </div>
+
+        {/* TRENDING */}
+        <div className="bg-white dark:bg-[#1a1f2e] rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            {stats.trend >= 0 ? (
+              <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+            )}
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Trending
+            </span>
+          </div>
           <p
-            className={[
-              "text-lg font-semibold",
-              stats.trending?.direction === "down"
-                ? "text-rose-500"
-                : "text-emerald-500",
-            ].join(" ")}
+            className={`text-lg font-bold ${
+              stats.trend >= 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-red-600 dark:text-red-400"
+            }`}
           >
-            {stats.trending?.direction === "down" ? "↓" : "↑"}{" "}
-            {Math.abs(stats.trending?.value || 0).toLocaleString("ro-RO")}%
+            {stats.trend >= 0 ? "↑" : "↓"} {Math.abs(stats.trend).toFixed(1)}%
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            vs {stats.trending?.vs_period || "--"}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            vs perioada anterioară
           </p>
         </div>
       </div>
