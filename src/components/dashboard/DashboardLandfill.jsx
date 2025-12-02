@@ -1,21 +1,21 @@
 // src/components/dashboard/DashboardLandfill.jsx
 /**
  * ============================================================================
- * DASHBOARD DEPOZITARE - MODERN ECO THEME
+ * DASHBOARD DEPOZITARE - FINAL CLEAN VERSION
  * ============================================================================
  * 
- * 🎨 CHANGES:
- * - Header modern eco integrat (fără refresh button în header)
+ * 🎨 FEATURES:
+ * - Header modern eco integrat
  * - Search funcțional
  * - Notificări dinamice
  * - Gradient emerald/teal theme consistent
- * - Păstrează toată logica existentă funcțională
+ * - ❌ FĂRĂ buton Actualizează (se face automat la schimbare filtre)
  * 
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import { getLandfillStats } from "../../services/dashboardLandfillService.js";
 import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
@@ -95,11 +95,6 @@ const DashboardLandfill = () => {
     fetchDashboardData(newFilters);
   };
 
-  const handleRefresh = () => {
-    console.log('🔄 Manual refresh with current filters:', filters);
-    fetchDashboardData(filters);
-  };
-
   const handleSearchChange = (query) => {
     setSearchQuery(query);
     console.log("🔍 Search query:", query);
@@ -155,10 +150,9 @@ const DashboardLandfill = () => {
                     {error}
                   </p>
                   <button
-                    onClick={handleRefresh}
+                    onClick={() => fetchDashboardData()}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all"
                   >
-                    <RefreshCw className="w-4 h-4" />
                     Încearcă din nou
                   </button>
                 </div>
@@ -171,6 +165,7 @@ const DashboardLandfill = () => {
   }
 
   const sectors = data?.per_sector || [];
+  const availableYears = data?.available_years || [new Date().getFullYear()];
 
   // ========================================================================
   // MAIN RENDER
@@ -190,23 +185,12 @@ const DashboardLandfill = () => {
         
         {/* FILTERS */}
         <DashboardFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          sectors={sectors}
-          loading={loading}
-        />
-
-        {/* REFRESH BUTTON (mutat jos, sub filtre) */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Actualizează
-          </button>
-        </div>
+  filters={filters}
+  onFilterChange={handleFilterChange}
+  sectors={sectors}
+  availableYears={availableYears}
+  loading={loading}
+/>
 
         {/* EMPTY STATE */}
         {!data?.summary ? (
@@ -217,16 +201,9 @@ const DashboardLandfill = () => {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
               Nu există date pentru perioada selectată
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Încearcă să selectezi o perioadă diferită.
             </p>
-            <button
-              onClick={handleRefresh}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Reîncarcă
-            </button>
           </div>
         ) : (
           <>

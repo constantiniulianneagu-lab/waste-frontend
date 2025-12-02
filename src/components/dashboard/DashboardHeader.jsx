@@ -1,17 +1,17 @@
 // src/components/dashboard/DashboardHeader.jsx
 /**
  * ============================================================================
- * DASHBOARD HEADER - MODERN ECO THEME (FUNCȚIONAL)
+ * DASHBOARD HEADER - FINAL CLEAN VERSION
  * ============================================================================
  * 
  * DESIGN: Ultra modern, Samsung/Apple style
  * THEME: Eco/Green/Reciclare - Emerald/Teal gradients
- * DATA: 100% funcțional cu AuthContext
  * 
- * IMPORTS ADAPTATE LA STRUCTURA TA:
- * - AuthContext din root (../../AuthContext)
- * - ThemeContext din contexts (../../contexts/ThemeContext)
- * - ThemeToggle din același folder (./ThemeToggle)
+ * LAYOUT:
+ * [Dashboard Depozitarea deșeurilor]    [Search] [Notif] [Theme] [Profile]
+ * 
+ * ✅ ThemeToggle compact (consistent cu restul)
+ * ❌ Fără buton Actualizează
  * 
  * ============================================================================
  */
@@ -124,7 +124,7 @@ const DashboardHeader = ({ notificationCount = 0, onSearchChange }) => {
               )}
             </button>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle - COMPACT */}
             <ThemeToggle />
 
             {/* Separator subtil */}
