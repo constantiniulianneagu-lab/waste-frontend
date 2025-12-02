@@ -1,30 +1,115 @@
 // src/components/dashboard/SectorStatsTable.jsx
-import { TrendingUp, TrendingDown } from "lucide-react";
+/**
+ * ============================================================================
+ * SECTOR STATS TABLE - VERSIUNE FINALĂ V2
+ * ============================================================================
+ * 
+ * MODIFICĂRI:
+ * - ORDONARE: Sector 1 → Sector 6 (nu random)
+ * - Badge sector cu gradient specific fiecare sector
+ * - Bară accent colorată stânga
+ * - Cantitate formatată românesc + Variație (↑/↓ X%)
+ * - Footer: Total general
+ * 
+ * ============================================================================
+ */
 
-const sectorGradientMap = {
-  1: "from-violet-500 to-violet-600",
-  2: "from-slate-300 to-slate-400",
-  3: "from-emerald-500 to-emerald-600",
-  4: "from-amber-500 to-amber-600",
-  5: "from-pink-500 to-pink-600",
-  6: "from-cyan-500 to-cyan-600",
-};
+import { TrendingUp, TrendingDown, MapPin } from "lucide-react";
 
-const SectorStatsTable = ({ data = [], loading = false }) => {
-  const total = data.reduce(
-    (sum, s) => sum + (Number(s.total_tons) || 0),
+const SectorStatsTable = ({ data = [], loading }) => {
+  // ========================================================================
+  // CULORI SECTOARE
+  // ========================================================================
+
+  const sectorColors = {
+    1: {
+      gradient: "from-violet-500 to-purple-600",
+      bg: "bg-violet-50 dark:bg-violet-500/10",
+      text: "text-violet-700 dark:text-violet-300",
+      border: "border-violet-500",
+      accent: "bg-violet-500",
+    },
+    2: {
+      gradient: "from-emerald-500 to-teal-600",
+      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+      text: "text-emerald-700 dark:text-emerald-300",
+      border: "border-emerald-500",
+      accent: "bg-emerald-500",
+    },
+    3: {
+      gradient: "from-orange-500 to-amber-600",
+      bg: "bg-orange-50 dark:bg-orange-500/10",
+      text: "text-orange-700 dark:text-orange-300",
+      border: "border-orange-500",
+      accent: "bg-orange-500",
+    },
+    4: {
+      gradient: "from-pink-500 to-rose-600",
+      bg: "bg-pink-50 dark:bg-pink-500/10",
+      text: "text-pink-700 dark:text-pink-300",
+      border: "border-pink-500",
+      accent: "bg-pink-500",
+    },
+    5: {
+      gradient: "from-cyan-500 to-blue-600",
+      bg: "bg-cyan-50 dark:bg-cyan-500/10",
+      text: "text-cyan-700 dark:text-cyan-300",
+      border: "border-cyan-500",
+      accent: "bg-cyan-500",
+    },
+    6: {
+      gradient: "from-indigo-500 to-blue-600",
+      bg: "bg-indigo-50 dark:bg-indigo-500/10",
+      text: "text-indigo-700 dark:text-indigo-300",
+      border: "border-indigo-500",
+      accent: "bg-indigo-500",
+    },
+  };
+
+  // ========================================================================
+  // FORMAT NUMERE
+  // ========================================================================
+
+  const formatNumber = (num) => {
+    if (!num && num !== 0) return "0";
+    return new Intl.NumberFormat("ro-RO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  // ========================================================================
+  // SORTARE DATE: Sector 1 → 6
+  // ========================================================================
+
+  const sortedData = [...data].sort((a, b) => {
+    const sectorA = parseInt(a.sector_number, 10) || 0;
+    const sectorB = parseInt(b.sector_number, 10) || 0;
+    return sectorA - sectorB;
+  });
+
+  // ========================================================================
+  // CALCUL TOTAL
+  // ========================================================================
+
+  const totalQuantity = sortedData.reduce(
+    (sum, item) => sum + (parseFloat(item.total_quantity) || 0),
     0
   );
 
+  // ========================================================================
+  // LOADING STATE
+  // ========================================================================
+
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
-        <div className="mb-4 h-5 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-        <div className="space-y-3 mt-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+      <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/3 mb-4 animate-pulse"></div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="h-14 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse"
+              className="h-16 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse"
             />
           ))}
         </div>
@@ -32,105 +117,115 @@ const SectorStatsTable = ({ data = [], loading = false }) => {
     );
   }
 
+  // ========================================================================
+  // EMPTY STATE
+  // ========================================================================
+
+  if (!sortedData || sortedData.length === 0) {
+    return (
+      <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className="text-center">
+          <MapPin className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Nu există date pe sectoare pentru perioada selectată
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
   return (
-    <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
+    <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
       {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           Cantități per sector
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Distribuția cantităților depozitate pe sectoare (tone)
-        </p>
+        <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-600" />
       </div>
 
-      {/* Table header */}
-      <div className="grid grid-cols-[2fr,1.2fr,1fr] gap-3 pb-2 border-b border-gray-200 dark:border-gray-800 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-        <span>Sector</span>
-        <span className="text-right">Cantitate (t)</span>
-        <span className="text-right">Variație</span>
-      </div>
-
-      {/* Rows – maxim 6, fără scroll */}
-      <div className="mt-3 space-y-2 flex-1">
-        {data.map((sector) => {
-          const grad =
-            sectorGradientMap[sector.sector_number] ||
-            "from-gray-300 to-gray-400";
-          const positive = (sector.variation_percent || 0) >= 0;
+      {/* Lista sectoare */}
+      <div className="space-y-3">
+        {sortedData.map((sector) => {
+          const sectorNum = parseInt(sector.sector_number, 10);
+          const colors = sectorColors[sectorNum] || sectorColors[1];
+          const quantity = parseFloat(sector.total_quantity) || 0;
+          const variation = parseFloat(sector.variation) || 0;
 
           return (
             <div
-              key={sector.sector_id}
-              className="relative grid grid-cols-[2fr,1.2fr,1fr] gap-3 items-center px-3 py-3 rounded-xl bg-gray-50/80 dark:bg-[#0f172a] border border-gray-200/70 dark:border-gray-800 hover:border-emerald-500/70 transition-all"
+              key={sector.sector_id || sectorNum}
+              className="relative bg-white dark:bg-[#1a1f2e] rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all duration-200 group overflow-hidden"
             >
-              {/* Accent bar left */}
-              <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-emerald-400 to-emerald-600" />
+              {/* Bară accent stânga */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-1 ${colors.accent} group-hover:w-2 transition-all duration-300`}
+              />
 
-              {/* Sector badge + text */}
-              <div className="flex items-center gap-3 pl-1">
-                <div
-                  className={`w-9 h-9 rounded-lg bg-gradient-to-tr ${grad} flex items-center justify-center text-xs font-bold text-white shadow-sm`}
-                >
-                  {sector.sector_number}
+              <div className="flex items-center justify-between pl-3">
+                {/* Badge Sector */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`${colors.bg} ${colors.border} border-2 rounded-lg px-3 py-1.5 min-w-[80px] text-center`}
+                  >
+                    <span className={`text-sm font-bold ${colors.text}`}>
+                      Sector {sectorNum}
+                    </span>
+                  </div>
+
+                  {/* Cantitate */}
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {formatNumber(quantity)}
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+                        tone
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Sector {sector.sector_number}
-                  </p>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                    {sector.city || "București"}
-                  </p>
-                </div>
-              </div>
 
-              {/* Cantitate */}
-              <div className="text-right">
-                <p className="text-sm font-semibold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
-                  {sector.total_tons_formatted ??
-                    Number(sector.total_tons || 0).toLocaleString("ro-RO", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                </p>
-              </div>
-
-              {/* Variație */}
-              <div className="text-right">
-                <span
-                  className={`inline-flex items-center justify-end gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                    positive
-                      ? "bg-emerald-500/10 text-emerald-400"
-                      : "bg-rose-500/10 text-rose-400"
-                  }`}
-                >
-                  {positive ? (
-                    <TrendingUp className="w-3 h-3" />
-                  ) : (
-                    <TrendingDown className="w-3 h-3" />
-                  )}
-                  {Math.abs(Number(sector.variation_percent || 0)).toFixed(1)}%
-                </span>
+                {/* Variație */}
+                {variation !== 0 && (
+                  <div className="flex items-center gap-1.5">
+                    {variation > 0 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    )}
+                    <span
+                      className={`text-sm font-semibold ${
+                        variation > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {variation > 0 ? "↑" : "↓"} {Math.abs(variation).toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Footer total */}
-      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 grid grid-cols-[2fr,1.2fr,1fr] gap-3 items-center">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          Total
-        </p>
-        <p className="text-right text-base font-bold bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
-          {total.toLocaleString("ro-RO", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </p>
-        <p className="text-right text-[11px] text-gray-500 dark:text-gray-400">
-          tone
-        </p>
+      {/* Footer - Total general */}
+      <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+            Total general
+          </span>
+          <span className="text-2xl font-bold text-gray-900 dark:text-white">
+            {formatNumber(totalQuantity)}
+            <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+              tone
+            </span>
+          </span>
+        </div>
       </div>
     </div>
   );
