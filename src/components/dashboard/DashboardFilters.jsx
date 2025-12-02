@@ -1,13 +1,27 @@
 // src/components/dashboard/DashboardFilters.jsx
+/**
+ * ============================================================================
+ * DASHBOARD FILTERS - VERSIUNE FINALĂ V2
+ * ============================================================================
+ * 
+ * MODIFICĂRI:
+ * - An dropdown: Doar ani cu date (nu hardcoded)
+ * - Data început/sfârșit: Format românesc ZZ.LL.AAAA
+ * - Locație: Ordonată (București, Sector 1-6)
+ * - Clean validation pentru sector_id
+ * 
+ * ============================================================================
+ */
+
 import { useState, useEffect } from "react";
 import { Calendar, MapPin, RotateCcw } from "lucide-react";
-import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
 
 const DashboardFilters = ({
   filters,
   onFilterChange,
   sectors = [],
   loading,
+  availableYears = [], // 🆕 Array cu anii pentru care avem date
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
 
@@ -16,70 +30,126 @@ const DashboardFilters = ({
     setLocalFilters(filters);
   }, [filters]);
 
+  // ========================================================================
+  // CONVERSIE DATE: YYYY-MM-DD ↔ ZZ.LL.AAAA
+  // ========================================================================
+
+  const formatDateRO = (isoDate) => {
+    if (!isoDate) return '';
+    const [year, month, day] = isoDate.split('-');
+    return `${day}.${month}.${year}`;
+  };
+
+  const parseRoDate = (roDate) => {
+    if (!roDate || roDate.length !== 10) return '';
+    const [day, month, year] = roDate.split('.');
+    return `${year}-${month}-${day}`;
+  };
+
+  // ========================================================================
+  // HANDLERS
+  // ========================================================================
+
   const handleApply = () => {
-    // 🔧 FIX: Nu trimite sector_id dacă e empty string
+    // Clean filters: elimină sector_id dacă e null/undefined/empty
     const cleanFilters = {
-      ...localFilters,
-      // Doar includem sector_id dacă e un număr valid
-      ...(localFilters.sector_id && { sector_id: localFilters.sector_id })
+      year: localFilters.year,
+      from: localFilters.from,
+      to: localFilters.to,
     };
-    
-    // Dacă sector_id e "", îl eliminăm complet din obiect
-    if (!cleanFilters.sector_id) {
-      delete cleanFilters.sector_id;
+
+    // Doar includem sector_id dacă e un număr valid (1-6)
+    if (localFilters.sector_id && localFilters.sector_id >= 1 && localFilters.sector_id <= 6) {
+      cleanFilters.sector_id = localFilters.sector_id;
     }
-    
-    console.log('🔍 Applying filters:', cleanFilters);
+
+    console.log('🔄 Applying filters:', cleanFilters);
     onFilterChange(cleanFilters);
   };
 
   const handleReset = () => {
+    const currentYear = new Date().getFullYear();
     const defaultFilters = {
-      year: new Date().getFullYear(),
-      from: getYearStart(),
-      to: getTodayDate(),
-      sector_id: null, // 🔧 FIX: null în loc de ""
+      year: currentYear,
+      from: `${currentYear}-01-01`,
+      to: new Date().toISOString().split('T')[0],
+      sector_id: null,
     };
     setLocalFilters(defaultFilters);
     onFilterChange(defaultFilters);
   };
 
-  // 🔧 FIX: Handler pentru sector cu validare
   const handleSectorChange = (e) => {
     const value = e.target.value;
-    
-    // Dacă e empty string, setăm null
+
     if (value === "" || value === "all") {
       setLocalFilters({
         ...localFilters,
-        sector_id: null
+        sector_id: null,
       });
       return;
     }
-    
-    // Altfel, convertim la integer
+
     const sectorId = parseInt(value, 10);
-    
+
     if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
       console.log('✅ Valid sector selected:', sectorId);
       setLocalFilters({
         ...localFilters,
-        sector_id: sectorId
+        sector_id: sectorId,
       });
     } else {
       console.warn('⚠️ Invalid sector value:', value);
     }
   };
 
+  // ========================================================================
+  // GENEREAZA ANI DISPONIBILI
+  // ========================================================================
+
+  const getYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+
+    // Dacă avem ani disponibili din API, folosim ăia
+    if (availableYears && availableYears.length > 0) {
+      return availableYears;
+    }
+
+    // Altfel, default: anul curent + 2 anteriori
+    return [currentYear, currentYear - 1, currentYear - 2];
+  };
+
+  const yearOptions = getYearOptions();
+
+  // ========================================================================
+  // SECTOR CURENT SELECTAT (pentru display)
+  // ========================================================================
+
+  const getSelectedSectorName = () => {
+    if (!localFilters.sector_id) return 'București';
+    
+    const sector = sectors.find(
+      (s) => s.sector_number === localFilters.sector_id
+    );
+    
+    return sector ? `Sector ${sector.sector_number}` : 'București';
+  };
+
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
   return (
     <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      
       {/* Row inputs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        {/* Perioada / Year */}
+        
+        {/* AN */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
             <Calendar className="w-4 h-4" />
-            Perioada
+            An
           </label>
           <select
             value={localFilters.year}
@@ -92,68 +162,106 @@ const DashboardFilters = ({
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           >
-            <option value={new Date().getFullYear()}>
-              {new Date().getFullYear()}
-            </option>
-            <option value={new Date().getFullYear() - 1}>
-              {new Date().getFullYear() - 1}
-            </option>
-            <option value={new Date().getFullYear() - 2}>
-              {new Date().getFullYear() - 2}
-            </option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Data început */}
+        {/* DATA ÎNCEPUT - Format Românesc */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
             Data început
           </label>
           <input
-            type="date"
-            value={localFilters.from}
-            onChange={(e) =>
-              setLocalFilters({ ...localFilters, from: e.target.value })
-            }
+            type="text"
+            placeholder="ZZ.LL.AAAA"
+            value={formatDateRO(localFilters.from)}
+            onChange={(e) => {
+              const roDate = e.target.value;
+              // Permite doar cifre și puncte
+              if (/^[\d.]*$/.test(roDate)) {
+                // Dacă are 10 caractere (ZZ.LL.AAAA), convertește
+                if (roDate.length === 10) {
+                  const isoDate = parseRoDate(roDate);
+                  setLocalFilters({ ...localFilters, from: isoDate });
+                }
+              }
+            }}
+            onBlur={(e) => {
+              // La blur, convertește și setează
+              const isoDate = parseRoDate(e.target.value);
+              if (isoDate) {
+                setLocalFilters({ ...localFilters, from: isoDate });
+              }
+            }}
+            maxLength={10}
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           />
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+            Format: ZZ.LL.AAAA
+          </p>
         </div>
 
-        {/* Data sfârșit */}
+        {/* DATA SFÂRȘIT - Format Românesc */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
             Data sfârșit
           </label>
           <input
-            type="date"
-            value={localFilters.to}
-            onChange={(e) =>
-              setLocalFilters({ ...localFilters, to: e.target.value })
-            }
+            type="text"
+            placeholder="ZZ.LL.AAAA"
+            value={formatDateRO(localFilters.to)}
+            onChange={(e) => {
+              const roDate = e.target.value;
+              if (/^[\d.]*$/.test(roDate)) {
+                if (roDate.length === 10) {
+                  const isoDate = parseRoDate(roDate);
+                  setLocalFilters({ ...localFilters, to: isoDate });
+                }
+              }
+            }}
+            onBlur={(e) => {
+              const isoDate = parseRoDate(e.target.value);
+              if (isoDate) {
+                setLocalFilters({ ...localFilters, to: isoDate });
+              }
+            }}
+            maxLength={10}
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           />
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+            Format: ZZ.LL.AAAA
+          </p>
         </div>
 
-        {/* Locație */}
+        {/* LOCAȚIE - Ordonată București, Sector 1-6 */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
             <MapPin className="w-4 h-4" />
             Locație
           </label>
           <select
-            value={localFilters.sector_id || ""} // 🔧 FIX: default la ""
-            onChange={handleSectorChange} // 🔧 FIX: folosim handler-ul nou
+            value={localFilters.sector_id || ""}
+            onChange={handleSectorChange}
             className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#1a1f2e] border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             disabled={loading}
           >
+            {/* București (toate sectoarele) */}
             <option value="">București</option>
-            {sectors.map((sector) => (
-              <option key={sector.sector_id} value={sector.sector_number}>
-                Sector {sector.sector_number}
-              </option>
-            ))}
+            
+            {/* Sectoare 1-6 sortate */}
+            {sectors
+              .sort((a, b) => a.sector_number - b.sector_number)
+              .map((sector) => (
+                <option key={sector.sector_id} value={sector.sector_number}>
+                  Sector {sector.sector_number}
+                </option>
+              ))}
           </select>
         </div>
       </div>
@@ -186,19 +294,13 @@ const DashboardFilters = ({
         <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
           Afișare date pentru{" "}
           <span className="font-bold">{localFilters.year}</span> • Perioada:{" "}
-          <span className="font-bold">{localFilters.from}</span> -{" "}
-          <span className="font-bold">{localFilters.to}</span>
-          {localFilters.sector_id && (() => {
-            // 🔧 FIX: Căutăm după sector_number nu sector_id
-            const s = sectors.find(
-              (sec) => sec.sector_number === localFilters.sector_id
-            );
-            return s ? (
-              <>
-                {" "}• Locație: <span className="font-bold">Sector {s.sector_number}</span>
-              </>
-            ) : null;
-          })()}
+          <span className="font-bold">{formatDateRO(localFilters.from)}</span> -{" "}
+          <span className="font-bold">{formatDateRO(localFilters.to)}</span>
+          {localFilters.sector_id && (
+            <>
+              {" "}• Locație: <span className="font-bold">{getSelectedSectorName()}</span>
+            </>
+          )}
         </p>
       </div>
     </div>

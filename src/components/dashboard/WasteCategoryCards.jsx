@@ -1,266 +1,223 @@
 // src/components/dashboard/WasteCategoryCards.jsx
 /**
  * ============================================================================
- * WASTE CATEGORY CARDS – PREMIUM TAILWIND
+ * WASTE CATEGORY CARDS - VERSIUNE FINALĂ V2
+ * ============================================================================
+ * 
+ * MODIFICĂRI:
+ * - FIX LIGHT MODE: Coduri deșeuri vizibile pe fundal deschis (contrast îmbunătățit)
+ * - ELIMINAT DUPLICAT: Sub "X tichete" era afișată cantitatea din nou → Șters
+ * - Format: "X tichete • Y.YY tone" + "DIN TOTAL Z%"
+ * - Verificat denumiri coduri vs baza de date
+ * 
  * ============================================================================
  */
 
-import React from "react";
-import {
-  formatPercent,
-  getWasteCodeIcon,
-} from "../../utils/dashboardUtils.js";
+import { Package, TrendingUp, TrendingDown } from "lucide-react";
 
-const WasteCategoryCards = ({ categories = [], loading = false }) => {
-  /**
-   * Color presets per waste code
-   */
-  const getColorConfig = (wasteCode) => {
-    const map = {
-      "20 03 01": {
-        // deșeuri municipale
-        gradient:
-          "from-purple-500 via-purple-500/90 to-violet-500 dark:from-purple-500 dark:via-purple-600 dark:to-violet-600",
-        chipBg: "bg-purple-500/15 dark:bg-purple-400/15",
-        chipText: "text-purple-200 dark:text-purple-100",
-        barBg: "bg-purple-500",
-        ring: "ring-purple-500/40",
-        glow: "shadow-[0_0_25px_rgba(168,85,247,0.45)]",
-      },
-      "20 03 03": {
-        // reziduuri străzi
-        gradient:
-          "from-emerald-500 via-emerald-500/90 to-teal-500 dark:from-emerald-500 dark:via-emerald-600 dark:to-teal-600",
-        chipBg: "bg-emerald-500/15 dark:bg-emerald-400/15",
-        chipText: "text-emerald-100",
-        barBg: "bg-emerald-400",
-        ring: "ring-emerald-500/40",
-        glow: "shadow-[0_0_25px_rgba(16,185,129,0.45)]",
-      },
-      "19 * *": {
-        // deșeuri de sortare
-        gradient:
-          "from-orange-500 via-amber-500 to-yellow-400 dark:from-orange-500 dark:via-amber-500 dark:to-yellow-400",
-        chipBg: "bg-amber-500/15 dark:bg-amber-400/20",
-        chipText: "text-amber-100",
-        barBg: "bg-amber-400",
-        ring: "ring-amber-400/50",
-        glow: "shadow-[0_0_25px_rgba(245,158,11,0.4)]",
-      },
-      "17 09 04": {
-        // construcții
-        gradient:
-          "from-pink-500 via-rose-500 to-red-400 dark:from-pink-500 dark:via-rose-500 dark:to-red-400",
-        chipBg: "bg-pink-500/15 dark:bg-pink-400/20",
-        chipText: "text-pink-100",
-        barBg: "bg-pink-400",
-        ring: "ring-pink-500/40",
-        glow: "shadow-[0_0_25px_rgba(236,72,153,0.45)]",
-      },
-      ALTELE: {
-        // alte fluxuri
-        gradient:
-          "from-cyan-500 via-sky-500 to-blue-500 dark:from-cyan-500 dark:via-sky-500 dark:to-blue-500",
-        chipBg: "bg-cyan-500/15 dark:bg-cyan-400/20",
-        chipText: "text-cyan-100",
-        barBg: "bg-cyan-400",
-        ring: "ring-cyan-400/40",
-        glow: "shadow-[0_0_25px_rgba(56,189,248,0.45)]",
-      },
-    };
-
-    return map[wasteCode] || map.ALTELE;
-  };
-
-  /**
-   * Loading skeleton (5 cards)
-   */
+const WasteCategoryCards = ({ categories = [], loading }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="h-48 rounded-2xl bg-gradient-to-br from-slate-200/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 border border-slate-200/80 dark:border-slate-700/80 animate-pulse"
+            className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
           >
-            <div className="h-full w-full bg-slate-200/40 dark:bg-slate-800/40 rounded-2xl" />
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-2/3 mb-4"></div>
+            <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+            <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
           </div>
         ))}
       </div>
     );
   }
 
-  /**
-   * Empty state
-   */
   if (!categories || categories.length === 0) {
     return (
-      <div className="mb-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md px-8 py-10 flex flex-col items-center justify-center text-center shadow-[0_18px_45px_rgba(15,23,42,0.25)]">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-300 via-slate-200 to-slate-100 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 text-slate-500 dark:text-slate-300 shadow-lg">
-          <svg
-            viewBox="0 0 24 24"
-            className="h-8 w-8"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path
-              d="M3 7h18M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10 11v4M14 11v4"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-100 mb-1">
-          Nu există date pentru perioada selectată.
-        </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Ajustează filtrele de perioadă sau sector pentru a vedea distribuția
-          categoriilor de deșeuri.
+      <div className="bg-gray-50 dark:bg-[#252d3d] rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+        <Package className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          Nu există date pentru perioada selectată
         </p>
       </div>
     );
   }
 
-  /**
-   * Main cards
-   */
+  // ========================================================================
+  // CULORI CARDURI (conform design)
+  // ========================================================================
+
+  const categoryColors = {
+    // Deșeuri municipale - Violet
+    municipale: {
+      gradient: "from-violet-500 to-purple-600",
+      bg: "bg-violet-50 dark:bg-violet-500/10",
+      border: "border-violet-200 dark:border-violet-500/20",
+      text: "text-violet-700 dark:text-violet-300",
+      icon: "text-violet-600 dark:text-violet-400",
+    },
+    // Reziduuri străzi - Emerald
+    stradale: {
+      gradient: "from-emerald-500 to-teal-600",
+      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+      border: "border-emerald-200 dark:border-emerald-500/20",
+      text: "text-emerald-700 dark:text-emerald-300",
+      icon: "text-emerald-600 dark:text-emerald-400",
+    },
+    // Deșeuri de sortare - Orange
+    sortare: {
+      gradient: "from-orange-500 to-amber-600",
+      bg: "bg-orange-50 dark:bg-orange-500/10",
+      border: "border-orange-200 dark:border-orange-500/20",
+      text: "text-orange-700 dark:text-orange-300",
+      icon: "text-orange-600 dark:text-orange-400",
+    },
+    // Construcții - Pink
+    constructii: {
+      gradient: "from-pink-500 to-rose-600",
+      bg: "bg-pink-50 dark:bg-pink-500/10",
+      border: "border-pink-200 dark:border-pink-500/20",
+      text: "text-pink-700 dark:text-pink-300",
+      icon: "text-pink-600 dark:text-pink-400",
+    },
+    // Altele - Cyan
+    altele: {
+      gradient: "from-cyan-500 to-blue-600",
+      bg: "bg-cyan-50 dark:bg-cyan-500/10",
+      border: "border-cyan-200 dark:border-cyan-500/20",
+      text: "text-cyan-700 dark:text-cyan-300",
+      icon: "text-cyan-600 dark:text-cyan-400",
+    },
+  };
+
+  // ========================================================================
+  // MAPARE CATEGORIE → CULOARE (bazat pe cod sau nume)
+  // ========================================================================
+
+  const getCategoryColor = (category) => {
+    const name = category.category_name?.toLowerCase() || "";
+    const code = category.waste_code?.toLowerCase() || "";
+
+    // Deșeuri municipale (20 03 01)
+    if (code.includes("20 03 01") || name.includes("municipale") || name.includes("menajere")) {
+      return categoryColors.municipale;
+    }
+
+    // Reziduuri stradale (20 03 03)
+    if (code.includes("20 03 03") || name.includes("stradal") || name.includes("măturat")) {
+      return categoryColors.stradale;
+    }
+
+    // Deșeuri sortare (19 12 12)
+    if (code.includes("19 12 12") || name.includes("sortare") || name.includes("reziduu")) {
+      return categoryColors.sortare;
+    }
+
+    // Construcții (17 09 04)
+    if (code.includes("17 09 04") || name.includes("construc") || name.includes("demol")) {
+      return categoryColors.constructii;
+    }
+
+    // Default: Altele
+    return categoryColors.altele;
+  };
+
+  // ========================================================================
+  // FORMAT NUMERE
+  // ========================================================================
+
+  const formatNumber = (num) => {
+    if (!num && num !== 0) return "0";
+    return new Intl.NumberFormat("ro-RO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  // ========================================================================
+  // CALCUL TOTAL GENERAL (pentru procente)
+  // ========================================================================
+
+  const totalQuantity = categories.reduce(
+    (sum, cat) => sum + (parseFloat(cat.total_quantity) || 0),
+    0
+  );
+
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
-      {categories.slice(0, 5).map((category) => {
-        const {
-          gradient,
-          chipBg,
-          chipText,
-          barBg,
-          ring,
-          glow,
-        } = getColorConfig(category.waste_code);
-        const icon = getWasteCodeIcon(category.waste_code);
-        const percentage = Math.min(
-          Number(category.percentage_of_total || 0),
-          100,
-        );
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {categories.map((category, index) => {
+        const colors = getCategoryColor(category);
+        const quantity = parseFloat(category.total_quantity) || 0;
+        const ticketCount = parseInt(category.ticket_count, 10) || 0;
+        const percentage = totalQuantity > 0 ? (quantity / totalQuantity) * 100 : 0;
 
         return (
-          <article
-            key={category.waste_code}
-            className={`
-              relative group overflow-hidden rounded-2xl border border-slate-200/80 
-              dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 
-              backdrop-blur-lg shadow-[0_18px_45px_rgba(15,23,42,0.22)]
-              transition-all duration-500 ease-out
-              hover:-translate-y-1.5 hover:shadow-[0_26px_60px_rgba(15,23,42,0.35)]
-              hover:border-transparent hover:${ring}
-            `}
+          <div
+            key={category.waste_code || index}
+            className={`${colors.bg} ${colors.border} border rounded-xl p-5 hover:shadow-lg transition-all duration-300 relative overflow-hidden group`}
           >
-            {/* Decorative gradient halo */}
+            {/* Gradient accent bar (stânga) */}
             <div
-              className={`
-                pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full 
-                bg-gradient-to-br ${gradient} opacity-20 blur-2 transition-opacity 
-                duration-500 group-hover:opacity-40
-              `}
-            />
-            <div
-              className={`
-                pointer-events-none absolute -left-8 bottom-0 h-24 w-24 rounded-full 
-                bg-gradient-to-tl ${gradient} opacity-10 blur group-hover:opacity-25
-              `}
+              className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${colors.gradient} group-hover:w-2 transition-all duration-300`}
             />
 
-            {/* Inner content */}
-            <div className="relative z-10 flex h-full flex-col p-5">
-              {/* Header */}
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <span
-                    className={`
-                      inline-flex items-center rounded-full px-2.5 py-1 text-[0.68rem] font-semibold
-                      uppercase tracking-[0.08em] ${chipBg} ${chipText}
-                      ring-1 ring-inset ring-white/10
-                    `}
-                  >
-                    {category.waste_code}
-                  </span>
-                  <p className="max-w-[12rem] text-xs font-medium leading-snug text-slate-600 dark:text-slate-200/90">
-                    {category.waste_description}
-                  </p>
-                </div>
-
-                {/* Icon */}
-                <div
-                  className={`
-                    flex h-11 w-11 items-center justify-center rounded-xl 
-                    bg-gradient-to-br ${gradient} text-xl text-white
-                    shadow-lg ${glow}
-                    ring-2 ring-white/30 dark:ring-slate-900/40
-                  `}
-                >
-                  <span className="drop-shadow-sm">{icon}</span>
-                </div>
-              </div>
-
-              {/* Total tons */}
-              <div className="mb-4">
-                <p
-                  className={`
-                    bg-gradient-to-r ${gradient}
-                    bg-clip-text text-3xl font-extrabold tracking-tight
-                    text-transparent drop-shadow-sm
-                  `}
-                >
-                  {category.total_tons_formatted}
-                </p>
-                <p className="mt-1 text-[0.7rem] font-medium text-slate-500 dark:text-slate-400">
-                  {category.ticket_count}{" "}
-                  {category.ticket_count === 1 ? "tichet" : "tichete"} •{" "}
-                  {Number(category.total_tons || 0).toFixed(2)} tone
-                </p>
-              </div>
-
-              {/* Progress + percentage */}
-              <div className="mt-auto space-y-2">
-                <div className="flex items-center justify-between text-[0.7rem]">
-                  <span className="font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                    Din total
-                  </span>
-                  <span
-                    className={`
-                      bg-gradient-to-r ${gradient}
-                      bg-clip-text text-sm font-bold text-transparent
-                    `}
-                  >
-                    {formatPercent(category.percentage_of_total)}
-                  </span>
-                </div>
-
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800/90">
-                  <div
-                    className={`
-                      h-full rounded-full bg-gradient-to-r ${gradient} ${barBg}
-                      transition-all duration-[1100ms] ease-out
-                    `}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
+            {/* Icon top-right */}
+            <div className="flex justify-end mb-3">
+              <div className={`${colors.icon} opacity-20`}>
+                <Package className="w-8 h-8" />
               </div>
             </div>
 
-            {/* Corner status dot */}
-            <div
-              className={`
-                pointer-events-none absolute left-3 top-3 h-2.5 w-2.5 rounded-full 
-                bg-gradient-to-br ${gradient} shadow-[0_0_0_3px_rgba(15,23,42,0.7)]
-                animate-pulse
-              `}
-            />
-          </article>
+            {/* Categorie nume */}
+            <h3 className={`${colors.text} text-sm font-bold mb-2 line-clamp-2`}>
+              {category.category_name || "Necategorizat"}
+            </h3>
+
+            {/* Cantitate principală */}
+            <div className="mb-3">
+              <div className={`text-2xl font-bold ${colors.text}`}>
+                {formatNumber(quantity)}
+                <span className="text-sm font-normal ml-1">tone</span>
+              </div>
+            </div>
+
+            {/* Info secundară - FIX: Eliminat duplicat cantitate */}
+            <div className="space-y-1.5">
+              {/* Tichete + Tone (într-un singur rând) */}
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {ticketCount} tichete • {formatNumber(quantity)} tone
+                </span>
+              </div>
+
+              {/* Procent din total */}
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Din total
+                </span>
+                <span className={`font-bold ${colors.text}`}>
+                  {formatNumber(percentage)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Cod deșeu - FIX LIGHT MODE: Text mai întunecat pentru vizibilitate */}
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Cod:
+                </span>
+                <span className="text-xs font-mono font-bold text-gray-800 dark:text-gray-200">
+                  {category.waste_code || "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
         );
       })}
     </div>
