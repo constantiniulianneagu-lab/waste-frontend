@@ -34,22 +34,22 @@ const SectorStatsTable = ({ data = [], loading = false }) => {
 
   return (
     <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
-      {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-          Cantități per sector
-        </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Distribuția cantităților depozitate pe sectoare (tone)
-        </p>
-      </div>
+    {/* Header */}
+    <div className="mb-5">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+        Cantități per sector
+      </h3>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        Distribuția cantităților pe sectoare (tone)
+      </p>
+    </div>
 
-      {/* Table header */}
-      <div className="grid grid-cols-[2fr,1.2fr,1fr] gap-3 pb-2 border-b border-gray-200 dark:border-gray-800 text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-        <span>Sector</span>
-        <span className="text-right">Cantitate (t)</span>
-        <span className="text-right">Variație</span>
-      </div>
+    {/* Table header */}
+    <div className="grid grid-cols-[2fr,1.2fr,1fr] gap-3 pb-2 border-b border-gray-200 dark:border-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
+      <span>Sector</span>
+      <span className="text-right">Cantitate (t)</span>
+      <span className="text-right">Variație</span>
+    </div>
 
       {/* Rows – maxim 6, fără scroll */}
       <div className="mt-3 space-y-2 flex-1">
