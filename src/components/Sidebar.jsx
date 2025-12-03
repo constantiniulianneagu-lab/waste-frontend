@@ -90,8 +90,8 @@ const Sidebar = () => {
               <Trash2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-white">SAMD București</h1>
-              <p className="text-[10px] text-gray-400">Sistem Automatizat de Monitorizare Deșeuri</p>
+              <h1 className="text-base font-bold text-white">SAMD</h1>
+              <p className="text-[10px] text-gray-400">Sistem Avansat de Monitorizare Deșeuri</p>
             </div>
           </div>
         ) : (
