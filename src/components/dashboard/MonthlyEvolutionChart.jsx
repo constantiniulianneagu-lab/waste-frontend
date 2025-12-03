@@ -125,8 +125,8 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="w-full h-[260px] sm:h-[300px]">
+      {/* Chart - MAI MARE */}
+      <div className="w-full h-[300px] sm:h-[340px]">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === "area" && (
             <AreaChart data={data}>
@@ -243,14 +243,14 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Stats footer */}
-      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats footer - CENTRATE VERTICAL */}
+      <div className="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-6">
         {/* Maximum */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        <div className="flex flex-col justify-center">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             Maximum
           </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+          <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
             {stats.maximum?.value
               ? stats.maximum.value.toLocaleString("ro-RO", {
                   minimumFractionDigits: 2,
@@ -258,17 +258,17 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 })
               : "0"}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {stats.maximum?.month || "N/A"}
           </p>
         </div>
 
         {/* Minimum - FIX: AFIȘEAZĂ ORICE VALOARE (INCLUSIV 0) */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        <div className="flex flex-col justify-center">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             Minimum
           </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+          <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
             {typeof stats.minimum?.value === 'number'
               ? stats.minimum.value.toLocaleString("ro-RO", {
                   minimumFractionDigits: 2,
@@ -276,17 +276,17 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 })
               : "N/A"}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {stats.minimum?.month || "N/A"}
           </p>
         </div>
 
         {/* Average */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        <div className="flex flex-col justify-center">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             Medie lunară
           </p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+          <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
             {stats.average_monthly
               ? stats.average_monthly.toLocaleString("ro-RO", {
                   minimumFractionDigits: 2,
@@ -294,19 +294,19 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 })
               : "0"}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             tone / lună
           </p>
         </div>
 
         {/* Trending */}
-        <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+        <div className="flex flex-col justify-center">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
             Trending
           </p>
           <p
             className={[
-              "text-lg font-semibold",
+              "text-xl font-bold leading-tight",
               stats.trending?.direction === "down"
                 ? "text-rose-500 dark:text-rose-400"
                 : "text-emerald-500 dark:text-emerald-400",
@@ -319,7 +319,7 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
             })}
             %
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             vs {stats.trending?.vs_period || "--"}
           </p>
         </div>
