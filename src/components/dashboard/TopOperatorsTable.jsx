@@ -1,52 +1,79 @@
 // src/components/dashboard/TopOperatorsTable.jsx
+/**
+ * ============================================================================
+ * TOP OPERATORS TABLE - MODERN ELEGANT (ARMONIZAT CU RECENT TICKETS)
+ * ============================================================================
+ * 
+ * 🎨 DESIGN:
+ * - Compact, elegant, profesional
+ * - Badge separat pentru fiecare sector
+ * - Progress bar subtil (fără procent scris)
+ * - Armonizat cu RecentTicketsTable
+ * 
+ * ============================================================================
+ */
+
 import React from "react";
 
 const TopOperatorsTable = ({ data = [], loading = false }) => {
-  // Culori uniforme pe sectoare (la fel ca în restul dashboard-ului)
+  
+  // ========================================================================
+  // CULORI SECTOARE (ECO PALETTE)
+  // ========================================================================
+  
   const sectorColors = {
-    1: {
-      gradient: "from-violet-500 to-violet-600",
-      shadow: "shadow-violet-500/40",
+    1: { 
+      bg: "bg-violet-500", 
+      text: "text-violet-500",
+      progress: "bg-violet-500"
     },
-    2: {
-      gradient: "from-slate-200 to-slate-300",
-      shadow: "shadow-slate-400/40",
+    2: { 
+      bg: "bg-gray-400", 
+      text: "text-gray-400",
+      progress: "bg-gray-400"
     },
-    3: {
-      gradient: "from-emerald-500 to-emerald-600",
-      shadow: "shadow-emerald-500/40",
+    3: { 
+      bg: "bg-emerald-500", 
+      text: "text-emerald-500",
+      progress: "bg-emerald-500"
     },
-    4: {
-      gradient: "from-amber-500 to-amber-600",
-      shadow: "shadow-amber-500/40",
+    4: { 
+      bg: "bg-amber-500", 
+      text: "text-amber-500",
+      progress: "bg-amber-500"
     },
-    5: {
-      gradient: "from-pink-500 to-rose-500",
-      shadow: "shadow-pink-500/40",
+    5: { 
+      bg: "bg-pink-500", 
+      text: "text-pink-500",
+      progress: "bg-pink-500"
     },
-    6: {
-      gradient: "from-cyan-500 to-sky-500",
-      shadow: "shadow-cyan-500/40",
+    6: { 
+      bg: "bg-cyan-500", 
+      text: "text-cyan-500",
+      progress: "bg-cyan-500"
     },
   };
 
   const getColorConfig = (sectorNum) =>
     sectorColors[sectorNum] || sectorColors[1];
 
-  /* LOADING SKELETON */
+  // ========================================================================
+  // LOADING SKELETON
+  // ========================================================================
+  
   if (loading) {
     return (
-      <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1a1f2e]">
+      <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
         <div className="mb-6">
           <div className="h-5 w-48 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
-          <div className="mt-2 h-4 w-64 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded-md bg-gray-100 dark:bg-gray-600" />
         </div>
 
-        <div className="flex flex-1 flex-col gap-2">
+        <div className="flex flex-1 flex-col gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="h-[72px] animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800"
+              className="h-20 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-700"
             />
           ))}
         </div>
@@ -54,105 +81,113 @@ const TopOperatorsTable = ({ data = [], loading = false }) => {
     );
   }
 
+  // ========================================================================
+  // CALCULATE TOTAL (pentru progress bar)
+  // ========================================================================
+  
+  const totalTons = data.reduce((sum, op) => sum + (op.total_tons || 0), 0);
+
+  // ========================================================================
+  // RENDER MAIN
+  // ========================================================================
+
   return (
-    <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1a1f2e]">
+    <div className="flex h-[600px] flex-col rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+      
       {/* HEADER */}
-      <div className="mb-6 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="mb-5 flex-shrink-0">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           Top operatori salubrizare
         </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           Cantități depozitate în perioada selectată
         </p>
       </div>
 
-      {/* LISTĂ CU SCROLL */}
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden pr-1 max-h-[420px]">
+      {/* LISTĂ CU SCROLL - CARDS ELEGANTE */}
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden pr-2 max-h-[470px]">
         {data.map((operator, idx) => {
-          const firstSectorNum =
-            operator.sector_numbers?.[0] ||
-            operator.sectors?.[0] ||
-            1;
-
+          // Sectors array
+          const sectors = operator.sector_numbers || operator.sectors || [1];
+          const firstSectorNum = sectors[0] || 1;
           const colorConfig = getColorConfig(firstSectorNum);
 
-          const sectors =
-            operator.sector_numbers ||
-            operator.sectors ||
-            [firstSectorNum];
-
-          const displaySectors = sectors.slice(0, 3);
-          const extraCount =
-            sectors.length > 3 ? sectors.length - 3 : 0;
+          // Progress bar percentage
+          const percentage = totalTons > 0 
+            ? ((operator.total_tons || 0) / totalTons) * 100 
+            : 0;
 
           return (
             <div
               key={operator.institution_id || idx}
-              className="group relative flex flex-shrink-0 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm shadow-xs transition-all duration-300 hover:-translate-x-1 hover:border-gray-200 hover:bg-white hover:shadow-lg dark:border-gray-800 dark:bg-[#0f1419] dark:hover:border-gray-700 dark:hover:bg-[#101623]"
+              className="group relative flex flex-col gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 transition-all duration-200 hover:shadow-sm hover:border-emerald-500/40 dark:hover:border-emerald-500/30"
             >
-              {/* Bară colorată stânga */}
-              <div
-                className={`absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b ${colorConfig.gradient}`}
-              />
-
-              {/* Badge-uri de sector */}
-              <div className="ml-3 flex flex-shrink-0 items-center gap-1.5">
-                {displaySectors.map((sectorNum, i) => {
-                  const cfg = getColorConfig(sectorNum);
-                  return (
-                    <div
-                      key={i}
-                      className={`
-                        flex h-9 w-9 items-center justify-center rounded-xl 
-                        bg-gradient-to-br ${cfg.gradient}
-                        text-xs font-semibold text-white shadow-md
-                      `}
-                    >
-                      {sectorNum}
+              
+              {/* ROW 1: BADGE-URI + OPERATOR + CANTITATE */}
+              <div className="flex items-center gap-3">
+                
+                {/* BADGE-URI SECTOARE (separate) */}
+                <div className="flex-shrink-0 flex items-center gap-1.5">
+                  {sectors.slice(0, 3).map((sectorNum, i) => {
+                    const cfg = getColorConfig(sectorNum);
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center justify-center w-7 h-7 rounded-lg ${cfg.bg} shadow-sm`}
+                      >
+                        <span className="text-xs font-bold text-white">
+                          {sectorNum}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {sectors.length > 3 && (
+                    <div className="flex items-center justify-center w-7 h-7 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                        +{sectors.length - 3}
+                      </span>
                     </div>
-                  );
-                })}
-                {extraCount > 0 && (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-dashed border-gray-400/40 text-[11px] font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-300">
-                    +{extraCount}
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* INFO OPERATOR */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate leading-tight">
+                    {operator.institution_name}
+                  </p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    Sector {operator.sector_numbers_display || sectors.join(", ")}
+                  </p>
+                </div>
+
+                {/* CANTITATE */}
+                <div className="flex-shrink-0 text-right">
+                  <p className={`text-base font-bold ${colorConfig.text} leading-tight`}>
+                    {operator.total_tons_formatted ||
+                      operator.total_tons?.toLocaleString("ro-RO", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal ml-1">t</span>
+                  </p>
+                </div>
               </div>
 
-              {/* Info operator */}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-gray-900 dark:text-white">
-                  {operator.institution_name}
-                </p>
-                <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
-                  Sector{" "}
-                  {operator.sector_numbers_display ||
-                    sectors.join(", ")}
-                </p>
+              {/* ROW 2: PROGRESS BAR (fără procent scris) */}
+              <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${colorConfig.progress} rounded-full transition-all duration-500`}
+                  style={{ width: `${percentage}%` }}
+                />
               </div>
 
-              {/* Cantitate totală */}
-              <div className="flex flex-shrink-0 flex-col items-end">
-                <p
-                  className={`
-                    bg-gradient-to-r ${colorConfig.gradient}
-                    bg-clip-text text-base font-bold text-transparent
-                  `}
-                >
-                  {operator.total_tons_formatted ||
-                    operator.total_tons?.toLocaleString("ro-RO", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                </p>
-                <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                  tone
-                </p>
-              </div>
+              {/* Accent line subtil (hover) */}
+              <div className="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-gradient-to-b from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </div>
           );
         })}
 
+        {/* EMPTY STATE */}
         {data.length === 0 && (
           <div className="flex flex-1 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
             Nu există operatori pentru perioada selectată.
@@ -162,9 +197,9 @@ const TopOperatorsTable = ({ data = [], loading = false }) => {
 
       {/* FOOTER */}
       {data.length > 0 && (
-        <div className="mt-4 flex-shrink-0 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-2 text-center text-xs text-gray-500 dark:border-gray-700 dark:bg-[#0f1419] dark:text-gray-400">
+        <div className="mt-4 flex-shrink-0 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">
           Total{" "}
-          <span className="font-semibold text-gray-800 dark:text-gray-100">
+          <span className="font-bold text-gray-900 dark:text-white">
             {data.length}
           </span>{" "}
           operatori afișați

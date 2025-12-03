@@ -141,8 +141,8 @@ const RecentTicketsTable = ({ data = [], loading = false }) => {
         </div>
       </div>
 
-      {/* LISTĂ CU SCROLL - MODERN CARDS */}
-      <div className="flex max-h-[470px] flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-hidden pr-2">
+      {/* LISTĂ CU SCROLL - CARDS ELEGANTE COMPACTE */}
+      <div className="flex max-h-[470px] flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden pr-2">
         {data.map((ticket, idx) => {
           const sectorNum = ticket.sector_number || 1;
           const colorConfig = getColorConfig(sectorNum);
@@ -150,12 +150,12 @@ const RecentTicketsTable = ({ data = [], loading = false }) => {
           return (
             <div
               key={ticket.ticket_id || idx}
-              className="group relative flex items-center gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 backdrop-blur-sm px-4 py-3.5 transition-all duration-300 hover:shadow-md hover:scale-[1.01] hover:border-emerald-500/50 dark:hover:border-emerald-500/30"
+              className="group relative flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 transition-all duration-200 hover:shadow-sm hover:border-emerald-500/40 dark:hover:border-emerald-500/30"
             >
               
-              {/* BADGE SECTOR - STÂNGA */}
-              <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl ${colorConfig.bg} shadow-md`}>
-                <span className="text-xl font-bold text-white">
+              {/* BADGE SECTOR - COMPACT */}
+              <div className={`flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg ${colorConfig.bg} shadow-sm`}>
+                <span className="text-base font-bold text-white">
                   {sectorNum}
                 </span>
               </div>
@@ -163,17 +163,17 @@ const RecentTicketsTable = ({ data = [], loading = false }) => {
               {/* INFO CENTRU - OPERATOR + COD + NR AUTO */}
               <div className="flex-1 min-w-0">
                 {/* Operator */}
-                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate leading-tight">
                   {ticket.supplier_name || "Operator necunoscut"}
                 </p>
                 
                 {/* Cod deșeu + Nr. auto */}
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <span className="font-mono font-semibold">{ticket.waste_code}</span>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                  <span className="font-mono font-medium">{ticket.waste_code}</span>
                   {ticket.vehicle_number && (
                     <>
-                      <span>•</span>
-                      <span className="font-medium">{ticket.vehicle_number}</span>
+                      <span className="text-gray-300 dark:text-gray-600">•</span>
+                      <span>{ticket.vehicle_number}</span>
                     </>
                   )}
                 </div>
@@ -181,27 +181,24 @@ const RecentTicketsTable = ({ data = [], loading = false }) => {
 
               {/* INFO DREAPTA - CANTITATE + DATĂ/ORĂ */}
               <div className="flex-shrink-0 text-right">
-                {/* Cantitate */}
-                <p className={`text-xl font-bold ${colorConfig.text}`}>
+                {/* Cantitate + tone (1 rand) */}
+                <p className={`text-base font-bold ${colorConfig.text} leading-tight`}>
                   {ticket.net_weight_tons_formatted || 
                     `${(ticket.net_weight_tons || 0).toLocaleString('ro-RO', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}`}
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-                  tone
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal ml-1">t</span>
                 </p>
                 
-                {/* Dată + Oră */}
-                <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
-                  <div>{formatDate(ticket.ticket_date)}</div>
-                  <div className="font-mono">{formatTime(ticket.ticket_date || ticket.created_at)}</div>
-                </div>
+                {/* Dată + Oră (1 rand) */}
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                  {formatDate(ticket.ticket_date)} • {formatTime(ticket.ticket_date || ticket.created_at)}
+                </p>
               </div>
 
-              {/* Accent line (hover) */}
-              <div className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {/* Accent line subtil (hover) */}
+              <div className="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-gradient-to-b from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </div>
           );
         })}

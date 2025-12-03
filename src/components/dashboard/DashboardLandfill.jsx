@@ -1,16 +1,7 @@
 // src/components/dashboard/DashboardLandfill.jsx
 /**
  * ============================================================================
- * DASHBOARD DEPOZITARE - FINAL CLEAN VERSION
- * ============================================================================
- * 
- * 🎨 FEATURES:
- * - Header modern eco integrat
- * - Search funcțional
- * - Notificări dinamice
- * - Gradient emerald/teal theme consistent
- * - ❌ FĂRĂ buton Actualizează (se face automat la schimbare filtre)
- * 
+ * DASHBOARD DEPOZITARE - FINAL WITH RECENT TICKETS COMPONENT
  * ============================================================================
  */
 
@@ -25,25 +16,22 @@ import DashboardFilters from "./DashboardFilters.jsx";
 import WasteCategoryCards from "./WasteCategoryCards.jsx";
 import MonthlyEvolutionChart from "./MonthlyEvolutionChart.jsx";
 import SectorStatsTable from "./SectorStatsTable.jsx";
+import RecentTicketsTable from "./RecentTicketsTable.jsx";
+import TopOperatorsTable from "./TopOperatorsTable.jsx";
 
 const DashboardLandfill = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationCount] = useState(3); // Mock - conectează la API mai târziu
+  const [notificationCount] = useState(3);
 
-  // Filters
   const [filters, setFilters] = useState({
     year: new Date().getFullYear(),
     from: getYearStart(),
     to: getTodayDate(),
     sector_id: null,
   });
-
-  // ========================================================================
-  // FETCH DASHBOARD DATA
-  // ========================================================================
 
   const fetchDashboardData = async (filterParams = filters) => {
     try {
@@ -60,7 +48,6 @@ const DashboardLandfill = () => {
         throw new Error("Empty response from API");
       }
   
-      // Backend trimite { success, data }
       if (typeof res === "object" && "success" in res) {
         if (!res.success) {
           throw new Error(res.message || "API responded with success=false");
@@ -68,7 +55,6 @@ const DashboardLandfill = () => {
         console.log("✅ Using res.data for dashboard:", res.data);
         setData(res.data);
       } else {
-        // Fallback - în caz că ai alt format
         console.log("⚠️ Using response as data directly");
         setData(res);
       }
@@ -82,12 +68,7 @@ const DashboardLandfill = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // ========================================================================
-  // HANDLERS
-  // ========================================================================
 
   const handleFilterChange = (newFilters) => {
     console.log('🔄 Filter change requested:', newFilters);
@@ -98,12 +79,7 @@ const DashboardLandfill = () => {
   const handleSearchChange = (query) => {
     setSearchQuery(query);
     console.log("🔍 Search query:", query);
-    // TODO: Implementează logica de filtrare în funcție de search
   };
-
-  // ========================================================================
-  // LOADING STATE
-  // ========================================================================
 
   if (loading) {
     return (
@@ -123,10 +99,6 @@ const DashboardLandfill = () => {
       </div>
     );
   }
-
-  // ========================================================================
-  // ERROR STATE
-  // ========================================================================
 
   if (error) {
     return (
@@ -167,32 +139,24 @@ const DashboardLandfill = () => {
   const sectors = data?.per_sector || [];
   const availableYears = data?.available_years || [new Date().getFullYear()];
 
-  // ========================================================================
-  // MAIN RENDER
-  // ========================================================================
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
-      {/* HEADER MODERN ECO */}
       <DashboardHeader 
         notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
       />
 
-      {/* MAIN CONTENT */}
       <div className="px-6 lg:px-8 py-6 space-y-6">
         
-        {/* FILTERS */}
         <DashboardFilters
-  filters={filters}
-  onFilterChange={handleFilterChange}
-  sectors={sectors}
-  availableYears={availableYears}
-  loading={loading}
-/>
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          sectors={sectors}
+          availableYears={availableYears}
+          loading={loading}
+        />
 
-        {/* EMPTY STATE */}
         {!data?.summary ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -207,7 +171,7 @@ const DashboardLandfill = () => {
           </div>
         ) : (
           <>
-            {/* SUMMARY CARDS (4) - ECO THEME */}
+            {/* SUMMARY CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <SummaryCard
                 title="TOTAL DEȘEURI"
@@ -218,18 +182,14 @@ const DashboardLandfill = () => {
               />
               <SummaryCard
                 title="TOTAL TICHETE"
-                value={
-                  data.summary.total_tickets?.toLocaleString("ro-RO") || "0"
-                }
+                value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
                 subtitle="înregistrări"
                 gradient="from-cyan-500 to-blue-600"
                 icon="🧾"
               />
               <SummaryCard
                 title="MEDIE PER TICHET"
-                value={
-                  data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"
-                }
+                value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
                 subtitle="tone / tichet"
                 gradient="from-lime-500 to-emerald-600"
                 icon="⚖️"
@@ -270,143 +230,17 @@ const DashboardLandfill = () => {
             {/* TOP OPERATORS + RECENT TICKETS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-              {/* TOP OPERATORS */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                    Top operatori salubrizare
-                  </h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Cantități depozitate în perioada selectată
-                  </p>
-                </div>
+              {/* TOP OPERATORS - MODERN COMPONENT */}
+              <TopOperatorsTable 
+                data={data?.top_operators || []}
+                loading={loading}
+              />
 
-                <div className="max-h-[420px] overflow-y-auto">
-                  {data?.top_operators && data.top_operators.length > 0 ? (
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {data.top_operators.map((operator) => (
-                        <div
-                          key={operator.institution_id}
-                          className="px-6 py-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div
-                              className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{
-                                backgroundColor: `${operator.icon_color}22`,
-                              }}
-                            >
-                              <span
-                                className="text-sm font-bold"
-                                style={{ color: operator.icon_color }}
-                              >
-                                {operator.sector_numbers_display}
-                              </span>
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                {operator.institution_name}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                Sector {operator.sector_numbers_display}
-                              </p>
-                            </div>
-
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                                {operator.total_tons_formatted}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                tone
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Nu există operatori pentru perioada selectată.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* RECENT TICKETS */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                      Ultimele înregistrări
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      Până la 50 de tichete recente
-                    </p>
-                  </div>
-                  <button className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-semibold">
-                    Vezi toate
-                  </button>
-                </div>
-
-                <div className="max-h-[420px] overflow-y-auto">
-                  {data?.recent_tickets && data.recent_tickets.length > 0 ? (
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {data.recent_tickets.map((ticket) => (
-                        <div
-                          key={ticket.ticket_id}
-                          className="px-6 py-4 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 transition-colors"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div
-                              className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{
-                                backgroundColor: `${ticket.icon_color}22`,
-                              }}
-                            >
-                              <span
-                                className="text-sm font-bold"
-                                style={{ color: ticket.icon_color }}
-                              >
-                                {ticket.sector_number}
-                              </span>
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                Cod deșeu: {ticket.waste_code}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {new Date(ticket.ticket_date).toLocaleDateString(
-                                  "ro-RO"
-                                )}{" "}
-                                • Tichet {ticket.ticket_number}
-                              </p>
-                            </div>
-
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-sm font-bold text-gray-900 dark:text-white">
-                                {ticket.net_weight_tons_formatted}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                tone
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-6 py-12 text-center">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Nu există tichete pentru perioada selectată.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* RECENT TICKETS - MODERN COMPONENT */}
+              <RecentTicketsTable 
+                data={data?.recent_tickets || []}
+                loading={loading}
+              />
             </div>
           </>
         )}
@@ -415,14 +249,8 @@ const DashboardLandfill = () => {
   );
 };
 
-/**
- * ============================================================================
- * SUMMARY CARD - ECO THEME
- * ============================================================================
- */
 const SummaryCard = ({ title, value, subtitle, gradient, icon }) => (
   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg transition-all group relative overflow-hidden">
-    {/* Gradient accent bar */}
     <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${gradient} group-hover:w-2 transition-all`} />
     
     <div className="flex items-start justify-between gap-3 pl-2">
