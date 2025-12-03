@@ -1,12 +1,12 @@
 // src/components/dashboard/DashboardFilters.jsx
 /**
  * ============================================================================
- * DASHBOARD FILTERS - dd/mm/yyyy FORMAT + AUTO-UPDATE
+ * DASHBOARD FILTERS - FINAL VERSION (ANI DINAMICI + DATE PICKER FIX)
  * ============================================================================
  * 
  * 🎨 DESIGN:
- * - Format afișare: dd/mm/yyyy (românesc)
- * - Date picker nativ funcțional
+ * - Date picker nativ FUNCȚIONAL (iconițe vizibile)
+ * - Ani dinamici din backend (2025, 2024, etc.)
  * - Grid 6 coloane proporționale
  * 
  * 🔧 FUNCȚIONAL:
@@ -37,29 +37,19 @@ const DashboardFilters = ({
   }, [filters]);
 
   // ========================================================================
-  // CONVERSIE DATE: YYYY-MM-DD ↔ DD/MM/YYYY
-  // ========================================================================
-
-  const formatDateDisplay = (isoDate) => {
-    if (!isoDate) return '';
-    try {
-      const [year, month, day] = isoDate.split('-');
-      return `${day}/${month}/${year}`;
-    } catch {
-      return isoDate;
-    }
-  };
-
-  // ========================================================================
-  // ANI DISPONIBILI
+  // ANI DISPONIBILI (DIN BACKEND)
   // ========================================================================
 
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
+    
+    // Dacă backend returnează ani, folosim ăia
     if (availableYears && availableYears.length > 0) {
-      return availableYears.sort((a, b) => b - a);
+      return availableYears.sort((a, b) => b - a); // Descrescător (2025, 2024, 2023...)
     }
-    return [currentYear];
+    
+    // Fallback: ultimii 3 ani
+    return [currentYear, currentYear - 1, currentYear - 2];
   };
 
   const yearOptions = getYearOptions();
@@ -173,7 +163,7 @@ const DashboardFilters = ({
       {/* GRID 6 COLOANE */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
         
-        {/* 1. ANUL - AUTO-UPDATE DATE */}
+        {/* 1. ANUL - DINAMIC DIN BACKEND */}
         <div className="md:col-span-1">
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -193,66 +183,38 @@ const DashboardFilters = ({
           </select>
         </div>
 
-        {/* 2. DATA ÎNCEPUT - AFIȘARE dd/mm/yyyy */}
-        <div className="md:col-span-1 relative">
+        {/* 2. DATA ÎNCEPUT - DATE PICKER NATIV FUNCȚIONAL */}
+        <div className="md:col-span-1">
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data început
           </label>
-          
-          {/* Input vizual (read-only) cu format românesc */}
-          <div className="relative">
-            <input
-              type="text"
-              value={formatDateDisplay(localFilters.from)}
-              readOnly
-              className="w-full px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white cursor-pointer"
-              onClick={() => document.getElementById('date-from-picker').showPicker()}
-            />
-            
-            {/* Date picker ascuns (overlay) */}
-            <input
-              id="date-from-picker"
-              type="date"
-              value={localFilters.from}
-              onChange={(e) => {
-                console.log('📅 Date from changed:', e.target.value);
-                setLocalFilters({ ...localFilters, from: e.target.value });
-              }}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              disabled={loading}
-            />
-          </div>
+          <input
+            type="date"
+            value={localFilters.from}
+            onChange={(e) => {
+              console.log('📅 Date from changed:', e.target.value);
+              setLocalFilters({ ...localFilters, from: e.target.value });
+            }}
+            className="w-full px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5"
+            disabled={loading}
+          />
         </div>
 
-        {/* 3. DATA SFÂRȘIT - AFIȘARE dd/mm/yyyy */}
-        <div className="md:col-span-1 relative">
+        {/* 3. DATA SFÂRȘIT - DATE PICKER NATIV FUNCȚIONAL */}
+        <div className="md:col-span-1">
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data sfârșit
           </label>
-          
-          {/* Input vizual (read-only) cu format românesc */}
-          <div className="relative">
-            <input
-              type="text"
-              value={formatDateDisplay(localFilters.to)}
-              readOnly
-              className="w-full px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white cursor-pointer"
-              onClick={() => document.getElementById('date-to-picker').showPicker()}
-            />
-            
-            {/* Date picker ascuns (overlay) */}
-            <input
-              id="date-to-picker"
-              type="date"
-              value={localFilters.to}
-              onChange={(e) => {
-                console.log('📅 Date to changed:', e.target.value);
-                setLocalFilters({ ...localFilters, to: e.target.value });
-              }}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              disabled={loading}
-            />
-          </div>
+          <input
+            type="date"
+            value={localFilters.to}
+            onChange={(e) => {
+              console.log('📅 Date to changed:', e.target.value);
+              setLocalFilters({ ...localFilters, to: e.target.value });
+            }}
+            className="w-full px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5"
+            disabled={loading}
+          />
         </div>
 
         {/* 4. LOCAȚIE */}
