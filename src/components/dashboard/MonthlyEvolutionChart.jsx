@@ -28,21 +28,21 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
   ];
 
   // ─────────────────────────────────────────────────────────────
-  // CUSTOM TOOLTIP COMPONENT (DARK/LIGHT ADAPTIVE)
+  // CUSTOM TOOLTIP COMPONENT (MODERN GLASSMORPHISM)
   // ─────────────────────────────────────────────────────────────
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-gray-800 border-2 border-emerald-500 dark:border-emerald-400 rounded-xl p-3 shadow-xl">
-          <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-lg px-3 py-2 shadow-lg">
+          <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-0.5">
             {label}
           </p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
             {Number(payload[0].value).toLocaleString("ro-RO", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}{" "}
-            tone
+            <span className="text-xs font-normal text-gray-600 dark:text-gray-400">tone</span>
           </p>
         </div>
       );
@@ -263,18 +263,18 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
           </p>
         </div>
 
-        {/* Minimum - FIX: AFIȘEAZĂ VALOAREA CORECT */}
+        {/* Minimum - FIX: AFIȘEAZĂ ORICE VALOARE (INCLUSIV 0) */}
         <div>
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Minimum
           </p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {stats.minimum?.value !== undefined && stats.minimum?.value !== null
+            {typeof stats.minimum?.value === 'number'
               ? stats.minimum.value.toLocaleString("ro-RO", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })
-              : "0"}
+              : "N/A"}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {stats.minimum?.month || "N/A"}
