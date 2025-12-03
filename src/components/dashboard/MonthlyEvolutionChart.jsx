@@ -16,7 +16,7 @@ import {
 import { Activity, BarChart3, TrendingUp } from "lucide-react";
 
 const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
-  const [chartType, setChartType] = useState("area"); // 'area' | 'bar' | 'line'
+  const [chartType, setChartType] = useState("area");
 
   const hasData = Array.isArray(data) && data.length > 0;
   const yearLabel = hasData ? data[0]?.year : null;
@@ -28,11 +28,34 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
   ];
 
   // ─────────────────────────────────────────────────────────────
+  // CUSTOM TOOLTIP COMPONENT (DARK/LIGHT ADAPTIVE)
+  // ─────────────────────────────────────────────────────────────
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 border-2 border-emerald-500 dark:border-emerald-400 rounded-xl p-3 shadow-xl">
+          <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+            {label}
+          </p>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+            {Number(payload[0].value).toLocaleString("ro-RO", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            tone
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // ─────────────────────────────────────────────────────────────
   // LOADING STATE
   // ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -48,9 +71,9 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
   // ─────────────────────────────────────────────────────────────
   if (!hasData) {
     return (
-      <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 xl:p-7 h-[430px] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
             <Activity className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -65,7 +88,7 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
   // MAIN RENDER
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white dark:bg-[#1a1f2e] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 xl:p-7 shadow-sm flex flex-col h-full">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 xl:p-7 shadow-sm flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
@@ -79,7 +102,7 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
         </div>
 
         {/* Chart type switcher */}
-        <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 p-1">
+        <div className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-1">
           {chartModes.map(({ id, label, icon: Icon }) => {
             const active = chartType === id;
             return (
@@ -90,8 +113,8 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 className={[
                   "inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-[13px] font-medium transition-all",
                   active
-                    ? "bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-md"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/70",
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800",
                 ].join(" ")}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -109,14 +132,13 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="landfillArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.9} />
-                  <stop offset="95%" stopColor="#0f172a" stopOpacity={0.05} />
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
+                className="stroke-gray-200 dark:stroke-gray-700"
                 vertical={false}
               />
               <XAxis
@@ -124,43 +146,19 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 tickLine={false}
                 axisLine={false}
                 padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
                 tickFormatter={(value) =>
                   value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                 }
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
                 dataKey="total_tons"
@@ -176,8 +174,7 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
             <BarChart data={data}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
+                className="stroke-gray-200 dark:stroke-gray-700"
                 vertical={false}
               />
               <XAxis
@@ -185,47 +182,23 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 tickLine={false}
                 axisLine={false}
                 padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
                 tickFormatter={(value) =>
                   value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                 }
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="total_tons"
                 radius={[8, 8, 0, 0]}
-                className="fill-emerald-500 dark:fill-emerald-400"
+                fill="#10b981"
                 animationDuration={900}
               />
             </BarChart>
@@ -235,8 +208,7 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
             <LineChart data={data}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-800"
+                className="stroke-gray-200 dark:stroke-gray-700"
                 vertical={false}
               />
               <XAxis
@@ -244,49 +216,25 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
                 tickLine={false}
                 axisLine={false}
                 padding={{ left: 10, right: 10 }}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{
-                  fontSize: 12,
-                  fill: "#6b7280",
-                }}
+                className="text-gray-600 dark:text-gray-400"
+                tick={{ fontSize: 12 }}
                 tickFormatter={(value) =>
                   value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                 }
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#020617",
-                  borderRadius: 12,
-                  border: "1px solid rgba(148, 163, 184, 0.3)",
-                  padding: 12,
-                  color: "#e5e7eb",
-                }}
-                labelStyle={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-                itemStyle={{
-                  fontSize: 12,
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString("ro-RO")} t`,
-                  "Cantitate",
-                ]}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Line
                 type="monotone"
                 dataKey="total_tons"
-                stroke="#38bdf8"
+                stroke="#0ea5e9"
                 strokeWidth={3}
-                dot={{ r: 3.5, strokeWidth: 0, fill: "#38bdf8" }}
+                dot={{ r: 3.5, strokeWidth: 0, fill: "#0ea5e9" }}
                 activeDot={{ r: 6 }}
                 animationDuration={900}
               />
@@ -296,15 +244,18 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
       </div>
 
       {/* Stats footer */}
-      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Max */}
+      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Maximum */}
         <div>
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Maximum
           </p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
             {stats.maximum?.value
-              ? stats.maximum.value.toLocaleString("ro-RO")
+              ? stats.maximum.value.toLocaleString("ro-RO", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
               : "0"}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -312,14 +263,17 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
           </p>
         </div>
 
-        {/* Min */}
+        {/* Minimum - FIX: AFIȘEAZĂ VALOAREA CORECT */}
         <div>
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Minimum
           </p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {stats.minimum?.value
-              ? stats.minimum.value.toLocaleString("ro-RO")
+            {stats.minimum?.value !== undefined && stats.minimum?.value !== null
+              ? stats.minimum.value.toLocaleString("ro-RO", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
               : "0"}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -334,7 +288,10 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
           </p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
             {stats.average_monthly
-              ? stats.average_monthly.toLocaleString("ro-RO")
+              ? stats.average_monthly.toLocaleString("ro-RO", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
               : "0"}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -351,12 +308,16 @@ const MonthlyEvolutionChart = ({ data = [], stats = {}, loading = false }) => {
             className={[
               "text-lg font-semibold",
               stats.trending?.direction === "down"
-                ? "text-rose-500"
-                : "text-emerald-500",
+                ? "text-rose-500 dark:text-rose-400"
+                : "text-emerald-500 dark:text-emerald-400",
             ].join(" ")}
           >
             {stats.trending?.direction === "down" ? "↓" : "↑"}{" "}
-            {Math.abs(stats.trending?.value || 0).toLocaleString("ro-RO")}%
+            {Math.abs(stats.trending?.value || 0).toLocaleString("ro-RO", {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })}
+            %
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             vs {stats.trending?.vs_period || "--"}
