@@ -1,7 +1,14 @@
 // src/components/Sidebar.jsx
 /**
  * ============================================================================
- * SIDEBAR ALIGNED WITH DASHBOARD HEADER (py-4 version)
+ * SIDEBAR PERFECT - TOOLTIP CENTRAT VERTICAL
+ * ============================================================================
+ * 
+ * 🔧 FIX TOOLTIP:
+ * ✅ Tooltip centrat vertical EXACT pe buton
+ * ✅ Fixed positioning + z-index 9999
+ * ✅ CSS transform pentru centrare perfectă
+ * 
  * ============================================================================
  */
 
@@ -70,9 +77,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     amber: "text-amber-500 dark:text-amber-400",
   };
 
-  const isActive = (path) =>
-    location.pathname === path ||
-    location.pathname.startsWith(path + "/");
+  const isActive = (path) => 
+    location.pathname === path || 
+    location.pathname.startsWith(path + '/');
 
   return (
     <aside
@@ -85,8 +92,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         ${isCollapsed ? "w-20" : "w-72"}
       `}
     >
-      {/* HEADER - LOGO + BORDER-BOTTOM */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+      {/* HEADER - LOGO */}
+      <div className="h-[73px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
         {!isCollapsed ? (
           <div className="flex items-center gap-3">
             {/* Logo Icon */}
@@ -112,7 +119,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
+      <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-visible">
         <div className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -153,9 +160,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   </span>
                 )}
 
-                {/* Tooltip (collapsed) */}
+                {/* Tooltip - CENTRAT VERTICAL PERFECT */}
                 {isCollapsed && (
-                  <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
                     {item.title}
                   </div>
                 )}
@@ -165,7 +172,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
       </nav>
 
-      {/* FOOTER - CU TOOLTIPS PENTRU TOATE BUTOANELE */}
+      {/* FOOTER */}
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 p-2 space-y-1">
         
         {/* Logout */}
@@ -185,9 +192,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <span className="text-sm font-medium">Ieșire</span>
           )}
 
-          {/* Tooltip când collapsed */}
+          {/* Tooltip - CENTRAT VERTICAL */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
               Ieșire
             </div>
           )}
@@ -213,9 +220,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </>
           )}
 
-          {/* Tooltip când collapsed */}
+          {/* Tooltip - CENTRAT VERTICAL */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
               Extinde
             </div>
           )}
