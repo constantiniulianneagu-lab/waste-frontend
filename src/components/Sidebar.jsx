@@ -1,15 +1,7 @@
 // src/components/Sidebar.jsx
 /**
  * ============================================================================
- * SIDEBAR PERFECT ALIGNED - FINAL FIX
- * ============================================================================
- * 
- * 🔧 FIXES FINALE:
- * ✅ Border corect: border-b (nu bg-gray-200)
- * ✅ Font mai mare subtitle (10px în loc de 9px)
- * ✅ Tooltip la TOATE butoanele când collapsed
- * ✅ Aliniament perfect cu header
- * 
+ * SIDEBAR ALIGNED WITH DASHBOARD HEADER (py-4 version)
  * ============================================================================
  */
 
@@ -78,9 +70,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     amber: "text-amber-500 dark:text-amber-400",
   };
 
-  const isActive = (path) => 
-    location.pathname === path || 
-    location.pathname.startsWith(path + '/');
+  const isActive = (path) =>
+    location.pathname === path ||
+    location.pathname.startsWith(path + "/");
 
   return (
     <aside
@@ -94,7 +86,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       `}
     >
       {/* HEADER - LOGO + BORDER-BOTTOM */}
-      <div className="h-[73px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
         {!isCollapsed ? (
           <div className="flex items-center gap-3">
             {/* Logo Icon */}
