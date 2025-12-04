@@ -1,18 +1,18 @@
 // src/App.jsx
 /**
  * ============================================================================
- * APP - WITH RESPONSIVE SIDEBAR (CORRECTED)
+ * APP - WITH RESPONSIVE SIDEBAR & SHARED STATE
  * ============================================================================
  * 
- * ✅ Content resize cu ml-72 când expanded (w-72)
- * ✅ Content resize cu ml-20 când collapsed (w-20)
- * ✅ Fără overlap cu Dashboard Header
+ * ✅ State collapse partajat între Sidebar și toate paginile
+ * ✅ Content resize automat: ml-72 (expanded) sau ml-20 (collapsed)
+ * ✅ Smooth transitions 300ms
  * 
  * ============================================================================
  */
 
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 import Sidebar from "./components/Sidebar";
@@ -47,21 +47,28 @@ function App() {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Sidebar collapse state - IMPORTANT: trebuie să fie în sync cu Sidebar.jsx
+  // ========================================================================
+  // SIDEBAR COLLAPSE STATE - PARTAJAT CU SIDEBAR
+  // ========================================================================
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const showSidebar = user && location.pathname !== "/login";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* SIDEBAR */}
-      {showSidebar && <Sidebar />}
+      {/* SIDEBAR - cu state partajat */}
+      {showSidebar && (
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          setIsCollapsed={setIsCollapsed} 
+        />
+      )}
 
       {/* MAIN CONTENT - RESIZE AUTOMAT */}
       <div 
         className={`
-          transition-all duration-300
-          ${showSidebar ? (isCollapsed ? "ml-20" : "ml-72") : ""}
+          transition-all duration-300 ease-in-out
+          ${showSidebar ? (isCollapsed ? "ml-20" : "ml-72") : "ml-0"}
         `}
       >
         <Routes>
