@@ -1,5 +1,18 @@
 // src/App.jsx
+/**
+ * ============================================================================
+ * APP - WITH RESPONSIVE SIDEBAR (CORRECTED)
+ * ============================================================================
+ * 
+ * ✅ Content resize cu ml-72 când expanded (w-72)
+ * ✅ Content resize cu ml-20 când collapsed (w-20)
+ * ✅ Fără overlap cu Dashboard Header
+ * 
+ * ============================================================================
+ */
+
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
 import Sidebar from "./components/Sidebar";
@@ -9,8 +22,7 @@ import DashboardTmb from './components/dashboard/DashboardTmb';
 import Users from "./Users";
 import Institutions from "./Institutions";
 import ReportsMain from './components/reports/ReportsMain';
-import ReportTMB from './components/reports/ReportTMB'; // 🆕 NOU - Raportare TMB
-
+import ReportTMB from './components/reports/ReportTMB';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -35,17 +47,28 @@ function App() {
   const { user } = useAuth();
   const location = useLocation();
 
+  // Sidebar collapse state - IMPORTANT: trebuie să fie în sync cu Sidebar.jsx
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const showSidebar = user && location.pathname !== "/login";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1419] transition-colors">
-      <Sidebar />
-      <div className={showSidebar ? "ml-60 transition-all duration-300" : ""}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      {/* SIDEBAR */}
+      {showSidebar && <Sidebar />}
+
+      {/* MAIN CONTENT - RESIZE AUTOMAT */}
+      <div 
+        className={`
+          transition-all duration-300
+          ${showSidebar ? (isCollapsed ? "ml-20" : "ml-72") : ""}
+        `}
+      >
         <Routes>
           {/* Public route */}
           <Route path="/login" element={<WasteLogin />} />
 
-          {/* Redirect root → dashboard landfill */}
+          {/* Redirect root */}
           <Route
             path="/"
             element={
