@@ -1,13 +1,12 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - FIX FINAL FILTRE
+ * DASHBOARD TMB - FIX URGENT SECTOARE
  * ============================================================================
  * 
  * 🔧 FIX:
- * ✅ Extrage ani din monthly_evolution (nu din available_years)
- * ✅ Extrage sectoare corect din sector_distribution
- * ✅ Afișează "Sector 1", "Sector 2", etc.
+ * ✅ Extrage sector_id din sector_name ("Sector 1" → 1)
+ * ✅ Backend returnează doar sector_name, nu sector_id
  * 
  * ============================================================================
  */
@@ -198,10 +197,8 @@ const DashboardTmb = () => {
       return [new Date().getFullYear()];
     }
 
-    // Extrage anii unici din monthly_evolution (format: "Ian 2024", "Feb 2024", etc.)
     const years = new Set();
     data.monthly_evolution.forEach(item => {
-      // Extrage anul din string-ul lunii (ex: "Ian 2024" → 2024)
       const match = item.month?.match(/\d{4}/);
       if (match) {
         years.add(parseInt(match[0], 10));
@@ -224,14 +221,24 @@ const DashboardTmb = () => {
       return [];
     }
 
-    // Extrage sectoare și sortează după sector_id
+    // Extrage sector_id din sector_name (ex: "Sector 1" → 1)
     const sectorsData = data.sector_distribution
-      .filter(item => item.sector_id && item.sector_id >= 1 && item.sector_id <= 6)
-      .map(item => ({
-        sector_id: item.sector_id,
-        sector_number: item.sector_id,
-        sector_name: `Sector ${item.sector_id}`, // ✅ Format corect
-      }))
+      .map(item => {
+        // Extrage numărul din sector_name
+        const match = item.sector_name?.match(/\d+/);
+        const sectorNumber = match ? parseInt(match[0], 10) : null;
+        
+        if (!sectorNumber || sectorNumber < 1 || sectorNumber > 6) {
+          return null;
+        }
+
+        return {
+          sector_id: sectorNumber,
+          sector_number: sectorNumber,
+          sector_name: `Sector ${sectorNumber}`,
+        };
+      })
+      .filter(Boolean) // Elimină null-urile
       .sort((a, b) => a.sector_id - b.sector_id);
 
     console.log("🗺️ Sectors extracted from distribution:", sectorsData);
@@ -251,7 +258,7 @@ const DashboardTmb = () => {
   })) || [];
 
   const sectorPieData = data?.sector_distribution?.map(item => ({
-    name: `Sector ${item.sector_id}`,
+    name: item.sector_name,
     tratate: parseFloat(item.tmb_tons) || 0,
     depozitate: parseFloat(item.landfill_tons) || 0
   })) || [];
@@ -359,7 +366,6 @@ const DashboardTmb = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
-      {/* HEADER */}
       <DashboardHeader 
         notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
@@ -368,7 +374,6 @@ const DashboardTmb = () => {
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
         
-        {/* FILTERS */}
         <DashboardFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -394,10 +399,8 @@ const DashboardTmb = () => {
             {/* LINIA 1: CARDS + GRAFIC */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               
-              {/* CARDS STACK (1/4) */}
               <div className="space-y-4">
                 
-                {/* Total Colectate */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-4 hover:border-emerald-300 dark:hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -412,7 +415,6 @@ const DashboardTmb = () => {
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">100% din total</p>
                 </div>
 
-                {/* Depozitate Direct */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-500/30 p-4 hover:border-red-300 dark:hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center">
@@ -427,7 +429,6 @@ const DashboardTmb = () => {
                   <p className="text-xs text-red-600 dark:text-red-400 font-medium">{data.summary.landfill_percent}% din total</p>
                 </div>
 
-                {/* TMB */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-cyan-200 dark:border-cyan-500/30 p-4 hover:border-cyan-300 dark:hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-500/20 rounded-lg flex items-center justify-center">
@@ -443,7 +444,6 @@ const DashboardTmb = () => {
                 </div>
               </div>
 
-              {/* GRAFIC (3/4) */}
               <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -472,16 +472,15 @@ const DashboardTmb = () => {
               </div>
             </div>
 
+            {/* RESTUL COMPONENTELOR (Output Cards, Distribuție, Tabel) - identice cu versiunea anterioară */}
+            {/* Copiază din versiunea anterioară sau vezi în /mnt/user-data/outputs/DashboardTmb_FIX_FILTERS.jsx */}
+            
             {/* LINIA 2: OUTPUT CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              
-              {/* Reciclabile */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-emerald-300 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-700 dark:text-gray-400">Reciclabile</p>
-                  <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-lg">
-                    Raport
-                  </span>
+                  <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-lg">Raport</span>
                 </div>
                 <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
                   {formatNumberRO(data.outputs.recycling.sent)} tone
@@ -507,13 +506,10 @@ const DashboardTmb = () => {
                 </div>
               </div>
 
-              {/* Valorificare */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-red-300 dark:hover:border-red-500/50 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-700 dark:text-gray-400">Valorificare energetică</p>
-                  <span className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-lg">
-                    Raport
-                  </span>
+                  <span className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-lg">Raport</span>
                 </div>
                 <p className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
                   {formatNumberRO(data.outputs.recovery.sent)} tone
@@ -539,13 +535,10 @@ const DashboardTmb = () => {
                 </div>
               </div>
 
-              {/* Depozitat */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-700 dark:text-gray-400">Depozitat</p>
-                  <span className="px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-lg">
-                    Raport
-                  </span>
+                  <span className="px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-lg">Raport</span>
                 </div>
                 <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
                   {formatNumberRO(data.outputs.disposal.sent)} tone
@@ -571,7 +564,6 @@ const DashboardTmb = () => {
                 </div>
               </div>
 
-              {/* Stoc */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-amber-300 dark:hover:border-amber-500/50 hover:shadow-lg transition-all duration-300">
                 <p className="text-sm text-gray-700 dark:text-gray-400 mb-4">Stoc/Diferență</p>
                 <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">
@@ -585,8 +577,6 @@ const DashboardTmb = () => {
 
             {/* LINIA 3: DISTRIBUȚIE + TABEL */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* Distribuție pe sectoare */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-6">
                   Distribuția pe sectoare
@@ -594,22 +584,10 @@ const DashboardTmb = () => {
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={sectorPieData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="#9ca3af"
-                      style={{ fontSize: '11px' }}
-                    />
-                    <YAxis 
-                      stroke="#9ca3af"
-                      style={{ fontSize: '11px' }}
-                    />
+                    <XAxis dataKey="name" stroke="#9ca3af" style={{ fontSize: '11px' }} />
+                    <YAxis stroke="#9ca3af" style={{ fontSize: '11px' }} />
                     <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
                       formatter={(value) => `${formatNumberRO(value)} tone`}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
@@ -619,7 +597,6 @@ const DashboardTmb = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Tabel operatori */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-base font-semibold text-emerald-600 dark:text-emerald-400 mb-6">
                   Cantități gestionate de operatori
@@ -647,17 +624,13 @@ const DashboardTmb = () => {
                             <div className="text-emerald-600 dark:text-emerald-400 font-bold">
                               {formatNumberRO(op.tmb_total_tons)} t
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {op.tmb_percent}%
-                            </div>
+                            <div className="text-xs text-gray-500">{op.tmb_percent}%</div>
                           </td>
                           <td className="py-3 text-right">
                             <div className="text-red-600 dark:text-red-400 font-bold">
                               {formatNumberRO(op.landfill_total_tons)} t
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {op.landfill_percent}%
-                            </div>
+                            <div className="text-xs text-gray-500">{op.landfill_percent}%</div>
                           </td>
                         </tr>
                       ))}
