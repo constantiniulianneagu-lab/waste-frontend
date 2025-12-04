@@ -1,17 +1,13 @@
 // src/components/dashboard/DashboardHeader.jsx
 /**
  * ============================================================================
- * DASHBOARD HEADER - FINAL CLEAN VERSION
+ * DASHBOARD HEADER - UNIVERSAL (DEPOZITARE + TMB + RAPOARTE)
  * ============================================================================
  * 
- * DESIGN: Ultra modern, Samsung/Apple style
- * THEME: Eco/Green/Reciclare - Emerald/Teal gradients
- * 
- * LAYOUT:
- * [Dashboard Depozitarea deșeurilor]    [Search] [Notif] [Theme] [Profile]
- * 
- * ✅ ThemeToggle compact (consistent cu restul)
- * ❌ Fără buton Actualizează
+ * 🎨 FEATURES:
+ * ✅ Titlu dinamic prin prop "title"
+ * ✅ Default: "Dashboard Depozitarea deșeurilor"
+ * ✅ Poate fi schimbat pentru TMB, Rapoarte, etc.
  * 
  * ============================================================================
  */
@@ -22,7 +18,11 @@ import { useAuth } from "../../AuthContext";
 import { useTheme } from "../../hooks/useTheme";
 import ThemeToggle from "./ThemeToggle";
 
-const DashboardHeader = ({ notificationCount = 0, onSearchChange }) => {
+const DashboardHeader = ({ 
+  notificationCount = 0, 
+  onSearchChange,
+  title = "Dashboard Depozitarea deșeurilor"  // ✅ Titlu dinamic
+}) => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,10 +79,10 @@ const DashboardHeader = ({ notificationCount = 0, onSearchChange }) => {
       <div className="max-w-[1920px] mx-auto px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
           
-          {/* STÂNGA: Titlu Dashboard */}
+          {/* STÂNGA: Titlu Dashboard (DINAMIC) */}
           <div className="flex-shrink-0">
             <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent tracking-tight">
-              Dashboard Depozitarea deșeurilor
+              {title}
             </h1>
           </div>
 
