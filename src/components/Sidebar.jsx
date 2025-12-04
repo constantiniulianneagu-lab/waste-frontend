@@ -1,13 +1,13 @@
 // src/components/Sidebar.jsx
 /**
  * ============================================================================
- * SIDEBAR PERFECT - TOOLTIP CENTRAT VERTICAL
+ * SIDEBAR PERFECT - FIX TOOLTIP OVERFLOW
  * ============================================================================
  * 
  * 🔧 FIX TOOLTIP:
- * ✅ Tooltip centrat vertical EXACT pe buton
- * ✅ Fixed positioning + z-index 9999
- * ✅ CSS transform pentru centrare perfectă
+ * ✅ overflow-visible pe nav (nu mai taie tooltips)
+ * ✅ z-index 9999 pe tooltips (deasupra content)
+ * ✅ Portal-style positioning
  * 
  * ============================================================================
  */
@@ -118,7 +118,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         )}
       </div>
 
-      {/* NAVIGATION */}
+      {/* NAVIGATION - OVERFLOW VISIBLE PENTRU TOOLTIPS */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-visible">
         <div className="space-y-1">
           {menuItems.map((item) => {
@@ -160,9 +160,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   </span>
                 )}
 
-                {/* Tooltip - CENTRAT VERTICAL PERFECT */}
+                {/* Tooltip - Z-INDEX MARE + FIXED POSITION */}
                 {isCollapsed && (
-                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
+                  <div 
+                    className="fixed left-[calc(80px+0.5rem)] px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl"
+                    style={{ 
+                      zIndex: 9999,
+                      top: 'var(--tooltip-top, 0)',
+                    }}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                      e.currentTarget.style.setProperty('--tooltip-top', `${rect.top + rect.height / 2 - 16}px`);
+                    }}
+                  >
                     {item.title}
                   </div>
                 )}
@@ -173,7 +183,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       </nav>
 
       {/* FOOTER */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 p-2 space-y-1">
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 p-2 space-y-1 overflow-visible">
         
         {/* Logout */}
         <button
@@ -192,9 +202,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <span className="text-sm font-medium">Ieșire</span>
           )}
 
-          {/* Tooltip - CENTRAT VERTICAL */}
+          {/* Tooltip - FIXED POSITION */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
+            <div 
+              className="fixed left-[calc(80px+0.5rem)] px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl"
+              style={{ zIndex: 9999 }}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                e.currentTarget.style.top = `${rect.top + rect.height / 2 - 16}px`;
+              }}
+            >
               Ieșire
             </div>
           )}
@@ -220,9 +237,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </>
           )}
 
-          {/* Tooltip - CENTRAT VERTICAL */}
+          {/* Tooltip - FIXED POSITION */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-[9999]">
+            <div 
+              className="fixed left-[calc(80px+0.5rem)] px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl"
+              style={{ zIndex: 9999 }}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                e.currentTarget.style.top = `${rect.top + rect.height / 2 - 16}px`;
+              }}
+            >
               Extinde
             </div>
           )}
