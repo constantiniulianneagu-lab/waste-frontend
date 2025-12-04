@@ -1,27 +1,28 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - FIX URGENT SECTOARE
+ * DASHBOARD TMB - CORECT CONFORM COD VECHI
  * ============================================================================
  * 
- * 🔧 FIX:
- * ✅ Extrage sector_id din sector_name ("Sector 1" → 1)
- * ✅ Backend returnează doar sector_name, nu sector_id
+ * 🔧 FIX COMPLET:
+ * ✅ Ani: Array de 10 ani (2025, 2024, 2023, ..., 2016)
+ * ✅ Filtre: start_date / end_date (nu from/to)
+ * ✅ Sectoare: Hardcoded București + Sector 1-6
+ * ✅ Default: An curent, startOfYear, today
  * 
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle, Factory, Trash2, Recycle, Zap, Package } from "lucide-react";
+import { AlertCircle, Factory, Trash2, Package } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
-import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
 
 import DashboardHeader from "./DashboardHeader.jsx";
 import DashboardFilters from "./DashboardFilters.jsx";
 
 import {
-  ComposedChart, BarChart, Bar, LineChart, Line, AreaChart, Area,
+  BarChart, Bar, LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
@@ -33,10 +34,18 @@ const DashboardTmb = () => {
   const [notificationCount] = useState(3);
   const [chartType, setChartType] = useState('bar');
 
+  // ========================================================================
+  // FILTRE - CONFORM COD VECHI TMB
+  // ========================================================================
+
+  const currentYear = new Date().getFullYear();
+  const startOfYear = `${currentYear}-01-01`;
+  const today = new Date().toISOString().split('T')[0];
+
   const [filters, setFilters] = useState({
-    year: new Date().getFullYear(),
-    from: getYearStart(),
-    to: getTodayDate(),
+    year: currentYear,
+    from: startOfYear,
+    to: today,
     sector_id: null,
   });
 
@@ -64,12 +73,14 @@ const DashboardTmb = () => {
   
       console.log("📊 Fetching TMB dashboard data with filters:", filterParams);
       
+      // Adaptare filtre pentru API TMB
       const tmbFilters = {
         year: filterParams.year?.toString(),
         start_date: filterParams.from,
         end_date: filterParams.to,
       };
 
+      // Adaugă sector_id doar dacă e selectat
       if (filterParams.sector_id && filterParams.sector_id >= 1 && filterParams.sector_id <= 6) {
         tmbFilters.sector_id = filterParams.sector_id.toString();
       }
@@ -189,63 +200,26 @@ const DashboardTmb = () => {
   if (!data) return null;
 
   // ========================================================================
-  // EXTRAGE ANI DIN MONTHLY EVOLUTION
+  // ANI - ARRAY DE 10 ANI (CA LA DEPOZITARE)
   // ========================================================================
 
-  const extractYearsFromMonthlyEvolution = () => {
-    if (!data?.monthly_evolution || data.monthly_evolution.length === 0) {
-      return [new Date().getFullYear()];
-    }
-
-    const years = new Set();
-    data.monthly_evolution.forEach(item => {
-      const match = item.month?.match(/\d{4}/);
-      if (match) {
-        years.add(parseInt(match[0], 10));
-      }
-    });
-
-    const yearArray = Array.from(years).sort((a, b) => b - a);
-    console.log("📅 Years extracted from monthly_evolution:", yearArray);
-    return yearArray.length > 0 ? yearArray : [new Date().getFullYear()];
-  };
-
-  const availableYears = extractYearsFromMonthlyEvolution();
+  const availableYears = Array.from({ length: 10 }, (_, i) => currentYear - i);
+  console.log("📅 Available years (10 years):", availableYears);
 
   // ========================================================================
-  // EXTRAGE SECTOARE DIN SECTOR_DISTRIBUTION
+  // SECTOARE - HARDCODED BUCUREȘTI + SECTOR 1-6
   // ========================================================================
 
-  const extractSectorsFromDistribution = () => {
-    if (!data?.sector_distribution || data.sector_distribution.length === 0) {
-      return [];
-    }
+  const sectors = [
+    { sector_id: 1, sector_number: 1, sector_name: "Sector 1" },
+    { sector_id: 2, sector_number: 2, sector_name: "Sector 2" },
+    { sector_id: 3, sector_number: 3, sector_name: "Sector 3" },
+    { sector_id: 4, sector_number: 4, sector_name: "Sector 4" },
+    { sector_id: 5, sector_number: 5, sector_name: "Sector 5" },
+    { sector_id: 6, sector_number: 6, sector_name: "Sector 6" },
+  ];
 
-    // Extrage sector_id din sector_name (ex: "Sector 1" → 1)
-    const sectorsData = data.sector_distribution
-      .map(item => {
-        // Extrage numărul din sector_name
-        const match = item.sector_name?.match(/\d+/);
-        const sectorNumber = match ? parseInt(match[0], 10) : null;
-        
-        if (!sectorNumber || sectorNumber < 1 || sectorNumber > 6) {
-          return null;
-        }
-
-        return {
-          sector_id: sectorNumber,
-          sector_number: sectorNumber,
-          sector_name: `Sector ${sectorNumber}`,
-        };
-      })
-      .filter(Boolean) // Elimină null-urile
-      .sort((a, b) => a.sector_id - b.sector_id);
-
-    console.log("🗺️ Sectors extracted from distribution:", sectorsData);
-    return sectorsData;
-  };
-
-  const sectors = extractSectorsFromDistribution();
+  console.log("🗺️ Hardcoded sectors 1-6:", sectors);
 
   // ========================================================================
   // PREPARE DATA PENTRU GRAFICE
@@ -293,12 +267,7 @@ const DashboardTmb = () => {
           <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '12px'
-            }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
             formatter={(value) => `${formatNumberRO(value)} tone`}
           />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
@@ -313,12 +282,7 @@ const DashboardTmb = () => {
           <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '12px'
-            }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
             formatter={(value) => `${formatNumberRO(value)} tone`}
           />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
@@ -343,12 +307,7 @@ const DashboardTmb = () => {
           <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
           <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '12px'
-            }}
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
             formatter={(value) => `${formatNumberRO(value)} tone`}
           />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
@@ -374,6 +333,7 @@ const DashboardTmb = () => {
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
         
+        {/* FILTERS - CU ANI HARDCODED ȘI SECTOARE HARDCODED */}
         <DashboardFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -472,10 +432,9 @@ const DashboardTmb = () => {
               </div>
             </div>
 
-            {/* RESTUL COMPONENTELOR (Output Cards, Distribuție, Tabel) - identice cu versiunea anterioară */}
-            {/* Copiază din versiunea anterioară sau vezi în /mnt/user-data/outputs/DashboardTmb_FIX_FILTERS.jsx */}
+            {/* RESTUL COMPONENTELOR - Output Cards, Distribuție, Tabel */}
+            {/* Copiază din /mnt/user-data/outputs/DashboardTmb_URGENT_FIX.jsx de la linia ~520 */}
             
-            {/* LINIA 2: OUTPUT CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-emerald-300 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
@@ -575,7 +534,6 @@ const DashboardTmb = () => {
               </div>
             </div>
 
-            {/* LINIA 3: DISTRIBUȚIE + TABEL */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-6">
