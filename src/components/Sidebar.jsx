@@ -1,14 +1,14 @@
 // src/components/Sidebar.jsx
 /**
  * ============================================================================
- * SIDEBAR UNIFICAT - PERFECT ALIGNED
+ * SIDEBAR PERFECT ALIGNED - FINAL FIX
  * ============================================================================
  * 
- * 🔧 FIXES CRITICE:
- * ✅ Border continuu cu header (eliminat border-b de la logo)
- * ✅ Text corect: "SAMD" + "Sistem Avansat de Monitorizare Deșeuri"
- * ✅ Înălțime exactă logo = header (73px)
- * ✅ Fără scroll bug în footer
+ * 🔧 FIXES FINALE:
+ * ✅ Border corect: border-b (nu bg-gray-200)
+ * ✅ Font mai mare subtitle (10px în loc de 9px)
+ * ✅ Tooltip la TOATE butoanele când collapsed
+ * ✅ Aliniament perfect cu header
  * 
  * ============================================================================
  */
@@ -93,8 +93,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         ${isCollapsed ? "w-20" : "w-72"}
       `}
     >
-      {/* HEADER - LOGO (FĂRĂ BORDER-BOTTOM SEPARAT) */}
-      <div className="h-[73px] flex items-center justify-between px-4">
+      {/* HEADER - LOGO + BORDER-BOTTOM */}
+      <div className="h-[73px] flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
         {!isCollapsed ? (
           <div className="flex items-center gap-3">
             {/* Logo Icon */}
@@ -106,10 +106,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                 SAMD
               </span>
-              <span className="text-[9px] text-gray-500 dark:text-gray-400 leading-tight tracking-wide">
-                Sistem Avansat de
-                <br />
-                Monitorizare Deșeuri
+              <span className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight tracking-wide whitespace-nowrap">
+                Sistem Avansat de Monitorizare Deșeuri
               </span>
             </div>
           </div>
@@ -120,9 +118,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
         )}
       </div>
-
-      {/* BORDER CONTINUU (LA ACELAȘI NIVEL CU HEADER) */}
-      <div className="h-px bg-gray-200 dark:border-gray-800" />
 
       {/* NAVIGATION */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -178,14 +173,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
       </nav>
 
-      {/* FOOTER - FĂRĂ SCROLL BUG */}
+      {/* FOOTER - CU TOOLTIPS PENTRU TOATE BUTOANELE */}
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 p-2 space-y-1">
         
         {/* Logout */}
         <button
           onClick={logout}
           className={`
-            group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+            group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
             text-gray-700 dark:text-gray-300
             hover:bg-red-50 dark:hover:bg-red-900/20
             hover:text-red-600 dark:hover:text-red-400
@@ -198,6 +193,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <span className="text-sm font-medium">Ieșire</span>
           )}
 
+          {/* Tooltip când collapsed */}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
               Ieșire
@@ -209,7 +205,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={`
-            group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+            group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
             text-gray-700 dark:text-gray-300
             hover:bg-gray-100 dark:hover:bg-gray-800
             transition-all duration-200
@@ -225,6 +221,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </>
           )}
 
+          {/* Tooltip când collapsed */}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
               Extinde
