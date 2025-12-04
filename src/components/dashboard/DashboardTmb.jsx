@@ -1,15 +1,13 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - COMPLET CU FILTRE FUNCȚIONALE
+ * DASHBOARD TMB - FIX FINAL FILTRE
  * ============================================================================
  * 
- * 🎨 FEATURES:
- * ✅ Filtre funcționale exact ca la Depozitare
- * ✅ Ani disponibili din backend (available_years)
- * ✅ Schimbare automată date la selectare an
- * ✅ Sectoare doar cu date disponibile
- * ✅ Reset la valori default
+ * 🔧 FIX:
+ * ✅ Extrage ani din monthly_evolution (nu din available_years)
+ * ✅ Extrage sectoare corect din sector_distribution
+ * ✅ Afișează "Sector 1", "Sector 2", etc.
  * 
  * ============================================================================
  */
@@ -67,14 +65,12 @@ const DashboardTmb = () => {
   
       console.log("📊 Fetching TMB dashboard data with filters:", filterParams);
       
-      // Adaptare filtre pentru API TMB
       const tmbFilters = {
         year: filterParams.year?.toString(),
         start_date: filterParams.from,
         end_date: filterParams.to,
       };
 
-      // Adaugă sector_id doar dacă e valid
       if (filterParams.sector_id && filterParams.sector_id >= 1 && filterParams.sector_id <= 6) {
         tmbFilters.sector_id = filterParams.sector_id.toString();
       }
@@ -194,21 +190,55 @@ const DashboardTmb = () => {
   if (!data) return null;
 
   // ========================================================================
-  // PREPARE DATA PENTRU FILTRE
+  // EXTRAGE ANI DIN MONTHLY EVOLUTION
   // ========================================================================
 
-  // Extrage sectoare din sector_distribution (doar sectoare cu date)
-  const sectors = data?.sector_distribution?.map(sector => ({
-    sector_id: sector.sector_id,
-    sector_number: sector.sector_id,
-    sector_name: sector.sector_name,
-  })) || [];
+  const extractYearsFromMonthlyEvolution = () => {
+    if (!data?.monthly_evolution || data.monthly_evolution.length === 0) {
+      return [new Date().getFullYear()];
+    }
 
-  // Ani disponibili din backend (doar ani cu date)
-  const availableYears = data?.available_years || [new Date().getFullYear()];
+    // Extrage anii unici din monthly_evolution (format: "Ian 2024", "Feb 2024", etc.)
+    const years = new Set();
+    data.monthly_evolution.forEach(item => {
+      // Extrage anul din string-ul lunii (ex: "Ian 2024" → 2024)
+      const match = item.month?.match(/\d{4}/);
+      if (match) {
+        years.add(parseInt(match[0], 10));
+      }
+    });
 
-  console.log("📊 TMB Sectors available:", sectors);
-  console.log("📅 TMB Years available:", availableYears);
+    const yearArray = Array.from(years).sort((a, b) => b - a);
+    console.log("📅 Years extracted from monthly_evolution:", yearArray);
+    return yearArray.length > 0 ? yearArray : [new Date().getFullYear()];
+  };
+
+  const availableYears = extractYearsFromMonthlyEvolution();
+
+  // ========================================================================
+  // EXTRAGE SECTOARE DIN SECTOR_DISTRIBUTION
+  // ========================================================================
+
+  const extractSectorsFromDistribution = () => {
+    if (!data?.sector_distribution || data.sector_distribution.length === 0) {
+      return [];
+    }
+
+    // Extrage sectoare și sortează după sector_id
+    const sectorsData = data.sector_distribution
+      .filter(item => item.sector_id && item.sector_id >= 1 && item.sector_id <= 6)
+      .map(item => ({
+        sector_id: item.sector_id,
+        sector_number: item.sector_id,
+        sector_name: `Sector ${item.sector_id}`, // ✅ Format corect
+      }))
+      .sort((a, b) => a.sector_id - b.sector_id);
+
+    console.log("🗺️ Sectors extracted from distribution:", sectorsData);
+    return sectorsData;
+  };
+
+  const sectors = extractSectorsFromDistribution();
 
   // ========================================================================
   // PREPARE DATA PENTRU GRAFICE
@@ -221,7 +251,7 @@ const DashboardTmb = () => {
   })) || [];
 
   const sectorPieData = data?.sector_distribution?.map(item => ({
-    name: item.sector_name,
+    name: `Sector ${item.sector_id}`,
     tratate: parseFloat(item.tmb_tons) || 0,
     depozitate: parseFloat(item.landfill_tons) || 0
   })) || [];
@@ -338,7 +368,7 @@ const DashboardTmb = () => {
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
         
-        {/* FILTERS - CU ANI ȘI SECTOARE DISPONIBILE */}
+        {/* FILTERS */}
         <DashboardFilters
           filters={filters}
           onFilterChange={handleFilterChange}
