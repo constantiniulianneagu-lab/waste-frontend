@@ -203,8 +203,8 @@ const DashboardTmb = () => {
   // ANI - ARRAY DE 10 ANI (CA LA DEPOZITARE)
   // ========================================================================
 
-  const availableYears = Array.from({ length: 10 }, (_, i) => currentYear - i);
-  console.log("📅 Available years (10 years):", availableYears);
+  const availableYears = Array.from({ length: 2 }, (_, i) => currentYear - i);
+  console.log("📅 Available years (2 years):", availableYears);
 
   // ========================================================================
   // SECTOARE - HARDCODED BUCUREȘTI + SECTOR 1-6
