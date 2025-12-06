@@ -3,24 +3,11 @@
  * ============================================================================
  * USER SERVICE - API CALLS
  * ============================================================================
- * 
- * User Management (PLATFORM_ADMIN):
- * - getAllUsers
- * - getUserById
- * - createUser
- * - updateUser
- * - deleteUser
- * - getUserStats
- * 
- * User Profile (ALL USERS):
- * - getUserProfile
- * - updateProfile
- * - updatePassword
- * 
+ * Compatibil cu apiClient function-based
  * ============================================================================
  */
 
-import apiClient from './api/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete } from './api/apiClient';
 
 export const userService = {
   // ========================================================================
@@ -33,13 +20,13 @@ export const userService = {
    */
   getUserProfile: async () => {
     try {
-      const response = await apiClient.get('/users/profile');
-      return response.data;
+      const data = await apiGet('/api/users/profile');
+      return data;
     } catch (error) {
       console.error('getUserProfile error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la încărcarea profilului'
+        message: error.message || 'Eroare la încărcarea profilului'
       };
     }
   },
@@ -48,15 +35,15 @@ export const userService = {
    * Update current user profile
    * PUT /api/users/profile
    */
-  updateProfile: async (data) => {
+  updateProfile: async (profileData) => {
     try {
-      const response = await apiClient.put('/users/profile', data);
-      return response.data;
+      const data = await apiPut('/api/users/profile', profileData);
+      return data;
     } catch (error) {
       console.error('updateProfile error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la actualizarea profilului'
+        message: error.message || 'Eroare la actualizarea profilului'
       };
     }
   },
@@ -65,15 +52,15 @@ export const userService = {
    * Update current user password
    * PUT /api/users/password
    */
-  updatePassword: async (data) => {
+  updatePassword: async (passwordData) => {
     try {
-      const response = await apiClient.put('/users/password', data);
-      return response.data;
+      const data = await apiPut('/api/users/password', passwordData);
+      return data;
     } catch (error) {
       console.error('updatePassword error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la schimbarea parolei'
+        message: error.message || 'Eroare la schimbarea parolei'
       };
     }
   },
@@ -88,13 +75,13 @@ export const userService = {
    */
   getAllUsers: async (params = {}) => {
     try {
-      const response = await apiClient.get('/users', { params });
-      return response.data;
+      const data = await apiGet('/api/users', params);
+      return data;
     } catch (error) {
       console.error('getAllUsers error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la încărcarea utilizatorilor'
+        message: error.message || 'Eroare la încărcarea utilizatorilor'
       };
     }
   },
@@ -105,13 +92,13 @@ export const userService = {
    */
   getUserById: async (id) => {
     try {
-      const response = await apiClient.get(`/users/${id}`);
-      return response.data;
+      const data = await apiGet(`/api/users/${id}`);
+      return data;
     } catch (error) {
       console.error('getUserById error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la încărcarea utilizatorului'
+        message: error.message || 'Eroare la încărcarea utilizatorului'
       };
     }
   },
@@ -120,15 +107,15 @@ export const userService = {
    * Create new user
    * POST /api/users
    */
-  createUser: async (data) => {
+  createUser: async (userData) => {
     try {
-      const response = await apiClient.post('/users', data);
-      return response.data;
+      const data = await apiPost('/api/users', userData);
+      return data;
     } catch (error) {
       console.error('createUser error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la crearea utilizatorului'
+        message: error.message || 'Eroare la crearea utilizatorului'
       };
     }
   },
@@ -137,15 +124,15 @@ export const userService = {
    * Update user
    * PUT /api/users/:id
    */
-  updateUser: async (id, data) => {
+  updateUser: async (id, userData) => {
     try {
-      const response = await apiClient.put(`/users/${id}`, data);
-      return response.data;
+      const data = await apiPut(`/api/users/${id}`, userData);
+      return data;
     } catch (error) {
       console.error('updateUser error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la actualizarea utilizatorului'
+        message: error.message || 'Eroare la actualizarea utilizatorului'
       };
     }
   },
@@ -156,13 +143,13 @@ export const userService = {
    */
   deleteUser: async (id) => {
     try {
-      const response = await apiClient.delete(`/users/${id}`);
-      return response.data;
+      const data = await apiDelete(`/api/users/${id}`);
+      return data;
     } catch (error) {
       console.error('deleteUser error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la ștergerea utilizatorului'
+        message: error.message || 'Eroare la ștergerea utilizatorului'
       };
     }
   },
@@ -173,13 +160,13 @@ export const userService = {
    */
   getUserStats: async () => {
     try {
-      const response = await apiClient.get('/users/stats');
-      return response.data;
+      const data = await apiGet('/api/users/stats');
+      return data;
     } catch (error) {
       console.error('getUserStats error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Eroare la încărcarea statisticilor'
+        message: error.message || 'Eroare la încărcarea statisticilor'
       };
     }
   }
