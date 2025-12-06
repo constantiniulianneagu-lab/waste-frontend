@@ -91,16 +91,19 @@ const Institutions = () => {
   const loadInstitutions = async () => {
     setLoading(true);
     try {
-      const data = await apiGet('/api/institutions');
+      const response = await apiGet('/api/institutions');
       
-      console.log('API Response:', data); // Debug
+      console.log('API Response:', response); // Debug
       
-      if (data.success) {
-        const institutionsArray = Array.isArray(data.data) ? data.data : [];
+      if (response.success) {
+        // Backend returnează: { success: true, data: { institutions: [...], pagination: {...} } }
+        const institutionsArray = Array.isArray(response.data?.institutions) 
+          ? response.data.institutions 
+          : [];
         setInstitutions(institutionsArray);
         calculateStats(institutionsArray);
       } else {
-        console.error("Failed to load institutions:", data.message);
+        console.error("Failed to load institutions:", response.message);
         setInstitutions([]);
         calculateStats([]);
       }
@@ -118,7 +121,9 @@ const Institutions = () => {
     const inactive = data.length - active;
     
     const byType = data.reduce((acc, inst) => {
-      acc[inst.type] = (acc[inst.type] || 0) + 1;
+      // Mapează RECYCLING_CLIENT → RECICLATOR pentru stats
+      const normalizedType = inst.type === 'RECYCLING_CLIENT' ? 'RECICLATOR' : inst.type;
+      acc[normalizedType] = (acc[normalizedType] || 0) + 1;
       return acc;
     }, {});
 
@@ -309,6 +314,7 @@ const Institutions = () => {
       TMB: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
       DEPOZIT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
       RECICLATOR: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      RECYCLING_CLIENT: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", // ✅ ADĂUGAT
       VALORIFICARE: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
     return colors[type] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
@@ -322,6 +328,7 @@ const Institutions = () => {
       TMB: "Tratare mecano-biologică",
       DEPOZIT: "Depozit",
       RECICLATOR: "Reciclator",
+      RECYCLING_CLIENT: "Reciclator", // ✅ ADĂUGAT - afișează "Reciclator"
       VALORIFICARE: "Valorificare",
     };
     return labels[type] || type;
@@ -864,6 +871,7 @@ const Institutions = () => {
                       <option value="TMB">Tratare mecano-biologică</option>
                       <option value="DEPOZIT">Depozit</option>
                       <option value="RECICLATOR">Reciclator</option>
+                      <option value="RECYCLING_CLIENT">Reciclator (Client)</option>
                       <option value="VALORIFICARE">Valorificare</option>
                     </select>
                     {errors.type && (
