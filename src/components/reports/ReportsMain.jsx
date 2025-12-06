@@ -38,11 +38,6 @@ const ReportsMain = () => {
 
       <div className="px-6 lg:px-8 py-6">
         <div className="max-w-[1920px] mx-auto">
-          
-          {/* Subtitle */}
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Generează și vizualizează rapoarte detaliate
-          </p>
 
           {/* Tab Buttons */}
           <div className="flex gap-3 mb-6">
