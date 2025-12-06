@@ -123,8 +123,34 @@ const Institutions = () => {
     const inactive = data.length - active;
     
     const byType = data.reduce((acc, inst) => {
-      // Mapează RECYCLING_CLIENT → RECICLATOR pentru stats
-      const normalizedType = inst.type === 'RECYCLING_CLIENT' ? 'RECICLATOR' : inst.type;
+      // Mapare tipuri backend → categorii frontend
+      let normalizedType;
+      switch(inst.type) {
+        case 'MUNICIPALITY':
+          normalizedType = 'MUNICIPIU';
+          break;
+        case 'WASTE_OPERATOR':
+          normalizedType = 'OPERATOR';
+          break;
+        case 'TMB_OPERATOR':
+          normalizedType = 'TMB';
+          break;
+        case 'DISPOSAL_CLIENT':
+          normalizedType = 'DEPOZIT';
+          break;
+        case 'RECYCLING_CLIENT':
+          normalizedType = 'RECICLATOR';
+          break;
+        case 'RECOVERY_CLIENT':
+          normalizedType = 'VALORIFICARE';
+          break;
+        case 'SORTING_OPERATOR':
+          normalizedType = 'COLECTOR';
+          break;
+        default:
+          normalizedType = inst.type;
+      }
+      
       acc[normalizedType] = (acc[normalizedType] || 0) + 1;
       return acc;
     }, {});
@@ -301,7 +327,34 @@ const Institutions = () => {
   const filteredInstitutions = institutions.filter((inst) => {
     // Filtru pe tip (dacă e activ)
     if (activeTypeFilter) {
-      const normalizedType = inst.type === 'RECYCLING_CLIENT' ? 'RECICLATOR' : inst.type;
+      // Mapare tip backend → categorie frontend
+      let normalizedType;
+      switch(inst.type) {
+        case 'MUNICIPALITY':
+          normalizedType = 'MUNICIPIU';
+          break;
+        case 'WASTE_OPERATOR':
+          normalizedType = 'OPERATOR';
+          break;
+        case 'TMB_OPERATOR':
+          normalizedType = 'TMB';
+          break;
+        case 'DISPOSAL_CLIENT':
+          normalizedType = 'DEPOZIT';
+          break;
+        case 'RECYCLING_CLIENT':
+          normalizedType = 'RECICLATOR';
+          break;
+        case 'RECOVERY_CLIENT':
+          normalizedType = 'VALORIFICARE';
+          break;
+        case 'SORTING_OPERATOR':
+          normalizedType = 'COLECTOR';
+          break;
+        default:
+          normalizedType = inst.type;
+      }
+      
       if (normalizedType !== activeTypeFilter) {
         return false;
       }
@@ -329,28 +382,46 @@ const Institutions = () => {
 
   const getTypeBadgeColor = (type) => {
     const colors = {
+      // Categorii frontend
       MUNICIPIU: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
       OPERATOR: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       COLECTOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
       TMB: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
       DEPOZIT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
       RECICLATOR: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-      RECYCLING_CLIENT: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", // ✅ ADĂUGAT
       VALORIFICARE: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      
+      // Tipuri backend (fallback)
+      MUNICIPALITY: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      WASTE_OPERATOR: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      SORTING_OPERATOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      TMB_OPERATOR: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+      DISPOSAL_CLIENT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      RECYCLING_CLIENT: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      RECOVERY_CLIENT: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
     return colors[type] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
   };
 
   const getTypeLabel = (type) => {
     const labels = {
+      // Categorii frontend
       MUNICIPIU: "Municipiu",
       OPERATOR: "Operator",
       COLECTOR: "Colector",
       TMB: "Tratare mecano-biologică",
       DEPOZIT: "Depozit",
       RECICLATOR: "Reciclator",
-      RECYCLING_CLIENT: "Reciclator", // ✅ ADĂUGAT - afișează "Reciclator"
       VALORIFICARE: "Valorificare",
+      
+      // Tipuri backend
+      MUNICIPALITY: "Municipiu",
+      WASTE_OPERATOR: "Operator",
+      SORTING_OPERATOR: "Colector",
+      TMB_OPERATOR: "Tratare mecano-biologică",
+      DISPOSAL_CLIENT: "Depozit",
+      RECYCLING_CLIENT: "Reciclator",
+      RECOVERY_CLIENT: "Valorificare",
     };
     return labels[type] || type;
   };
@@ -619,13 +690,43 @@ const Institutions = () => {
               <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               Lista Instituții
             </h2>
-            <button
-              onClick={handleAdd}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
-            >
-              <Plus className="w-4 h-4" />
-              Adaugă Instituție
-            </button>
+            <div className="flex items-center gap-3">
+              {/* DEBUG BUTTON - TEMPORAR */}
+              <button
+                onClick={() => {
+                  console.log('=== DEBUG INSTITUTIONS ===');
+                  console.log('Total loaded:', institutions.length);
+                  console.log('Active filter:', activeTypeFilter);
+                  console.log('Filtered count:', filteredInstitutions.length);
+                  console.log('Stats:', stats);
+                  
+                  // Tipuri distincte
+                  const types = [...new Set(institutions.map(i => i.type))];
+                  console.log('Unique types:', types);
+                  
+                  // Count per type
+                  const typeCounts = {};
+                  institutions.forEach(inst => {
+                    typeCounts[inst.type] = (typeCounts[inst.type] || 0) + 1;
+                  });
+                  console.table(typeCounts);
+                  
+                  // Sample data
+                  console.log('First 5 institutions:', institutions.slice(0, 5));
+                }}
+                className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-all"
+              >
+                🐛 Debug
+              </button>
+              
+              <button
+                onClick={handleAdd}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
+              >
+                <Plus className="w-4 h-4" />
+                Adaugă Instituție
+              </button>
+            </div>
           </div>
 
           {/* Table */}
