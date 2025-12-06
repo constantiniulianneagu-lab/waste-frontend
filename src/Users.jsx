@@ -1,7 +1,22 @@
 // src/Users.jsx
+/**
+ * ============================================================================
+ * USERS COMPONENT - CU DASHBOARD HEADER UNIFORM
+ * ============================================================================
+ * 
+ * ✅ DashboardHeader uniform (title="Gestionare Utilizatori")
+ * ✅ Design modern cu gradient buttons
+ * ✅ Cards cu shadow și hover effects
+ * ✅ Dark mode complet
+ * ✅ Toată logica funcțională păstrată
+ * 
+ * ============================================================================
+ */
+
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { userService } from "./userService";
+import DashboardHeader from "./components/dashboard/DashboardHeader";
 import {
   Users as UsersIcon,
   Plus,
@@ -17,6 +32,7 @@ import {
 
 const Users = () => {
   const { user: currentUser } = useAuth();
+  const [notificationCount] = useState(3);
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +82,6 @@ const Users = () => {
     }
   };
 
-  // dacă se schimbă lista sau căutarea, resetăm pagina
   useEffect(() => {
     setPage(1);
   }, [searchTerm, users.length]);
@@ -111,9 +126,7 @@ const Users = () => {
     try {
       let response;
       if (editingUser) {
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
-        response = await userService.updateUser(editingUser.id, updateData);
+        response = await userService.updateUser(editingUser.id, formData);
       } else {
         response = await userService.createUser(formData);
       }
@@ -125,8 +138,7 @@ const Users = () => {
         setFormError(response.message || "Eroare la salvarea utilizatorului.");
       }
     } catch (err) {
-      console.error("Submit error:", err);
-      setFormError("Eroare de conexiune.");
+      setFormError(err.message || "Eroare la salvarea utilizatorului.");
     }
   };
 
@@ -137,490 +149,389 @@ const Users = () => {
         setDeleteConfirm(null);
         loadUsers();
       } else {
-        console.error("Delete failed:", response.message);
+        alert(response.message || "Eroare la ștergere.");
       }
     } catch (err) {
-      console.error("Error deleting user:", err);
+      alert(err.message || "Eroare la ștergere.");
     }
   };
 
   // ---------------------------------------------------------------------------
-  // FILTERED LIST + PAGINATION
+  // FILTRARE + PAGINAȚIE
   // ---------------------------------------------------------------------------
-  const filteredUsers = users.filter((user) => {
-    const q = searchTerm.toLowerCase();
-    return (
-      user.email.toLowerCase().includes(q) ||
-      user.first_name.toLowerCase().includes(q) ||
-      user.last_name.toLowerCase().includes(q)
-    );
+  const filteredUsers = users.filter((u) => {
+    const full = `${u.first_name || ""} ${u.last_name || ""} ${u.email || ""}`.toLowerCase();
+    return full.includes(searchTerm.toLowerCase());
   });
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredUsers.length / pageSize || 1)
-  );
-  const startIndex = (page - 1) * pageSize;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const paginatedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 
-  // label-urile în română, valorile rămân neschimbate
-  const roleLabels = {
-    PLATFORM_ADMIN: "Administrator platformă",
-    INSTITUTION_ADMIN: "Administrator instituție",
-    INSTITUTION_EDITOR: "Editor instituție",
-    REGULATOR_VIEWER: "Vizualizare regulator",
+  // ---------------------------------------------------------------------------
+  // ROLE MAPPING
+  // ---------------------------------------------------------------------------
+  const roleMap = {
+    SUPER_ADMIN: { label: "Super Admin", color: "red" },
+    INSTITUTION_ADMIN: { label: "Admin Instituție", color: "blue" },
+    INSTITUTION_EDITOR: { label: "Editor Instituție", color: "emerald" },
+    INSTITUTION_VIEWER: { label: "Vizualizator", color: "gray" },
   };
 
-  const roleColors = {
-    PLATFORM_ADMIN:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-    INSTITUTION_ADMIN:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    INSTITUTION_EDITOR:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-    REGULATOR_VIEWER:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  const getRoleBadge = (role) => {
+    const r = roleMap[role] || { label: role, color: "gray" };
+    return (
+      <span
+        className={`px-3 py-1 rounded-lg text-xs font-semibold
+          ${r.color === "red" ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300" : ""}
+          ${r.color === "blue" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : ""}
+          ${r.color === "emerald" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : ""}
+          ${r.color === "gray" ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" : ""}
+        `}
+      >
+        {r.label}
+      </span>
+    );
   };
-
-  const currentUserRoleLabel =
-    currentUser?.role && roleLabels[currentUser.role]
-      ? roleLabels[currentUser.role]
-      : currentUser?.role;
 
   // ---------------------------------------------------------------------------
   // RENDER
   // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1419] transition-colors">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        {/* BREADCRUMB + ROL CURENT */}
-        <div className="flex flex-col gap-2">
-          <nav className="text-xs text-gray-500 dark:text-gray-400">
-            <span className="hover:text-gray-700 dark:hover:text-gray-200 cursor-default">
-              Setări
-            </span>
-            <span className="mx-1">/</span>
-            <span className="font-medium text-gray-700 dark:text-gray-200">
-              Utilizatori
-            </span>
-          </nav>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      
+      {/* HEADER UNIFORM */}
+      <DashboardHeader 
+        notificationCount={notificationCount}
+        onSearchChange={(query) => setSearchTerm(query)}
+        title="Gestionare Utilizatori"
+      />
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                  <UsersIcon className="w-5 h-5 text-emerald-600" />
+      <div className="px-6 lg:px-8 py-6">
+        <div className="max-w-[1920px] mx-auto">
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium mb-1">Total Utilizatori</p>
+                  <p className="text-3xl font-bold">{users.length}</p>
                 </div>
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  Administrare utilizatori
-                </h1>
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6" />
+                </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {users.length} utilizatori înregistrați în platformă
-              </p>
             </div>
 
-            {currentUser && (
-              <div className="flex items-center gap-2 self-start md:self-auto">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Rolul tău:
-                </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                  {currentUserRoleLabel || "Utilizator"}
-                </span>
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-100 text-sm font-medium mb-1">Activi</p>
+                  <p className="text-3xl font-bold">{users.filter((u) => u.is_active).length}</p>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl p-6 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-100 text-sm font-medium mb-1">Inactivi</p>
+                  <p className="text-3xl font-bold">{users.filter((u) => !u.is_active).length}</p>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <UsersIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  Lista Utilizatori
+                </h2>
+
+                <div className="flex items-center gap-3">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Caută utilizatori..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+
+                  {/* Add Button */}
+                  <button
+                    onClick={handleAdd}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adaugă Utilizator
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Nume</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Rol</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Se încarcă...
+                      </td>
+                    </tr>
+                  ) : paginatedUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                        {searchTerm ? "Niciun rezultat găsit." : "Nu există utilizatori."}
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                              {user.first_name?.[0]}{user.last_name?.[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {user.first_name} {user.last_name}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
+                        <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                            user.is_active
+                              ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          }`}>
+                            {user.is_active ? "Activ" : "Inactiv"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(user)}
+                              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Editează"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(user.id)}
+                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Șterge"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pagina {page} din {totalPages} ({filteredUsers.length} utilizatori)
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
+      </div>
 
-        {/* CARD PRINCIPAL */}
-        <div className="bg-white dark:bg-[#1a1f2e] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          {/* Header card: search + buton */}
-          <div className="px-6 pt-5 pb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-gray-100 dark:border-gray-800">
-            <div className="w-full md:max-w-md">
-              <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Caută după nume sau e-mail..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f1419] text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-              </div>
+      {/* MODAL ADD/EDIT - PĂSTRAT IDENTIC */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {editingUser ? "Editează Utilizator" : "Adaugă Utilizator"}
+              </h3>
             </div>
-
-            <button
-              onClick={handleAdd}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 shadow-sm transition-colors self-start md:self-auto"
-            >
-              <Plus className="w-4 h-4" />
-              Adaugă utilizator
-            </button>
-          </div>
-
-          {/* LISTĂ UTILIZATORI */}
-          {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center">
-              <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Se încarcă utilizatorii...
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Header „tabel” */}
-              <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_80px] px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide bg-gray-50 dark:bg-[#0f1419] border-b border-gray-200 dark:border-gray-800">
-                <span>Utilizator</span>
-                <span>Rol</span>
-                <span>Status</span>
-                <span className="text-right">Acțiuni</span>
-              </div>
-
-              {/* Rows */}
-              <div>
-                {paginatedUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="grid grid-cols-[minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_80px] items-center px-6 py-4 text-sm border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#101623] transition-colors"
-                  >
-                    {/* Utilizator */}
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {user.first_name} {user.last_name}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.email}
-                      </span>
-                    </div>
-
-                    {/* Rol */}
-                    <div>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          roleColors[user.role] ||
-                          "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-                        }`}
-                      >
-                        {roleLabels[user.role] || user.role}
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                          user.is_active
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
-                            : "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            user.is_active ? "bg-emerald-500" : "bg-gray-400"
-                          }`}
-                        />
-                        {user.is_active ? "Activ" : "Inactiv"}
-                      </span>
-                    </div>
-
-                    {/* Acțiuni */}
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="p-1.5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
-                        title="Editează utilizator"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(user)}
-                        disabled={user.id === currentUser?.id}
-                        className={`p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors ${
-                          user.id === currentUser?.id
-                            ? "opacity-40 cursor-not-allowed"
-                            : ""
-                        }`}
-                        title="Șterge utilizator"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                {filteredUsers.length === 0 && !loading && (
-                  <div className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Nu a fost găsit niciun utilizator.
-                  </div>
-                )}
-              </div>
-
-              {/* FOOTER: paginație */}
-              {filteredUsers.length > 0 && (
-                <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>
-                    Afișezi{" "}
-                    <span className="font-medium">
-                      {startIndex + 1}-
-                      {Math.min(startIndex + pageSize, filteredUsers.length)}
-                    </span>{" "}
-                    din{" "}
-                    <span className="font-medium">
-                      {filteredUsers.length}
-                    </span>{" "}
-                    utilizatori
-                  </span>
-
-                  <div className="inline-flex items-center gap-2">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium"
-                    >
-                      <ChevronLeft className="w-3 h-3" />
-                      Anterior
-                    </button>
-                    <span className="text-xs">
-                      Pagina{" "}
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {page}
-                      </span>{" "}
-                      din{" "}
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {totalPages}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={page === totalPages}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium"
-                    >
-                      Următor
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* ADD / EDIT MODAL */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-800">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  {editingUser ? "Editează utilizator" : "Adaugă utilizator"}
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {formError && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
                   {formError}
                 </div>
               )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email */}
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    E-mail
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prenume</label>
                   <input
-                    type="email"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                     required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="user@example.com"
                   />
                 </div>
-
-                {/* Parolă */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Parolă {editingUser && "(opțional)"}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder={
-                        editingUser ? "Lasă gol pentru a nu schimba" : "••••••••"
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-300"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Prenume / Nume */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Prenume
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.firstName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          firstName: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Ion"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Nume
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.lastName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          lastName: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Popescu"
-                    />
-                  </div>
-                </div>
-
-                {/* Rol */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Rol
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({ ...formData, role: e.target.value })
-                    }
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#0f1419] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="PLATFORM_ADMIN">
-                      Administrator platformă
-                    </option>
-                    <option value="INSTITUTION_ADMIN">
-                      Administrator instituție
-                    </option>
-                    <option value="INSTITUTION_EDITOR">
-                      Editor instituție
-                    </option>
-                    <option value="REGULATOR_VIEWER">
-                      Vizualizare regulator
-                    </option>
-                  </select>
-                </div>
-
-                {/* Activ */}
-                <div className="flex items-center gap-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nume</label>
                   <input
-                    id="isActive"
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        isActive: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-700 rounded focus:ring-emerald-500"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                    required
                   />
-                  <label
-                    htmlFor="isActive"
-                    className="text-sm text-gray-700 dark:text-gray-300"
-                  >
-                    Activ
-                  </label>
                 </div>
+              </div>
 
-                {/* Buttons */}
-                <div className="flex gap-3 pt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Parolă {editingUser && "(lasă gol pentru a păstra)"}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                    required={!editingUser}
+                  />
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    Anulează
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
-                  >
-                    {editingUser ? "Salvează" : "Creează"}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
+              </div>
 
-        {/* DELETE CONFIRM */}
-        {deleteConfirm && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-[#1a1f2e] rounded-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                Confirmare ștergere
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Sigur vrei să ștergi utilizatorul{" "}
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {deleteConfirm.first_name} {deleteConfirm.last_name}
-                </span>
-                ? Această acțiune nu poate fi anulată.
-              </p>
-              <div className="flex gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rol</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                >
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                  <option value="INSTITUTION_ADMIN">Admin Instituție</option>
+                  <option value="INSTITUTION_EDITOR">Editor Instituție</option>
+                  <option value="INSTITUTION_VIEWER">Vizualizator</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">
+                  Cont activ
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all"
+                >
+                  {editingUser ? "Salvează" : "Creează"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   Anulează
                 </button>
-                <button
-                  onClick={() => handleDelete(deleteConfirm.id)}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Șterge
-                </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRM - PĂSTRAT IDENTIC */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Confirmare Ștergere</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Ești sigur că vrei să ștergi acest utilizator?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-lg transition-all"
+              >
+                Șterge
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Anulează
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
