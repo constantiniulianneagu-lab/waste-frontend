@@ -7,6 +7,7 @@
  * ✅ State collapse partajat între Sidebar și toate paginile
  * ✅ Content resize automat: ml-72 (expanded) sau ml-20 (collapsed)
  * ✅ Smooth transitions 300ms
+ * ✅ Rută profil utilizator adăugată
  * 
  * ============================================================================
  */
@@ -23,6 +24,7 @@ import Users from "./Users";
 import Institutions from "./Institutions";
 import ReportsMain from './components/reports/ReportsMain';
 import ReportTMB from './components/reports/ReportTMB';
+import UserProfile from './components/UserProfile'; // ✅ ADĂUGAT
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -138,6 +140,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <Institutions />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ USER PROFILE ROUTE - NOU */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />
