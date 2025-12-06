@@ -93,16 +93,21 @@ const Institutions = () => {
     try {
       const data = await apiGet('/api/institutions');
       
+      console.log('API Response:', data); // Debug
+      
       if (data.success) {
-        setInstitutions(data.data || []);
-        calculateStats(data.data || []);
+        const institutionsArray = Array.isArray(data.data) ? data.data : [];
+        setInstitutions(institutionsArray);
+        calculateStats(institutionsArray);
       } else {
         console.error("Failed to load institutions:", data.message);
         setInstitutions([]);
+        calculateStats([]);
       }
     } catch (err) {
       console.error("Error loading institutions:", err);
       setInstitutions([]);
+      calculateStats([]);
     } finally {
       setLoading(false);
     }
