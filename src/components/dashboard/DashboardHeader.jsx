@@ -8,11 +8,13 @@
  * ✅ Titlu dinamic prin prop "title"
  * ✅ Default: "Dashboard Depozitarea deșeurilor"
  * ✅ Poate fi schimbat pentru TMB, Rapoarte, etc.
+ * ✅ Click pe profil → navighează la /profile
  * 
  * ============================================================================
  */
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ ADĂUGAT
 import { Search, Bell } from "lucide-react";
 import { useAuth } from "../../AuthContext";
 import { useTheme } from "../../hooks/useTheme";
@@ -25,6 +27,7 @@ const DashboardHeader = ({
 }) => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate(); // ✅ ADĂUGAT
   const [searchQuery, setSearchQuery] = useState("");
 
   // ========================================================================
@@ -54,6 +57,10 @@ const DashboardHeader = ({
       OPERATOR_ADMIN: "Administrator Operator",
       OPERATOR_USER: "Utilizator Operator",
       VIEWER: "Vizualizator",
+      PLATFORM_ADMIN: "Administrator Platformă", // ✅ ADĂUGAT
+      ADMIN_INSTITUTION: "Administrator Instituție", // ✅ ADĂUGAT
+      EDITOR_INSTITUTION: "Editor Instituție", // ✅ ADĂUGAT
+      REGULATOR_VIEWER: "Vizualizator", // ✅ ADĂUGAT
     };
     return roleMap[role] || role || "Utilizator";
   };
@@ -130,10 +137,12 @@ const DashboardHeader = ({
             {/* Separator subtil */}
             <div className="hidden lg:block w-px h-10 bg-gray-200 dark:bg-gray-700/50" />
 
-            {/* Profil utilizator */}
+            {/* Profil utilizator - ✅ CLICK → /profile */}
             <button
               type="button"
-              className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all group"
+              onClick={() => navigate('/profile')} // ✅ ADĂUGAT
+              className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all group cursor-pointer"
+              title="Profil utilizator"
             >
               {/* Avatar cu inițiale gradient ECO */}
               <div className="relative">
