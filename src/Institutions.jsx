@@ -41,6 +41,7 @@ const Institutions = () => {
   const [institutions, setInstitutions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTypeFilter, setActiveTypeFilter] = useState(null); // ✅ ADĂUGAT - filtru tip activ
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,7 +92,8 @@ const Institutions = () => {
   const loadInstitutions = async () => {
     setLoading(true);
     try {
-      const response = await apiGet('/api/institutions');
+      // Preia TOATE instituțiile (limit=1000 sau fără limit)
+      const response = await apiGet('/api/institutions', { limit: 1000 });
       
       console.log('API Response:', response); // Debug
       
@@ -142,6 +144,16 @@ const Institutions = () => {
   const handleSearchChange = (query) => {
     setSearchQuery(query);
     setCurrentPage(1);
+  };
+
+  const handleTypeFilterClick = (type) => {
+    // Toggle filter: click pe același card = dezactivează filtrul
+    if (activeTypeFilter === type) {
+      setActiveTypeFilter(null);
+    } else {
+      setActiveTypeFilter(type);
+    }
+    setCurrentPage(1); // Reset la prima pagină
   };
 
   const handleAdd = () => {
@@ -287,6 +299,15 @@ const Institutions = () => {
   // ========================================================================
 
   const filteredInstitutions = institutions.filter((inst) => {
+    // Filtru pe tip (dacă e activ)
+    if (activeTypeFilter) {
+      const normalizedType = inst.type === 'RECYCLING_CLIENT' ? 'RECICLATOR' : inst.type;
+      if (normalizedType !== activeTypeFilter) {
+        return false;
+      }
+    }
+    
+    // Filtru pe search
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -396,7 +417,14 @@ const Institutions = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
           
           {/* Total */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick(null)}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === null 
+                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -413,10 +441,22 @@ const Institutions = () => {
               <span className="text-gray-300 dark:text-gray-600">•</span>
               <span className="text-gray-500 dark:text-gray-400">{stats.inactive} inactive</span>
             </div>
+            {activeTypeFilter === null && (
+              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Toate tipurile</p>
+              </div>
+            )}
           </div>
 
           {/* Municipiu */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('MUNICIPIU')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'MUNICIPIU' 
+                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
                 <Building className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -424,10 +464,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.MUNICIPIU || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Municipiu</p>
+            {activeTypeFilter === 'MUNICIPIU' && (
+              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* Operator */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('OPERATOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'OPERATOR' 
+                ? 'border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-colors">
                 <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -435,10 +487,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.OPERATOR || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Operator</p>
+            {activeTypeFilter === 'OPERATOR' && (
+              <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
+                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* Colector */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('COLECTOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'COLECTOR' 
+                ? 'border-purple-500 dark:border-purple-400 ring-2 ring-purple-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -446,10 +510,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.COLECTOR || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Colector</p>
+            {activeTypeFilter === 'COLECTOR' && (
+              <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-800">
+                <p className="text-xs font-medium text-purple-600 dark:text-purple-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* TMB */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('TMB')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'TMB' 
+                ? 'border-cyan-500 dark:border-cyan-400 ring-2 ring-cyan-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
@@ -457,10 +533,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.TMB || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">TMB</p>
+            {activeTypeFilter === 'TMB' && (
+              <div className="mt-2 pt-2 border-t border-cyan-200 dark:border-cyan-800">
+                <p className="text-xs font-medium text-cyan-600 dark:text-cyan-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* Depozit */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('DEPOZIT')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'DEPOZIT' 
+                ? 'border-red-500 dark:border-red-400 ring-2 ring-red-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -468,10 +556,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.DEPOZIT || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Depozit</p>
+            {activeTypeFilter === 'DEPOZIT' && (
+              <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
+                <p className="text-xs font-medium text-red-600 dark:text-red-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* Reciclator */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('RECICLATOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'RECICLATOR' 
+                ? 'border-green-500 dark:border-green-400 ring-2 ring-green-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -479,10 +579,22 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.RECICLATOR || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Reciclator</p>
+            {activeTypeFilter === 'RECICLATOR' && (
+              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
+                <p className="text-xs font-medium text-green-600 dark:text-green-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
 
           {/* Valorificare */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all p-5 group">
+          <div 
+            onClick={() => handleTypeFilterClick('VALORIFICARE')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'VALORIFICARE' 
+                ? 'border-orange-500 dark:border-orange-400 ring-2 ring-orange-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-colors">
                 <Building2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -490,6 +602,11 @@ const Institutions = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.VALORIFICARE || 0}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Valorificare</p>
+            {activeTypeFilter === 'VALORIFICARE' && (
+              <div className="mt-2 pt-2 border-t border-orange-200 dark:border-orange-800">
+                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">✓ Filtru activ</p>
+              </div>
+            )}
           </div>
         </div>
 
