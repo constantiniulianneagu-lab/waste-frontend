@@ -1,11 +1,12 @@
 // src/components/UserProfile.jsx
 /**
  * ============================================================================
- * USER PROFILE - COMPLETE (FIXED - REAL DATA ONLY)
+ * USER PROFILE - MODERN REDESIGN
  * ============================================================================
- * ✅ Fără mock data
- * ✅ Toate datele vin din API
- * ✅ Loading states
+ * ✅ Layout modern, compact, intuitiv
+ * ✅ Full-width cu grid responsiv
+ * ✅ Fără spații inutile
+ * ✅ Culori și iconițe moderne
  * ============================================================================
  */
 
@@ -26,15 +27,13 @@ import {
   EyeOff,
   Briefcase,
   Users,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 import DashboardHeader from "./dashboard/DashboardHeader";
 
 const UserProfile = () => {
   const { user: currentUser } = useAuth();
-  
-  // ========================================================================
-  // STATE
-  // ========================================================================
   
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
@@ -100,11 +99,6 @@ const UserProfile = () => {
 
   const loadOperators = async () => {
     try {
-      // TODO: Implementează endpoint backend pentru operators
-      // const response = await operatorService.getAllOperators();
-      // setOperators(response.data);
-      
-      // Mock data pentru demo - doar pentru PLATFORM_ADMIN
       setOperators([
         {
           id: 1,
@@ -269,11 +263,11 @@ const UserProfile = () => {
 
   const getBadgeColor = (activity) => {
     const colors = {
-      "Colectare": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      "Tratare mecano-biologică": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      "Depozitare": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      "Colectare": "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+      "Tratare mecano-biologică": "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      "Depozitare": "bg-red-500/10 text-red-400 border border-red-500/20",
     };
-    return colors[activity] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+    return colors[activity] || "bg-gray-500/10 text-gray-400 border border-gray-500/20";
   };
 
   // ========================================================================
@@ -282,14 +276,12 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[#0f172a]">
         <DashboardHeader title="Profil Utilizator" />
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Se încarcă profilul...</p>
-            </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-12 h-12 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-sm text-gray-400">Se încarcă...</p>
           </div>
         </div>
       </div>
@@ -301,277 +293,198 @@ const UserProfile = () => {
   // ========================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
+    <div className="min-h-screen bg-[#0f172a]">
       <DashboardHeader title="Profil Utilizator" />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="px-6 py-6 max-w-[1600px] mx-auto">
         
-        {/* GRID LAYOUT: STÂNGA (Avatar + Contact) + DREAPTA (Info Cards) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          
-          {/* STÂNGA: AVATAR + CONTACT RAPID */}
-          <div className="space-y-6">
-            
-            {/* Avatar Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <div className="text-center">
-                <div className="relative inline-block mb-4">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                    <span className="text-white text-3xl font-bold">
-                      {getUserInitials()}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-400 rounded-full border-4 border-white dark:border-gray-800" />
-                </div>
-                
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                  {userData?.first_name} {userData?.last_name}
-                </h2>
-                
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  {userData?.position || "Funcție nedefinită"}
-                </p>
-                
-                <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                  {formatRole(userData?.role)}
+        {/* HEADER CARD - Compact */}
+        <div className="bg-gradient-to-r from-[#1e293b] to-[#1e293b]/80 rounded-xl border border-gray-800 p-6 mb-6">
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <span className="text-white text-2xl font-bold">
+                  {getUserInitials()}
                 </span>
               </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-[#1e293b]" />
             </div>
-
-            {/* Contact Rapid */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Contact rapid</h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {userData?.phone || "Telefon nedefinit"}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-700 dark:text-gray-300 truncate">
-                    {userData?.email}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Organizație Card */}
-            {institutionData && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  Organizație
-                </h3>
-                
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                  {institutionData.short_name || institutionData.name}
-                </p>
-                
-                {institutionData.sector && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Sector {institutionData.sector}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* DREAPTA: INFO PERSONALE + INFO ORGANIZAȚIE */}
-          <div className="lg:col-span-2 space-y-6">
             
-            {/* INFO PERSONALE */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Informații personale
-                </h3>
-                <button
-                  onClick={handleEditPersonal}
-                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="p-6 grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nume</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.last_name || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Prenume</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.first_name || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.email || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.phone || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Funcția</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.position || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Direcția/Departamentul</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {userData?.department || "-"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
-                <button
-                  onClick={handleEditPassword}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
-                >
-                  Schimbă parola
-                </button>
-              </div>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-2xl font-bold text-white mb-1">
+                {userData?.first_name} {userData?.last_name}
+              </h2>
+              <p className="text-sm text-gray-400 mb-2">
+                {userData?.position || "Funcție nedefinită"}
+              </p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="w-3 h-3" />
+                {formatRole(userData?.role)}
+              </span>
             </div>
 
-            {/* INFO ORGANIZAȚIE */}
-            {institutionData && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    Informații organizație
-                  </h3>
-                </div>
-                
-                <div className="p-6 grid grid-cols-2 gap-6">
-                  <div className="col-span-2">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Denumire</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {institutionData.name}
-                    </p>
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Adresă</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      {institutionData.address || "-"}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {institutionData.contact_phone || "-"}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {institutionData.contact_email || "-"}
-                    </p>
-                  </div>
-                  
-                  {institutionData.website && (
-                    <div className="col-span-2">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Website</p>
-                      <a 
-                        href={institutionData.website.startsWith('http') ? institutionData.website : `https://${institutionData.website}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-2"
-                      >
-                        <Globe className="w-4 h-4" />
-                        {institutionData.website}
-                      </a>
-                    </div>
-                  )}
-                </div>
+            {/* Contact rapid */}
+            <div className="flex items-center gap-8 px-6 border-l border-gray-700">
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-300">{userData?.phone || "-"}</span>
               </div>
-            )}
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-300">{userData?.email}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* TABEL OPERATORI (doar pentru PLATFORM_ADMIN) */}
+        {/* GRID LAYOUT: 2 COLOANE */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+          
+          {/* INFO PERSONALE */}
+          <div className="bg-[#1e293b] rounded-xl border border-gray-800">
+            <div className="flex items-center justify-between p-5 border-b border-gray-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-400" />
+                Informații personale
+              </h3>
+              <button
+                onClick={handleEditPersonal}
+                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-5 grid grid-cols-2 gap-4">
+              <InfoField label="Nume" value={userData?.last_name} />
+              <InfoField label="Prenume" value={userData?.first_name} />
+              <InfoField label="Email" value={userData?.email} />
+              <InfoField label="Telefon" value={userData?.phone} />
+              <InfoField label="Funcția" value={userData?.position} />
+              <InfoField label="Departament" value={userData?.department} />
+            </div>
+
+            <div className="p-5 border-t border-gray-800">
+              <button
+                onClick={handleEditPassword}
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                Schimbă parola
+              </button>
+            </div>
+          </div>
+
+          {/* INFO ORGANIZAȚIE */}
+          {institutionData && (
+            <div className="bg-[#1e293b] rounded-xl border border-gray-800">
+              <div className="p-5 border-b border-gray-800">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-emerald-400" />
+                  Informații organizație
+                </h3>
+              </div>
+              
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 mb-1">Denumire</p>
+                  <p className="text-sm font-medium text-white leading-relaxed">
+                    {institutionData.name}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 mb-1">Adresă</p>
+                  <p className="text-sm text-gray-300 flex items-start gap-2 leading-relaxed">
+                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                    {institutionData.address || "-"}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 mb-1">Telefon</p>
+                    <p className="text-sm text-gray-300">{institutionData.contact_phone || "-"}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 mb-1">Email</p>
+                    <p className="text-sm text-gray-300">{institutionData.contact_email || "-"}</p>
+                  </div>
+                </div>
+                
+                {institutionData.website && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 mb-1">Website</p>
+                    <a 
+                      href={institutionData.website.startsWith('http') ? institutionData.website : `https://${institutionData.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2"
+                    >
+                      <Globe className="w-4 h-4" />
+                      {institutionData.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* TABEL OPERATORI */}
         {currentUser?.role === "PLATFORM_ADMIN" && operators.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="bg-[#1e293b] rounded-xl border border-gray-800">
+            <div className="p-5 border-b border-gray-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-400" />
                 Operatori platformă
               </h3>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900/50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Nume Operator
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Telefon
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Activitate
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Beneficiar
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Acțiuni
-                    </th>
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Operator</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Email</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Telefon</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Activitate</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Beneficiar</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Status</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Acțiuni</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody>
                   {operators.map((operator) => (
-                    <tr key={operator.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{operator.name}</p>
+                    <tr key={operator.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                      <td className="px-5 py-4">
+                        <p className="text-sm font-medium text-white">{operator.name}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.email}</p>
+                      <td className="px-5 py-4">
+                        <p className="text-sm text-gray-300">{operator.email}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.phone}</p>
+                      <td className="px-5 py-4">
+                        <p className="text-sm text-gray-300">{operator.phone}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${getBadgeColor(operator.activity)}`}>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${getBadgeColor(operator.activity)}`}>
                           {operator.activity}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.beneficiary}</p>
+                      <td className="px-5 py-4">
+                        <p className="text-sm text-gray-300">{operator.beneficiary}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-5 py-4">
                         <span className="flex items-center gap-2 text-sm">
                           <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                          <span className="text-gray-600 dark:text-gray-300">{operator.status}</span>
+                          <span className="text-gray-300">{operator.status}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-medium rounded-lg transition-all">
+                      <td className="px-5 py-4">
+                        <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
                           Vezi detalii
                         </button>
                       </td>
@@ -587,196 +500,108 @@ const UserProfile = () => {
       {/* SIDEBAR EDITARE */}
       {sidebarMode && (
         <>
-          {/* Overlay */}
           <div 
-            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
             onClick={handleCloseSidebar}
           />
           
-          {/* Sidebar */}
-          <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                {sidebarMode === "personal" ? "Editează informații personale" : "Schimbă parola"}
+          <div className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-[#1e293b] shadow-2xl z-50 overflow-y-auto border-l border-gray-800">
+            <div className="p-5 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-[#1e293b] z-10">
+              <h3 className="text-base font-bold text-white">
+                {sidebarMode === "personal" ? "Editează informații" : "Schimbă parola"}
               </h3>
               <button
                 onClick={handleCloseSidebar}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-5">
               {sidebarMode === "personal" ? (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Prenume *
-                    </label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                        errors.firstName ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
-                    />
-                    {errors.firstName && (
-                      <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Nume *
-                    </label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                        errors.lastName ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
-                    />
-                    {errors.lastName && (
-                      <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                        errors.email ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Telefon
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Funcția
-                    </label>
-                    <input
-                      type="text"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Direcția/Departamentul
-                    </label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
-                    />
-                  </div>
+                  <InputField
+                    label="Prenume *"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    error={errors.firstName}
+                  />
+                  <InputField
+                    label="Nume *"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    error={errors.lastName}
+                  />
+                  <InputField
+                    label="Email *"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    error={errors.email}
+                  />
+                  <InputField
+                    label="Telefon"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
+                  <InputField
+                    label="Funcția"
+                    name="position"
+                    value={formData.position}
+                    onChange={handleInputChange}
+                  />
+                  <InputField
+                    label="Departament"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleInputChange}
+                  />
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Parola curentă *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword.current ? "text" : "password"}
-                        name="currentPassword"
-                        value={formData.currentPassword}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                          errors.currentPassword ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all pr-10`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                      >
-                        {showPassword.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.currentPassword && (
-                      <p className="mt-1 text-xs text-red-500">{errors.currentPassword}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Parola nouă *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword.new ? "text" : "password"}
-                        name="newPassword"
-                        value={formData.newPassword}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                          errors.newPassword ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all pr-10`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                      >
-                        {showPassword.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {errors.newPassword && (
-                      <p className="mt-1 text-xs text-red-500">{errors.newPassword}</p>
-                    )}
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Parola trebuie să aibă minim 8 caractere, o literă mare, o literă mică și un număr.
-                    </p>
-                  </div>
+                  <PasswordField
+                    label="Parola curentă *"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleInputChange}
+                    error={errors.currentPassword}
+                    showPassword={showPassword.current}
+                    toggleShow={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
+                  />
+                  <PasswordField
+                    label="Parola nouă *"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleInputChange}
+                    error={errors.newPassword}
+                    showPassword={showPassword.new}
+                    toggleShow={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                  />
+                  <p className="text-xs text-gray-400">
+                    Minim 8 caractere, o literă mare, o literă mică și un număr.
+                  </p>
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-800">
+            <div className="p-5 border-t border-gray-800 flex gap-3 sticky bottom-0 bg-[#1e293b]">
               <button
                 onClick={handleCloseSidebar}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 Anulează
               </button>
               <button
                 onClick={sidebarMode === "personal" ? handleSavePersonal : handleSavePassword}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <>
@@ -797,5 +622,57 @@ const UserProfile = () => {
     </div>
   );
 };
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+const InfoField = ({ label, value }) => (
+  <div>
+    <p className="text-xs font-semibold text-gray-400 mb-1">{label}</p>
+    <p className="text-sm text-white">{value || "-"}</p>
+  </div>
+);
+
+const InputField = ({ label, name, type = "text", value, onChange, error }) => (
+  <div>
+    <label className="block text-xs font-semibold text-gray-400 mb-1.5">{label}</label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`w-full px-3 py-2.5 bg-[#0f172a] border ${
+        error ? "border-red-500" : "border-gray-700"
+      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-white text-sm transition-all`}
+    />
+    {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+  </div>
+);
+
+const PasswordField = ({ label, name, value, onChange, error, showPassword, toggleShow }) => (
+  <div>
+    <label className="block text-xs font-semibold text-gray-400 mb-1.5">{label}</label>
+    <div className="relative">
+      <input
+        type={showPassword ? "text" : "password"}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-3 py-2.5 bg-[#0f172a] border ${
+          error ? "border-red-500" : "border-gray-700"
+        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-white text-sm pr-10 transition-all`}
+      />
+      <button
+        type="button"
+        onClick={toggleShow}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+      >
+        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+    {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+  </div>
+);
 
 export default UserProfile;
