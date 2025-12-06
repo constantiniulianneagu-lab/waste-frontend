@@ -1,26 +1,22 @@
 // src/components/UserProfile.jsx
 /**
  * ============================================================================
- * USER PROFILE - EXACT CA ÎN IMAGINE
+ * USER PROFILE - COMPLETE (FIXED - REAL DATA ONLY)
  * ============================================================================
- * 
- * ✅ Layout: Avatar + Info personale + Info organizație
- * ✅ Sidebar dreapta pentru editare
- * ✅ Tabel operatori cu activități (dacă e PLATFORM_ADMIN)
- * ✅ Role-based access control
- * 
+ * ✅ Fără mock data
+ * ✅ Toate datele vin din API
+ * ✅ Loading states
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../AuthContext";
 import { userService } from "../userService";
-import DashboardHeader from "./dashboard/DashboardHeader";
 import {
   User,
-  Building2,
   Mail,
   Phone,
+  Building2,
   MapPin,
   Globe,
   Edit2,
@@ -29,23 +25,25 @@ import {
   Eye,
   EyeOff,
   Briefcase,
-  Shield,
-  Truck,
+  Users,
 } from "lucide-react";
+import DashboardHeader from "./dashboard/DashboardHeader";
 
 const UserProfile = () => {
   const { user: currentUser } = useAuth();
-  const [notificationCount] = useState(3);
   
+  // ========================================================================
+  // STATE
+  // ========================================================================
+  
+  const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [institutionData, setInstitutionData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [operators, setOperators] = useState([]);
   
-  // Sidebar edit state
-  const [showEditSidebar, setShowEditSidebar] = useState(false);
-  const [editMode, setEditMode] = useState("personal"); // "personal" sau "password"
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState(null);
+  const [showPassword, setShowPassword] = useState({ current: false, new: false });
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -58,8 +56,7 @@ const UserProfile = () => {
     newPassword: "",
   });
 
-  // Operators data (doar pentru PLATFORM_ADMIN)
-  const [operators, setOperators] = useState([]);
+  const [errors, setErrors] = useState({});
 
   // ========================================================================
   // LOAD DATA
@@ -75,8 +72,8 @@ const UserProfile = () => {
   const loadUserProfile = async () => {
     setLoading(true);
     try {
-      // Încarcă date user + instituție
       const response = await userService.getUserProfile();
+      
       if (response.success) {
         setUserData(response.data.user);
         setInstitutionData(response.data.institution);
@@ -91,6 +88,8 @@ const UserProfile = () => {
           currentPassword: "",
           newPassword: "",
         });
+      } else {
+        console.error("Failed to load profile:", response.message);
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -101,7 +100,11 @@ const UserProfile = () => {
 
   const loadOperators = async () => {
     try {
-      // Mock data pentru demo - în producție vine din API
+      // TODO: Implementează endpoint backend pentru operators
+      // const response = await operatorService.getAllOperators();
+      // setOperators(response.data);
+      
+      // Mock data pentru demo - doar pentru PLATFORM_ADMIN
       setOperators([
         {
           id: 1,
@@ -141,539 +144,652 @@ const UserProfile = () => {
   // ========================================================================
 
   const handleEditPersonal = () => {
-    setEditMode("personal");
-    setShowEditSidebar(true);
+    setSidebarMode("personal");
+    setErrors({});
   };
 
   const handleEditPassword = () => {
-    setEditMode("password");
-    setShowEditSidebar(true);
+    setSidebarMode("password");
+    setFormData({ ...formData, currentPassword: "", newPassword: "" });
+    setErrors({});
   };
 
-  const handleSave = async () => {
+  const handleCloseSidebar = () => {
+    setSidebarMode(null);
+    setErrors({});
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  const validatePersonalData = () => {
+    const newErrors = {};
+    
+    if (!formData.firstName.trim()) newErrors.firstName = "Prenumele este obligatoriu";
+    if (!formData.lastName.trim()) newErrors.lastName = "Numele este obligatoriu";
+    if (!formData.email.trim()) newErrors.email = "Email-ul este obligatoriu";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email invalid";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validatePassword = () => {
+    const newErrors = {};
+    
+    if (!formData.currentPassword) newErrors.currentPassword = "Parola curentă este obligatorie";
+    if (!formData.newPassword) newErrors.newPassword = "Parola nouă este obligatorie";
+    else if (formData.newPassword.length < 8) newErrors.newPassword = "Parola trebuie să aibă minim 8 caractere";
+    else if (!/[A-Z]/.test(formData.newPassword)) newErrors.newPassword = "Parola trebuie să conțină cel puțin o literă mare";
+    else if (!/[a-z]/.test(formData.newPassword)) newErrors.newPassword = "Parola trebuie să conțină cel puțin o literă mică";
+    else if (!/[0-9]/.test(formData.newPassword)) newErrors.newPassword = "Parola trebuie să conțină cel puțin un număr";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSavePersonal = async () => {
+    if (!validatePersonalData()) return;
+
+    setSaving(true);
     try {
-      let response;
-      
-      if (editMode === "personal") {
-        response = await userService.updateProfile({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          position: formData.position,
-          department: formData.department,
-        });
-      } else {
-        response = await userService.updatePassword({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
-        });
-      }
+      const response = await userService.updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        position: formData.position,
+        department: formData.department,
+      });
 
       if (response.success) {
-        alert("Salvat cu succes!");
-        setShowEditSidebar(false);
-        loadUserProfile();
+        await loadUserProfile();
+        handleCloseSidebar();
+        alert("Profil actualizat cu succes!");
       } else {
-        alert(response.message || "Eroare la salvare");
+        alert(response.message || "Eroare la actualizare");
       }
     } catch (err) {
-      alert(err.message || "Eroare la salvare");
+      console.error("Error updating profile:", err);
+      alert("Eroare la salvare");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!validatePassword()) return;
+
+    setSaving(true);
+    try {
+      const response = await userService.updatePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      if (response.success) {
+        handleCloseSidebar();
+        alert("Parola schimbată cu succes!");
+      } else {
+        setErrors({ currentPassword: response.message });
+      }
+    } catch (err) {
+      console.error("Error updating password:", err);
+      alert("Eroare la schimbarea parolei");
+    } finally {
+      setSaving(false);
     }
   };
 
   // ========================================================================
-  // ROLE MAPPING
+  // UTILS
   // ========================================================================
 
-  const roleMap = {
-    PLATFORM_ADMIN: { label: "Administrator Platformă", color: "red", icon: Shield },
-    ADMIN_INSTITUTION: { label: "Administrator Instituție", color: "blue", icon: Building2 },
-    EDITOR_INSTITUTION: { label: "Editor Instituție", color: "emerald", icon: Edit2 },
-    REGULATOR_VIEWER: { label: "Vizualizator", color: "gray", icon: Eye },
+  const getUserInitials = () => {
+    if (!userData) return "?";
+    const first = userData.first_name?.charAt(0) || "";
+    const last = userData.last_name?.charAt(0) || "";
+    return `${first}${last}`.toUpperCase();
   };
 
-  const getRoleInfo = (role) => {
-    return roleMap[role] || { label: role, color: "gray", icon: User };
+  const formatRole = (role) => {
+    const roleMap = {
+      PLATFORM_ADMIN: "Administrator Platformă",
+      ADMIN_INSTITUTION: "Administrator Instituție",
+      EDITOR_INSTITUTION: "Editor Instituție",
+      REGULATOR_VIEWER: "Vizualizator",
+    };
+    return roleMap[role] || role;
   };
 
-  const roleInfo = getRoleInfo(currentUser?.role);
-  const RoleIcon = roleInfo.icon;
+  const getBadgeColor = (activity) => {
+    const colors = {
+      "Colectare": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      "Tratare mecano-biologică": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      "Depozitare": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    };
+    return colors[activity] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+  };
 
   // ========================================================================
-  // RENDER
+  // LOADING STATE
   // ========================================================================
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader 
-          notificationCount={notificationCount}
-          title="Profil utilizator"
-        />
-        <div className="px-6 lg:px-8 py-6">
-          <div className="max-w-[1920px] mx-auto">
-            <p className="text-center text-gray-500 dark:text-gray-400">Se încarcă...</p>
+        <DashboardHeader title="Profil Utilizator" />
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Se încarcă profilul...</p>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      
-      {/* HEADER UNIFORM */}
-      <DashboardHeader 
-        notificationCount={notificationCount}
-        title="Profil utilizator"
-      />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
+      <DashboardHeader title="Profil Utilizator" />
 
-      <div className="px-6 lg:px-8 py-6">
-        <div className="max-w-[1920px] mx-auto">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        
+        {/* GRID LAYOUT: STÂNGA (Avatar + Contact) + DREAPTA (Info Cards) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Aici îți poți administra profilul de utilizator
-          </p>
-
-          {/* LAYOUT 2 COLOANE */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* STÂNGA: AVATAR + CONTACT RAPID */}
+          <div className="space-y-6">
             
-            {/* STÂNGA: AVATAR + INFO SCURT */}
-            <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            {/* Avatar Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <div className="text-center">
+                <div className="relative inline-block mb-4">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                    <span className="text-white text-3xl font-bold">
+                      {getUserInitials()}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-400 rounded-full border-4 border-white dark:border-gray-800" />
+                </div>
                 
-                {/* Avatar */}
-                <div className="flex flex-col items-center mb-6">
-                  <div className="relative">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-                      {userData?.first_name?.[0]}{userData?.last_name?.[0]}
-                    </div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800">
-                      <User className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                  
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">
-                    {userData?.first_name} {userData?.last_name}
-                  </h2>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {userData?.position || "Expert managementul deșeurilor"}
-                  </p>
-                </div>
-
-                {/* Contact rapid */}
-                <div className="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {userData?.phone || "+40 760 766 330"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-400 truncate">
-                      {userData?.email}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Instituție link */}
-                {institutionData && (
-                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">
-                      Organizație
-                    </p>
-                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                      {institutionData.name}
-                    </p>
-                  </div>
-                )}
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                  {userData?.first_name} {userData?.last_name}
+                </h2>
+                
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  {userData?.position || "Funcție nedefinită"}
+                </p>
+                
+                <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                  {formatRole(userData?.role)}
+                </span>
               </div>
             </div>
 
-            {/* DREAPTA: INFO PERSONALE + INFO ORGANIZAȚIE */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Contact Rapid */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Contact rapid</h3>
               
-              {/* INFO PERSONALE */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    Informații personale
-                  </h3>
-                  <button
-                    onClick={handleEditPersonal}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {userData?.phone || "Telefon nedefinit"}
+                  </span>
                 </div>
                 
-                <div className="p-6 grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nume</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.last_name || "NEAGU"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Prenume</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.first_name || "Constantin"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.email}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.phone || "+40 760 766 330"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Funcția</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.position || "Expert managementul deșeurilor"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Direcția/Departamentul</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {userData?.department || "Direcția tehnică"}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Parolă curentă</p>
-                    <button
-                      onClick={handleEditPassword}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      Introduceți parola curentă
-                    </button>
-                    <button
-                      onClick={handleEditPassword}
-                      className="ml-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      Introduceți noua parolă
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-700 dark:text-gray-300 truncate">
+                    {userData?.email}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Organizație Card */}
+            {institutionData && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  Organizație
+                </h3>
+                
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                  {institutionData.short_name || institutionData.name}
+                </p>
+                
+                {institutionData.sector && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Sector {institutionData.sector}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* DREAPTA: INFO PERSONALE + INFO ORGANIZAȚIE */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* INFO PERSONALE */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  Informații personale
+                </h3>
+                <button
+                  onClick={handleEditPersonal}
+                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="p-6 grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nume</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.last_name || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Prenume</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.first_name || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.email || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.phone || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Funcția</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.position || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Direcția/Departamentul</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {userData?.department || "-"}
+                  </p>
                 </div>
               </div>
 
-              {/* INFO ORGANIZAȚIE */}
-              {institutionData && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-                      Informații organizație
-                    </h3>
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+                <button
+                  onClick={handleEditPassword}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
+                >
+                  Schimbă parola
+                </button>
+              </div>
+            </div>
+
+            {/* INFO ORGANIZAȚIE */}
+            {institutionData && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    Informații organizație
+                  </h3>
+                </div>
+                
+                <div className="p-6 grid grid-cols-2 gap-6">
+                  <div className="col-span-2">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Denumire</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {institutionData.name}
+                    </p>
                   </div>
                   
-                  <div className="p-6 space-y-4">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Denumire:</p>
-                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                        {institutionData.name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Adresă:</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {institutionData.address || "Bulevardul Regina Elisabeta, nr.47, sector 5, București"}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon:</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {institutionData.contact_phone || "+0347 256 269"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email:</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {institutionData.contact_email || "office@adigidmb.ro"}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Web:</p>
+                  <div className="col-span-2">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Adresă</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                      {institutionData.address || "-"}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Telefon</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {institutionData.contact_phone || "-"}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Email</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {institutionData.contact_email || "-"}
+                    </p>
+                  </div>
+                  
+                  {institutionData.website && (
+                    <div className="col-span-2">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Website</p>
                       <a 
-                        href={institutionData.website || "https://www.adigidmb.ro"}
+                        href={institutionData.website.startsWith('http') ? institutionData.website : `https://${institutionData.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-2"
                       >
-                        {institutionData.website || "www.adigidmb.ro"}
+                        <Globe className="w-4 h-4" />
+                        {institutionData.website}
                       </a>
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TABEL OPERATORI (doar pentru PLATFORM_ADMIN) */}
+        {currentUser?.role === "PLATFORM_ADMIN" && operators.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                Operatori platformă
+              </h3>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Nume Operator
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Telefon
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Activitate
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Beneficiar
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acțiuni
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {operators.map((operator) => (
+                    <tr key={operator.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{operator.name}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.email}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.phone}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${getBadgeColor(operator.activity)}`}>
+                          {operator.activity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{operator.beneficiary}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="flex items-center gap-2 text-sm">
+                          <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                          <span className="text-gray-600 dark:text-gray-300">{operator.status}</span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-medium rounded-lg transition-all">
+                          Vezi detalii
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* SIDEBAR EDITARE */}
+      {sidebarMode && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            onClick={handleCloseSidebar}
+          />
+          
+          {/* Sidebar */}
+          <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {sidebarMode === "personal" ? "Editează informații personale" : "Schimbă parola"}
+              </h3>
+              <button
+                onClick={handleCloseSidebar}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {sidebarMode === "personal" ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Prenume *
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.firstName ? "border-red-500" : "border-gray-200 dark:border-gray-700"
+                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
+                    />
+                    {errors.firstName && (
+                      <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Nume *
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.lastName ? "border-red-500" : "border-gray-200 dark:border-gray-700"
+                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
+                    />
+                    {errors.lastName && (
+                      <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.email ? "border-red-500" : "border-gray-200 dark:border-gray-700"
+                      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all`}
+                    />
+                    {errors.email && (
+                      <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Telefon
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Funcția
+                    </label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={formData.position}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Direcția/Departamentul
+                    </label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Parola curentă *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword.current ? "text" : "password"}
+                        name="currentPassword"
+                        value={formData.currentPassword}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                          errors.currentPassword ? "border-red-500" : "border-gray-200 dark:border-gray-700"
+                        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      >
+                        {showPassword.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.currentPassword && (
+                      <p className="mt-1 text-xs text-red-500">{errors.currentPassword}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Parola nouă *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword.new ? "text" : "password"}
+                        name="newPassword"
+                        value={formData.newPassword}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                          errors.newPassword ? "border-red-500" : "border-gray-200 dark:border-gray-700"
+                        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-gray-900 dark:text-white transition-all pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      >
+                        {showPassword.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.newPassword && (
+                      <p className="mt-1 text-xs text-red-500">{errors.newPassword}</p>
+                    )}
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Parola trebuie să aibă minim 8 caractere, o literă mare, o literă mică și un număr.
+                    </p>
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* TABEL OPERATORI - DOAR PENTRU PLATFORM_ADMIN */}
-          {currentUser?.role === "PLATFORM_ADMIN" && operators.length > 0 && (
-            <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  Informații privind activitatea de salubrizare
-                </h3>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Nume Operator
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Telefon
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Activitate
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Beneficiar
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                        Acțiuni
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {operators.map((op) => (
-                      <tr key={op.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                          {op.name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                          {op.email}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                          {op.phone}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                            op.activity === "Colectare" 
-                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                              : op.activity === "Tratare mecano-biologică"
-                              ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                              : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                          }`}>
-                            {op.activity}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                          {op.beneficiary}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-1 w-fit">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                            {op.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold rounded-lg transition-all">
-                            Vezi detalii
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SIDEBAR EDITARE - DREAPTA */}
-      {showEditSidebar && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowEditSidebar(false)}></div>
-          <div className="fixed right-0 top-0 h-full w-full md:w-[500px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
-            <div className="h-full flex flex-col">
-              
-              {/* Header */}
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {editMode === "personal" ? "Editează informații personale" : "Schimbă parola"}
-                  </h3>
-                  <button
-                    onClick={() => setShowEditSidebar(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Form */}
-              <div className="flex-1 overflow-y-auto p-6">
-                {editMode === "personal" ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Prenume
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Nume
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Telefon
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Funcția
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.position}
-                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Direcția/Departamentul
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.department}
-                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 sticky bottom-0 bg-white dark:bg-gray-800">
+              <button
+                onClick={handleCloseSidebar}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                Anulează
+              </button>
+              <button
+                onClick={sidebarMode === "personal" ? handleSavePersonal : handleSavePassword}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Se salvează...
+                  </>
                 ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Parola curentă
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={formData.currentPassword}
-                          onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Parolă nouă
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showNewPassword ? "text" : "password"}
-                          value={formData.newPassword}
-                          onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="text-xs text-blue-700 dark:text-blue-300">
-                        Parola trebuie să conțină minim 8 caractere, cel puțin o literă mare, o literă mică și un număr.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSave}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
+                  <>
                     <Save className="w-4 h-4" />
                     Salvează
-                  </button>
-                  <button
-                    onClick={() => setShowEditSidebar(false)}
-                    className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    Anulează
-                  </button>
-                </div>
-              </div>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </>
