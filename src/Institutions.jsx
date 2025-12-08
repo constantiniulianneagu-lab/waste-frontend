@@ -642,7 +642,7 @@ const ContractFileUpload = ({ contractId, existingFile, onSuccess }) => {
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
-          
+          <a
             href={existingFile.url}
             download
             className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
