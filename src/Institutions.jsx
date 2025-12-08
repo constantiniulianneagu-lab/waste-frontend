@@ -30,6 +30,8 @@ import {
   Activity,
   Eye,
   Download,
+  Upload,   // ✅ ADAUGĂ
+  Trash,    // ✅ ADAUGĂ
 } from "lucide-react";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api/apiClient";
@@ -167,8 +169,8 @@ const Institutions = () => {
   // LOAD CONTRACTS FOR INSTITUTION
   // ========================================================================
 
-  const loadContractsForInstitution = async (institutionId) => {
-    if (institutionContracts[institutionId]) return; // Already loaded
+  const loadContractsForInstitution = async (institutionId, forceReload = false) => {
+    if (institutionContracts[institutionId] && !forceReload) return; // Already loaded
     
     setLoadingContracts(prev => ({ ...prev, [institutionId]: true }));
     
@@ -501,6 +503,205 @@ const Institutions = () => {
       maximumFractionDigits: 2
     }).format(num || 0);
   };
+
+// ========================================================================
+// FILE UPLOAD COMPONENT
+// ========================================================================
+
+const ContractFileUpload = ({ contractId, existingFile, onSuccess }) => {
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Doar fișiere PDF sunt acceptate');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Fișierul este prea mare (max 10MB)');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/contracts/${contractId}/upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Contract încărcat cu succes!');
+        onSuccess();
+      } else {
+        alert(data.message || 'Eroare la upload');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Eroare la încărcarea fișierului');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Sigur vrei să ștergi acest contract?')) return;
+
+    setDeleting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/contracts/${contractId}/file`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Contract șters cu succes!');
+        onSuccess();
+      } else {
+        alert(data.message || 'Eroare la ștergere');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Eroare la ștergerea fișierului');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
+
+  if (existingFile) {
+    return (
+      <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-blue-900 dark:text-blue-200 truncate">
+              {existingFile.name}
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">
+              {(existingFile.size / 1024).toFixed(0)} KB
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => window.open(existingFile.url, '_blank')}
+            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+            title="Vizualizează"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          
+            href={existingFile.url}
+            download
+            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+            title="Descarcă"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </a>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors disabled:opacity-50"
+            title="Șterge"
+          >
+            <Trash className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`relative border-2 border-dashed rounded-lg p-4 transition-colors ${
+        dragActive
+          ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
+          : 'border-gray-300 dark:border-gray-600'
+      }`}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <input
+        type="file"
+        id={`file-upload-${contractId}`}
+        accept="application/pdf"
+        onChange={handleChange}
+        className="hidden"
+      />
+      <label
+        htmlFor={`file-upload-${contractId}`}
+        className="flex flex-col items-center justify-center cursor-pointer"
+      >
+        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+          {uploading ? 'Se încarcă...' : 'Drag & drop sau click pentru upload'}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          PDF, max 10MB
+        </p>
+      </label>
+      {uploading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80 rounded-lg">
+          <div className="w-8 h-8 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
   // ========================================================================
   // EXPANDED ROW COMPONENT
