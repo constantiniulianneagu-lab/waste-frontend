@@ -346,14 +346,15 @@ const Institutions = () => {
   };
 
   const toggleRowExpand = (id) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
+    // Auto-close: doar un rând deschis odată
+    if (expandedRows.has(id)) {
+      // Închide rândul curent
+      setExpandedRows(new Set());
     } else {
-      newExpanded.add(id);
+      // Deschide noul rând (închide automat pe celălalt)
+      setExpandedRows(new Set([id]));
       loadContractsForInstitution(id);
     }
-    setExpandedRows(newExpanded);
   };
 
   // ========================================================================
