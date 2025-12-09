@@ -757,19 +757,19 @@ const Institutions = () => {
         {/* DETAILS GRID */}
         <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-white dark:bg-gray-800">
           
-          {/* Perioadă */}
-          <div className="flex items-start gap-2">
-            <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Perioadă</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatDate(contract.contract_date_start)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                → {formatDate(contract.contract_date_end) || 'nedeterminat'}
-              </p>
-            </div>
-          </div>
+         {/* Perioadă */}
+<div className="flex items-start gap-2">
+  <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+  <div>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Perioadă</p>
+    <p className="text-sm font-medium text-gray-900 dark:text-white">
+      {formatDate(contract.contract_date_start)}
+    </p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">
+      → {formatDate(contract.effective_end_date || contract.contract_date_end) || 'nedeterminat'}
+    </p>
+  </div>
+</div>
 
           {/* Tarif */}
           <div className="flex items-start gap-2">
