@@ -96,7 +96,7 @@ const Institutions = () => {
   const [selectedContractForEdit, setSelectedContractForEdit] = useState(null);
   const [currentInstitutionId, setCurrentInstitutionId] = useState(null);
 
-// ========================================================================
+  // ========================================================================
   // LOAD DATA FROM BACKEND
   // ========================================================================
 
@@ -348,9 +348,8 @@ const Institutions = () => {
     }
   };
 
-  // ✅ SCHIMBĂ DOAR AICI - AUTO-CLOSE EXPAND ROWS
+  // ✅ AUTO-CLOSE EXPAND ROWS
   const toggleRowExpand = (id) => {
-    // Auto-close: doar un rând deschis odată
     if (expandedRows.has(id)) {
       setExpandedRows(new Set());
     } else {
@@ -647,7 +646,7 @@ const Institutions = () => {
             >
               <Eye className="w-3.5 h-3.5" />
             </button>
-            
+            <a
               href={existingFile.url}
               download
               className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
@@ -708,7 +707,7 @@ const Institutions = () => {
     );
   };
 
-// ========================================================================
+  // ========================================================================
   // CONTRACT ROW COMPONENT
   // ========================================================================
 
@@ -913,7 +912,7 @@ const Institutions = () => {
                   <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Website</p>
-                    
+                    <a
                       href={inst.website.startsWith("http") ? inst.website : `https://${inst.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -1111,7 +1110,7 @@ const Institutions = () => {
     );
   };
 
-// ========================================================================
+  // ========================================================================
   // RENDER
   // ========================================================================
 
@@ -1525,343 +1524,339 @@ const Institutions = () => {
         </div>
       </div>
 
-     {/* SIDEBAR (Add/Edit/Delete) */}
-{sidebarOpen && (
-  <>
-    <div
-      className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-      onClick={handleCloseSidebar}
-    />
+      {/* SIDEBAR */}
+      {sidebarOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            onClick={handleCloseSidebar}
+          />
 
-    <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
-      
-      {/* HEADER */}
-      <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between border-b border-emerald-700 z-10">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          {sidebarMode === "add" && (
-            <>
-              <Plus className="w-5 h-5" />
-              Adaugă Instituție
-            </>
-          )}
-          {sidebarMode === "edit" && (
-            <>
-              <Edit2 className="w-5 h-5" />
-              Editează Instituție
-            </>
-          )}
-          {sidebarMode === "delete" && (
-            <>
-              <Trash2 className="w-5 h-5" />
-              Șterge Instituție
-            </>
-          )}
-        </h3>
-        <button
-          onClick={handleCloseSidebar}
-          className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-        >
-          <X className="w-5 h-5 text-white" />
-        </button>
-      </div>
-
-      {/* CONTENT */}
-      <div className="p-6">
-        
-        {/* DELETE MODE */}
-        {sidebarMode === "delete" && selectedInstitution && (
-          <div className="space-y-6">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-red-900 dark:text-red-100 mb-1">
-                    Confirmare Ștergere
-                  </h4>
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    Ești sigur că vrei să ștergi instituția{" "}
-                    <span className="font-semibold">{selectedInstitution.name}</span>?
-                  </p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-2">
-                    Această acțiune nu poate fi anulată.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleCloseSidebar}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
-              >
-                Anulează
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Se șterge...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" />
-                    Șterge Instituția
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ADD/EDIT MODE */}
-        {(sidebarMode === "add" || sidebarMode === "edit") && (
-          <div className="space-y-6">
+          <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
             
-            {/* Denumire */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Denumire *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                  errors.name
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
-                } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
-                placeholder="Denumirea instituției"
-              />
-              {errors.name && (
-                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                  {errors.name}
-                </p>
-              )}
-            </div>
-
-            {/* Denumire Scurtă */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Denumire Scurtă
-              </label>
-              <input
-                type="text"
-                name="short_name"
-                value={formData.short_name}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="Ex: PMB, S1, S2..."
-              />
-            </div>
-
-            {/* Tip Instituție */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Tip Instituție *
-              </label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                  errors.type
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
-                } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
-              >
-                <option value="">Selectează tipul</option>
-                <option value="MUNICIPALITY">Municipiu</option>
-                <option value="WASTE_OPERATOR">Operator Colectare</option>
-                <option value="SORTING_OPERATOR">Operator Sortare</option>
-                <option value="TMB_OPERATOR">Operator TMB</option>
-                <option value="DISPOSAL_CLIENT">Client Depozit</option>
-                <option value="RECYCLING_CLIENT">Client Reciclare</option>
-                <option value="RECOVERY_CLIENT">Client Valorificare</option>
-              </select>
-              {errors.type && (
-                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                  {errors.type}
-                </p>
-              )}
-            </div>
-
-            {/* Sector */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Sector
-              </label>
-              <input
-                type="text"
-                name="sector"
-                value={formData.sector}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="Ex: 1,2,3 sau B pentru București"
-              />
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                Separate prin virgulă pentru sectoare multiple (ex: 1,2,3)
-              </p>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Email Contact
-              </label>
-              <input
-                type="email"
-                name="contact_email"
-                value={formData.contact_email}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                  errors.contact_email
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
-                } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
-                placeholder="contact@institutie.ro"
-              />
-              {errors.contact_email && (
-                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                  {errors.contact_email}
-                </p>
-              )}
-            </div>
-
-            {/* Telefon */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Telefon Contact
-              </label>
-              <input
-                type="text"
-                name="contact_phone"
-                value={formData.contact_phone}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="+40 21 XXX XXXX"
-              />
-            </div>
-
-            {/* Adresă */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Adresă
-              </label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none"
-                placeholder="Adresa completă"
-              />
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Website
-              </label>
-              <input
-                type="text"
-                name="website"
-                value={formData.website}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="https://www.institutie.ro"
-              />
-            </div>
-
-            {/* Cod Fiscal */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Cod Fiscal
-              </label>
-              <input
-                type="text"
-                name="fiscal_code"
-                value={formData.fiscal_code}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="RO12345678"
-              />
-            </div>
-
-            {/* Nr. Înregistrare */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Nr. Înregistrare
-              </label>
-              <input
-                type="text"
-                name="registration_no"
-                value={formData.registration_no}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-                placeholder="J40/XXXX/YYYY"
-              />
-            </div>
-
-            {/* Status Activ */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-              <input
-                type="checkbox"
-                name="is_active"
-                checked={formData.is_active}
-                onChange={handleInputChange}
-                className="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-              />
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Instituție activă
-              </label>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleCloseSidebar}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
-              >
-                Anulează
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {saving ? (
+            {/* HEADER */}
+            <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between border-b border-emerald-700 z-10">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                {sidebarMode === "add" && (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Se salvează...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    {sidebarMode === "add" ? "Adaugă" : "Salvează"}
+                    <Plus className="w-5 h-5" />
+                    Adaugă Instituție
                   </>
                 )}
+                {sidebarMode === "edit" && (
+                  <>
+                    <Edit2 className="w-5 h-5" />
+                    Editează Instituție
+                  </>
+                )}
+                {sidebarMode === "delete" && (
+                  <>
+                    <Trash2 className="w-5 h-5" />
+                    Șterge Instituție
+                  </>
+                )}
+              </h3>
+              <button
+                onClick={handleCloseSidebar}
+                className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
+
+            {/* CONTENT */}
+            <div className="p-6">
+              
+              {/* DELETE MODE */}
+              {sidebarMode === "delete" && selectedInstitution && (
+                <div className="space-y-6">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                        <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-red-900 dark:text-red-100 mb-1">
+                          Confirmare Ștergere
+                        </h4>
+                        <p className="text-sm text-red-700 dark:text-red-300">
+                          Ești sigur că vrei să ștergi instituția{" "}
+                          <span className="font-semibold">{selectedInstitution.name}</span>?
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                          Această acțiune nu poate fi anulată.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCloseSidebar}
+                      className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
+                    >
+                      Anulează
+                    </button>
+                    <button
+                      onClick={handleConfirmDelete}
+                      disabled={saving}
+                      className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Se șterge...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4" />
+                          Șterge Instituția
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ADD/EDIT MODE */}
+              {(sidebarMode === "add" || sidebarMode === "edit") && (
+                <div className="space-y-6">
+                  
+                  {/* Denumire */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Denumire *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.name
+                          ? "border-red-500"
+                          : "border-gray-300 dark:border-gray-600"
+                      } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
+                      placeholder="Denumirea instituției"
+                    />
+                    {errors.name && (
+                      <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                        {errors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Denumire Scurtă */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Denumire Scurtă
+                    </label>
+                    <input
+                      type="text"
+                      name="short_name"
+                      value={formData.short_name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="Ex: PMB, S1, S2..."
+                    />
+                  </div>
+
+                  {/* Tip Instituție */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Tip Instituție *
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.type
+                          ? "border-red-500"
+                          : "border-gray-300 dark:border-gray-600"
+                      } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
+                    >
+                      <option value="">Selectează tipul</option>
+                      <option value="MUNICIPALITY">Municipiu</option>
+                      <option value="WASTE_OPERATOR">Operator Colectare</option>
+                      <option value="SORTING_OPERATOR">Operator Sortare</option>
+                      <option value="TMB_OPERATOR">Operator TMB</option>
+                      <option value="DISPOSAL_CLIENT">Client Depozit</option>
+                      <option value="RECYCLING_CLIENT">Client Reciclare</option>
+                      <option value="RECOVERY_CLIENT">Client Valorificare</option>
+                    </select>
+                    {errors.type && (
+                      <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                        {errors.type}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Sector */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Sector
+                    </label>
+                    <input
+                      type="text"
+                      name="sector"
+                      value={formData.sector}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="Ex: 1,2,3 sau B pentru București"
+                    />
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      Separate prin virgulă pentru sectoare multiple (ex: 1,2,3)
+                    </p>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Email Contact
+                    </label>
+                    <input
+                      type="email"
+                      name="contact_email"
+                      value={formData.contact_email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                        errors.contact_email
+                          ? "border-red-500"
+                          : "border-gray-300 dark:border-gray-600"
+                      } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
+                      placeholder="contact@institutie.ro"
+                    />
+                    {errors.contact_email && (
+                      <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                        {errors.contact_email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Telefon */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Telefon Contact
+                    </label>
+                    <input
+                      type="text"
+                      name="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="+40 21 XXX XXXX"
+                    />
+                  </div>
+
+                  {/* Adresă */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Adresă
+                    </label>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none"
+                      placeholder="Adresa completă"
+                    />
+                  </div>
+
+                  {/* Website */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="text"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="https://www.institutie.ro"
+                    />
+                  </div>
+
+                  {/* Cod Fiscal */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Cod Fiscal
+                    </label>
+                    <input
+                      type="text"
+                      name="fiscal_code"
+                      value={formData.fiscal_code}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="RO12345678"
+                    />
+                  </div>
+
+                  {/* Nr. Înregistrare */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Nr. Înregistrare
+                    </label>
+                    <input
+                      type="text"
+                      name="registration_no"
+                      value={formData.registration_no}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      placeholder="J40/XXXX/YYYY"
+                    />
+                  </div>
+
+                  {/* Status Activ */}
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <input
+                      type="checkbox"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      className="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
+                    />
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Instituție activă
+                    </label>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={handleCloseSidebar}
+                      className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
+                    >
+                      Anulează
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Se salvează...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          {sidebarMode === "add" ? "Adaugă" : "Salvează"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </>
-)}
+        </>
+      )}
 
-      {/* ===================================================================== */}
-      {/* MODALE NOI - ADAUGĂ LA SFÂRȘIT */}
-      {/* ===================================================================== */}
-
-      {/* WASTE OPERATOR CONTRACT MODAL */}
+      {/* MODALS */}
       <WasteOperatorContractModal
         isOpen={wasteContractModalOpen}
         onClose={() => {
@@ -1877,7 +1872,6 @@ const Institutions = () => {
         }}
       />
 
-      {/* SORTING CONTRACT MODAL */}
       <SortingContractModal
         isOpen={sortingContractModalOpen}
         onClose={() => {
@@ -1893,7 +1887,6 @@ const Institutions = () => {
         }}
       />
 
-      {/* DISPOSAL CONTRACT MODAL */}
       <DisposalContractModal
         isOpen={disposalContractModalOpen}
         onClose={() => {
