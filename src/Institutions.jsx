@@ -766,8 +766,8 @@ const Institutions = () => {
                 {formatDate(contract.contract_date_start)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-  → {formatDate(contract.effective_end_date || contract.contract_date_end) || 'nedeterminat'}
-</p>
+                → {formatDate(contract.contract_date_end) || 'nedeterminat'}
+              </p>
             </div>
           </div>
 
