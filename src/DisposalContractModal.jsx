@@ -203,12 +203,12 @@ const DisposalContractModal = ({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/50 z-[60]"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed top-0 right-0 h-full w-full sm:w-[700px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[700px] bg-white dark:bg-gray-800 shadow-2xl z-[70] overflow-y-auto">
         
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between z-10">
@@ -224,14 +224,10 @@ const DisposalContractModal = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           
-          {/* Contract Details */}
+          {/* Basic Info */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Detalii Contract
-            </h4>
-            
             {/* Contract Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

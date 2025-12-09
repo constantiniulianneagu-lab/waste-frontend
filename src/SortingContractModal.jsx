@@ -175,12 +175,12 @@ const SortingContractModal = ({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/50 z-[60]"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-[70] overflow-y-auto">
         
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between z-10">
