@@ -1133,200 +1133,167 @@ const Institutions = () => {
 
       <div className="max-w-[1920px] mx-auto px-6 py-8 space-y-6">
         
-        {/* STATS CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+         {/* STATS CARDS - MODERN COMPACT DESIGN */}
+         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           
           {/* Total */}
           <div 
             onClick={() => handleTypeFilterClick(null)}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === null 
-                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-slate-400 dark:border-slate-500 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <TrendingUp className="w-4 h-4 text-gray-400" />
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-slate-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Building2 className={`w-5 h-5 mb-2 ${activeTypeFilter === null ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.total}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Total</div>
+              {activeTypeFilter === null && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-500 to-slate-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.total}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Total Instituții</p>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                {stats.active} active
-              </span>
-              <span className="text-gray-300 dark:text-gray-600">•</span>
-              <span className="text-gray-500 dark:text-gray-400">{stats.inactive} inactive</span>
-            </div>
-            {activeTypeFilter === null && (
-              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
-                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Toate tipurile</p>
-              </div>
-            )}
           </div>
 
-          {/* Municipiu */}
+          {/* UAT/ADI */}
           <div 
             onClick={() => handleTypeFilterClick('MUNICIPIU')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === 'MUNICIPIU' 
-                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-indigo-400 dark:border-indigo-500 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                <Building className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Building className={`w-5 h-5 mb-2 ${activeTypeFilter === 'MUNICIPIU' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.MUNICIPIU || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">UAT/ADI</div>
+              {activeTypeFilter === 'MUNICIPIU' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.MUNICIPIU || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Municipiu</p>
-            {activeTypeFilter === 'MUNICIPIU' && (
-              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
-                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Filtru activ</p>
-              </div>
-            )}
-          </div>
-
-          {/* Operator */}
-          <div 
-            onClick={() => handleTypeFilterClick('OPERATOR')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
-              activeTypeFilter === 'OPERATOR' 
-                ? 'border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-colors">
-                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.OPERATOR || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Operator</p>
-            {activeTypeFilter === 'OPERATOR' && (
-              <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
-                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ Filtru activ</p>
-              </div>
-            )}
           </div>
 
           {/* Colector */}
           <div 
-            onClick={() => handleTypeFilterClick('COLECTOR')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
-              activeTypeFilter === 'COLECTOR' 
-                ? 'border-purple-500 dark:border-purple-400 ring-2 ring-purple-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+            onClick={() => handleTypeFilterClick('OPERATOR')}
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
+              activeTypeFilter === 'OPERATOR' 
+                ? 'border-emerald-400 dark:border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'OPERATOR' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.OPERATOR || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Colector</div>
+              {activeTypeFilter === 'OPERATOR' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.COLECTOR || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Colector</p>
-            {activeTypeFilter === 'COLECTOR' && (
-              <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-800">
-                <p className="text-xs font-medium text-purple-600 dark:text-purple-400">✓ Filtru activ</p>
-              </div>
-            )}
+          </div>
+
+          {/* Sortator */}
+          <div 
+            onClick={() => handleTypeFilterClick('COLECTOR')}
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
+              activeTypeFilter === 'COLECTOR' 
+                ? 'border-violet-400 dark:border-violet-500 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/30 dark:to-violet-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-violet-200 dark:hover:border-violet-800'
+            }`}
+          >
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-violet-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Package className={`w-5 h-5 mb-2 ${activeTypeFilter === 'COLECTOR' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.COLECTOR || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Sortator</div>
+              {activeTypeFilter === 'COLECTOR' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-violet-600"></div>
+              )}
+            </div>
           </div>
 
           {/* TMB */}
           <div 
             onClick={() => handleTypeFilterClick('TMB')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === 'TMB' 
-                ? 'border-cyan-500 dark:border-cyan-400 ring-2 ring-cyan-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-cyan-400 dark:border-cyan-500 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-cyan-200 dark:hover:border-cyan-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'TMB' ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.TMB || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">TMB</div>
+              {activeTypeFilter === 'TMB' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-cyan-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.TMB || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">TMB</p>
-            {activeTypeFilter === 'TMB' && (
-              <div className="mt-2 pt-2 border-t border-cyan-200 dark:border-cyan-800">
-                <p className="text-xs font-medium text-cyan-600 dark:text-cyan-400">✓ Filtru activ</p>
-              </div>
-            )}
           </div>
 
-          {/* Depozit */}
+          {/* Depozitare */}
           <div 
             onClick={() => handleTypeFilterClick('DEPOZIT')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === 'DEPOZIT' 
-                ? 'border-red-500 dark:border-red-400 ring-2 ring-red-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-rose-400 dark:border-rose-500 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-200 dark:hover:border-rose-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-rose-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Building2 className={`w-5 h-5 mb-2 ${activeTypeFilter === 'DEPOZIT' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.DEPOZIT || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Depozitare</div>
+              {activeTypeFilter === 'DEPOZIT' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-rose-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.DEPOZIT || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Depozit</p>
-            {activeTypeFilter === 'DEPOZIT' && (
-              <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
-                <p className="text-xs font-medium text-red-600 dark:text-red-400">✓ Filtru activ</p>
-              </div>
-            )}
           </div>
 
           {/* Reciclator */}
           <div 
             onClick={() => handleTypeFilterClick('RECICLATOR')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === 'RECICLATOR' 
-                ? 'border-green-500 dark:border-green-400 ring-2 ring-green-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-green-400 dark:border-green-500 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-green-200 dark:hover:border-green-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'RECICLATOR' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.RECICLATOR || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Reciclator</div>
+              {activeTypeFilter === 'RECICLATOR' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.RECICLATOR || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Reciclator</p>
-            {activeTypeFilter === 'RECICLATOR' && (
-              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
-                <p className="text-xs font-medium text-green-600 dark:text-green-400">✓ Filtru activ</p>
-              </div>
-            )}
           </div>
 
-          {/* Valorificare */}
+          {/* Valorificator */}
           <div 
             onClick={() => handleTypeFilterClick('VALORIFICARE')}
-            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+            className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
               activeTypeFilter === 'VALORIFICARE' 
-                ? 'border-orange-500 dark:border-orange-400 ring-2 ring-orange-500/20' 
-                : 'border-gray-200 dark:border-gray-700'
-            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+                ? 'border-amber-400 dark:border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 shadow-lg' 
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-200 dark:hover:border-amber-800'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-colors">
-                <Building2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-full"></div>
+            <div className="relative p-3">
+              <TrendingUp className={`w-5 h-5 mb-2 ${activeTypeFilter === 'VALORIFICARE' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`} />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.VALORIFICARE || 0}</div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Valorificator</div>
+              {activeTypeFilter === 'VALORIFICARE' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-amber-600"></div>
+              )}
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.VALORIFICARE || 0}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Valorificare</p>
-            {activeTypeFilter === 'VALORIFICARE' && (
-              <div className="mt-2 pt-2 border-t border-orange-200 dark:border-orange-800">
-                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">✓ Filtru activ</p>
-              </div>
-            )}
           </div>
         </div>
 
