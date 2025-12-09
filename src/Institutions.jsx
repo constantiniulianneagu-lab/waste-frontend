@@ -96,7 +96,7 @@ const Institutions = () => {
   const [selectedContractForEdit, setSelectedContractForEdit] = useState(null);
   const [currentInstitutionId, setCurrentInstitutionId] = useState(null);
 
-  // ========================================================================
+// ========================================================================
   // LOAD DATA FROM BACKEND
   // ========================================================================
 
@@ -348,6 +348,7 @@ const Institutions = () => {
     }
   };
 
+  // ✅ SCHIMBĂ DOAR AICI - AUTO-CLOSE EXPAND ROWS
   const toggleRowExpand = (id) => {
     // Auto-close: doar un rând deschis odată
     if (expandedRows.has(id)) {
@@ -707,9 +708,891 @@ const Institutions = () => {
     );
   };
 
-  // ========================================================================
+// ========================================================================
   // CONTRACT ROW COMPONENT
   // ========================================================================
 
   const ContractRow = ({ contract, onRefresh, isActive }) => {
-    const [showAmendments, setShowAmendme
+    const [showAmendments, setShowAmendments] = useState(false);
+    
+    return (
+      <div className={`border rounded-lg overflow-hidden ${
+        isActive 
+          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10' 
+          : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50'
+      }`}>
+        
+        {/* HEADER ROW */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isActive 
+                ? 'bg-emerald-100 dark:bg-emerald-900/30' 
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}>
+              <FileText className={`w-4 h-4 ${
+                isActive 
+                  ? 'text-emerald-600 dark:text-emerald-400' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                Contract {contract.contract_number}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {contract.sector_name || `Sector ${contract.sector_id}`}
+              </p>
+            </div>
+          </div>
+          
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+            isActive
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+            {isActive ? 'Activ' : 'Inactiv'}
+          </span>
+        </div>
+
+        {/* DETAILS GRID */}
+        <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-white dark:bg-gray-800">
+          
+          {/* Perioadă */}
+          <div className="flex items-start gap-2">
+            <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Perioadă</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {formatDate(contract.contract_date_start)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                → {formatDate(contract.effective_end_date || contract.contract_date_end) || 'nedeterminat'}
+              </p>
+            </div>
+          </div>
+
+          {/* Tarif */}
+          <div className="flex items-start gap-2">
+            <DollarSign className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Tarif</p>
+              <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400">
+                {formatCurrency(contract.tariff_per_ton)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">per tonă</p>
+            </div>
+          </div>
+
+          {/* Cantitate */}
+          <div className="flex items-start gap-2">
+            <Package className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Cantitate</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {formatNumber(contract.estimated_quantity_tons)} t
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">estimată</p>
+            </div>
+          </div>
+
+          {/* Valoare */}
+          <div className="flex items-start gap-2">
+            <TrendingUp className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Valoare contract</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(contract.contract_value)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* FILE UPLOAD ROW */}
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+          <ContractFileUpload
+            contractId={contract.id}
+            existingFile={
+              contract.contract_file_url
+                ? {
+                    url: contract.contract_file_url,
+                    name: contract.contract_file_name,
+                    size: contract.contract_file_size,
+                    uploadedAt: contract.contract_file_uploaded_at,
+                  }
+                : null
+            }
+            onSuccess={onRefresh}
+          />
+        </div>
+
+        {/* AMENDMENTS */}
+        {contract.amendments && contract.amendments.length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setShowAmendments(!showAmendments)}
+              className="w-full px-4 py-2 flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <span>Acte adiționale ({contract.amendments.length})</span>
+              <span>{showAmendments ? '▼' : '►'}</span>
+            </button>
+            
+            {showAmendments && (
+              <div className="px-4 py-3 bg-white dark:bg-gray-800 space-y-2">
+                {contract.amendments.map((amendment) => (
+                  <div
+                    key={amendment.id}
+                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900/50 rounded text-xs"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {amendment.amendment_number}
+                      </span>
+                      {amendment.reason && (
+                        <span className="text-gray-500 dark:text-gray-400 ml-2">
+                          - {amendment.reason}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {formatDate(amendment.amendment_date)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NOTES */}
+        {contract.notes && (
+          <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              <span className="font-semibold">Observații:</span> {contract.notes}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ========================================================================
+  // EXPANDED ROW COMPONENT
+  // ========================================================================
+
+  const InstitutionExpandedRow = ({ inst }) => {
+    const contracts = institutionContracts[inst.id] || [];
+    const isLoading = loadingContracts[inst.id];
+    
+    const activeContracts = contracts.filter(c => c.is_active);
+    const inactiveContracts = contracts.filter(c => !c.is_active);
+    
+    return (
+      <tr className="bg-gray-50 dark:bg-gray-900/50">
+        <td colSpan="7" className="px-6 py-6">
+          
+          {/* INSTITUTION DETAILS */}
+          <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Building className="w-4 h-4 text-gray-500" />
+              Detalii Instituție
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Adresă</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{inst.address || "-"}</p>
+                </div>
+              </div>
+
+              {inst.website && (
+                <div className="flex items-start gap-3">
+                  <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Website</p>
+                    
+                      href={inst.website.startsWith("http") ? inst.website : `https://${inst.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {inst.website}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {inst.fiscal_code && (
+                <div className="flex items-start gap-3">
+                  <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Cod Fiscal</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{inst.fiscal_code}</p>
+                  </div>
+                </div>
+              )}
+
+              {inst.registration_no && (
+                <div className="flex items-start gap-3">
+                  <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nr. Înregistrare</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{inst.registration_no}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3">
+                <Building className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                  <span className={`inline-flex items-center gap-2 text-sm ${inst.is_active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"}`}>
+                    <span className={`w-2 h-2 rounded-full ${inst.is_active ? "bg-emerald-400" : "bg-gray-400"}`}></span>
+                    {inst.is_active ? "Activ" : "Inactiv"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TMB CONTRACTS */}
+          {(inst.type === 'TMB_OPERATOR' || inst.type === 'TMB') && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                  Contracte TMB
+                </h4>
+                {contracts.length > 0 && (
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      {activeContracts.length} active
+                    </span>
+                    {inactiveContracts.length > 0 && (
+                      <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                        <XCircle className="w-3.5 h-3.5" />
+                        {inactiveContracts.length} inactive
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-8 h-8 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : contracts.length === 0 ? (
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
+                  <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Nu există contracte</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activeContracts.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                          Contracte Active
+                        </p>
+                      </div>
+                      {activeContracts.map((contract) => (
+                        <ContractRow 
+                          key={contract.id} 
+                          contract={contract} 
+                          onRefresh={() => loadContractsForInstitution(inst.id, true)}
+                          isActive={true}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {inactiveContracts.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 mt-4">
+                        <XCircle className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                          Contracte Inactive
+                        </p>
+                      </div>
+                      {inactiveContracts.map((contract) => (
+                        <ContractRow 
+                          key={contract.id} 
+                          contract={contract} 
+                          onRefresh={() => loadContractsForInstitution(inst.id, true)}
+                          isActive={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* WASTE OPERATOR CONTRACTS */}
+          {inst.type === 'WASTE_OPERATOR' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Contracte Operator Colectare
+                </h4>
+                <button
+                  onClick={() => {
+                    setCurrentInstitutionId(inst.id);
+                    setSelectedContractForEdit(null);
+                    setWasteContractModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  + Adaugă Contract
+                </button>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {/* SORTING CONTRACTS */}
+          {inst.type === 'SORTING_OPERATOR' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Contracte Sortare
+                </h4>
+                <button
+                  onClick={() => {
+                    setCurrentInstitutionId(inst.id);
+                    setSelectedContractForEdit(null);
+                    setSortingContractModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  + Adaugă Contract
+                </button>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {/* DISPOSAL CONTRACTS */}
+          {inst.type === 'DISPOSAL_CLIENT' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                  Contracte Depozit
+                </h4>
+                <button
+                  onClick={() => {
+                    setCurrentInstitutionId(inst.id);
+                    setSelectedContractForEdit(null);
+                    setDisposalContractModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  + Adaugă Contract
+                </button>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+              </div>
+            </div>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
+// ========================================================================
+  // RENDER
+  // ========================================================================
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <DashboardHeader title="Gestionare Instituții" onSearchChange={handleSearchChange} />
+        <div className="max-w-[1920px] mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
+      <DashboardHeader title="Gestionare Instituții" onSearchChange={handleSearchChange} />
+
+      <div className="max-w-[1920px] mx-auto px-6 py-8 space-y-6">
+        
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+          
+          {/* Total */}
+          <div 
+            onClick={() => handleTypeFilterClick(null)}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === null 
+                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <TrendingUp className="w-4 h-4 text-gray-400" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.total}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Total Instituții</p>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                {stats.active} active
+              </span>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <span className="text-gray-500 dark:text-gray-400">{stats.inactive} inactive</span>
+            </div>
+            {activeTypeFilter === null && (
+              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Toate tipurile</p>
+              </div>
+            )}
+          </div>
+
+          {/* Municipiu */}
+          <div 
+            onClick={() => handleTypeFilterClick('MUNICIPIU')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'MUNICIPIU' 
+                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                <Building className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.MUNICIPIU || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Municipiu</p>
+            {activeTypeFilter === 'MUNICIPIU' && (
+              <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* Operator */}
+          <div 
+            onClick={() => handleTypeFilterClick('OPERATOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'OPERATOR' 
+                ? 'border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-colors">
+                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.OPERATOR || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Operator</p>
+            {activeTypeFilter === 'OPERATOR' && (
+              <div className="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800">
+                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* Colector */}
+          <div 
+            onClick={() => handleTypeFilterClick('COLECTOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'COLECTOR' 
+                ? 'border-purple-500 dark:border-purple-400 ring-2 ring-purple-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.COLECTOR || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Colector</p>
+            {activeTypeFilter === 'COLECTOR' && (
+              <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-800">
+                <p className="text-xs font-medium text-purple-600 dark:text-purple-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* TMB */}
+          <div 
+            onClick={() => handleTypeFilterClick('TMB')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'TMB' 
+                ? 'border-cyan-500 dark:border-cyan-400 ring-2 ring-cyan-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.TMB || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">TMB</p>
+            {activeTypeFilter === 'TMB' && (
+              <div className="mt-2 pt-2 border-t border-cyan-200 dark:border-cyan-800">
+                <p className="text-xs font-medium text-cyan-600 dark:text-cyan-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* Depozit */}
+          <div 
+            onClick={() => handleTypeFilterClick('DEPOZIT')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'DEPOZIT' 
+                ? 'border-red-500 dark:border-red-400 ring-2 ring-red-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.DEPOZIT || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Depozit</p>
+            {activeTypeFilter === 'DEPOZIT' && (
+              <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
+                <p className="text-xs font-medium text-red-600 dark:text-red-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* Reciclator */}
+          <div 
+            onClick={() => handleTypeFilterClick('RECICLATOR')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'RECICLATOR' 
+                ? 'border-green-500 dark:border-green-400 ring-2 ring-green-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.RECICLATOR || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Reciclator</p>
+            {activeTypeFilter === 'RECICLATOR' && (
+              <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-800">
+                <p className="text-xs font-medium text-green-600 dark:text-green-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+
+          {/* Valorificare */}
+          <div 
+            onClick={() => handleTypeFilterClick('VALORIFICARE')}
+            className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              activeTypeFilter === 'VALORIFICARE' 
+                ? 'border-orange-500 dark:border-orange-400 ring-2 ring-orange-500/20' 
+                : 'border-gray-200 dark:border-gray-700'
+            } shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-colors">
+                <Building2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stats.byType.VALORIFICARE || 0}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Valorificare</p>
+            {activeTypeFilter === 'VALORIFICARE' && (
+              <div className="mt-2 pt-2 border-t border-orange-200 dark:border-orange-800">
+                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">✓ Filtru activ</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              Lista Instituții
+            </h2>
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
+            >
+              <Plus className="w-4 h-4" />
+              Adaugă Instituție
+            </button>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="w-12 px-6 py-3"></th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Denumire Instituție
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Activitate
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Sector
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Telefon
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Acțiuni
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {paginatedInstitutions.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {searchQuery ? "Nu s-au găsit instituții" : "Nu există instituții"}
+                        </p>
+                        <button
+                          onClick={handleAdd}
+                          className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
+                        >
+                          Adaugă prima instituție
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedInstitutions.map((inst) => (
+                    <>
+                      {/* Main Row */}
+                      <tr
+                        key={inst.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => toggleRowExpand(inst.id)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            {expandedRows.has(inst.id) ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                              <Building2 className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {inst.name}
+                              </p>
+                              {inst.short_name && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {inst.short_name}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${getTypeBadgeColor(
+                              inst.type
+                            )}`}
+                          >
+                            {getTypeLabel(inst.type)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getSectorBadges(inst.sector)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {inst.contact_email || "-"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {inst.contact_phone || "-"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(inst)}
+                              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Editează"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(inst)}
+                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Șterge"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Expanded Row */}
+                      {expandedRows.has(inst.id) && (
+                        <InstitutionExpandedRow inst={inst} />
+                      )}
+                    </>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {paginatedInstitutions.length > 0 && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Pagina {currentPage} din {totalPages}
+                </span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                >
+                  <option value={10}>10 / pagină</option>
+                  <option value={20}>20 / pagină</option>
+                  <option value={50}>50 / pagină</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Următorul
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SIDEBAR (Add/Edit/Delete) - PĂSTREAZĂ TOT CODUL EXISTENT DIN FIȘIERUL TĂU */}
+      {sidebarOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+            onClick={handleCloseSidebar}
+          />
+
+          <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
+            {/* PĂSTREAZĂ TOT CONȚINUTUL SIDEBAR-ULUI DIN FIȘIERUL TĂU ACTUAL */}
+            {/* De la linia ~1800 până la ~2100 din fișierul tău */}
+          </div>
+        </>
+      )}
+
+      {/* ===================================================================== */}
+      {/* MODALE NOI - ADAUGĂ LA SFÂRȘIT */}
+      {/* ===================================================================== */}
+
+      {/* WASTE OPERATOR CONTRACT MODAL */}
+      <WasteOperatorContractModal
+        isOpen={wasteContractModalOpen}
+        onClose={() => {
+          setWasteContractModalOpen(false);
+          setSelectedContractForEdit(null);
+        }}
+        institutionId={currentInstitutionId}
+        contract={selectedContractForEdit}
+        onSuccess={() => {
+          if (currentInstitutionId) {
+            loadContractsForInstitution(currentInstitutionId, true);
+          }
+        }}
+      />
+
+      {/* SORTING CONTRACT MODAL */}
+      <SortingContractModal
+        isOpen={sortingContractModalOpen}
+        onClose={() => {
+          setSortingContractModalOpen(false);
+          setSelectedContractForEdit(null);
+        }}
+        institutionId={currentInstitutionId}
+        contract={selectedContractForEdit}
+        onSuccess={() => {
+          if (currentInstitutionId) {
+            loadContractsForInstitution(currentInstitutionId, true);
+          }
+        }}
+      />
+
+      {/* DISPOSAL CONTRACT MODAL */}
+      <DisposalContractModal
+        isOpen={disposalContractModalOpen}
+        onClose={() => {
+          setDisposalContractModalOpen(false);
+          setSelectedContractForEdit(null);
+        }}
+        institutionId={currentInstitutionId}
+        contract={selectedContractForEdit}
+        onSuccess={() => {
+          if (currentInstitutionId) {
+            loadContractsForInstitution(currentInstitutionId, true);
+          }
+        }}
+      />
+    </div>
+  );
+};
+
+export default Institutions;
