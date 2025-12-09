@@ -30,47 +30,54 @@ import {
   Calendar,
   DollarSign,
   Package,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api/apiClient";
-import WasteOperatorContractModal from './WasteOperatorContractModal';
-import SortingContractModal from './SortingContractModal';
-import DisposalContractModal from './DisposalContractModal';
+import WasteOperatorContractModal from "./WasteOperatorContractModal";
+import SortingContractModal from "./SortingContractModal";
+import DisposalContractModal from "./DisposalContractModal";
 
 const Institutions = () => {
   // ========================================================================
   // STATE
   // ========================================================================
-  
+
   const [institutions, setInstitutions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTypeFilter, setActiveTypeFilter] = useState(null);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
+  // Sorting
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
+
   // Stats
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
     inactive: 0,
-    byType: {}
+    byType: {},
   });
-  
+
   // Expand rows
   const [expandedRows, setExpandedRows] = useState(new Set());
-  
+
   // Contracts for institutions
   const [institutionContracts, setInstitutionContracts] = useState({});
   const [loadingContracts, setLoadingContracts] = useState({});
-  
+
   // Sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMode, setSidebarMode] = useState(null);
   const [selectedInstitution, setSelectedInstitution] = useState(null);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     name: "",
@@ -91,9 +98,12 @@ const Institutions = () => {
 
   // Contract modals state
   const [wasteContractModalOpen, setWasteContractModalOpen] = useState(false);
-  const [sortingContractModalOpen, setSortingContractModalOpen] = useState(false);
-  const [disposalContractModalOpen, setDisposalContractModalOpen] = useState(false);
-  const [selectedContractForEdit, setSelectedContractForEdit] = useState(null);
+  const [sortingContractModalOpen, setSortingContractModalOpen] =
+    useState(false);
+  const [disposalContractModalOpen, setDisposalContractModalOpen] =
+    useState(false);
+  const [selectedContractForEdit, setSelectedContractForEdit] =
+    useState(null);
   const [currentInstitutionId, setCurrentInstitutionId] = useState(null);
 
   // ========================================================================
@@ -107,11 +117,11 @@ const Institutions = () => {
   const loadInstitutions = async () => {
     setLoading(true);
     try {
-      const response = await apiGet('/api/institutions', { limit: 1000 });
-      
+      const response = await apiGet("/api/institutions", { limit: 1000 });
+
       if (response.success) {
-        const institutionsArray = Array.isArray(response.data?.institutions) 
-          ? response.data.institutions 
+        const institutionsArray = Array.isArray(response.data?.institutions)
+          ? response.data.institutions
           : [];
         setInstitutions(institutionsArray);
         calculateStats(institutionsArray);
@@ -132,35 +142,35 @@ const Institutions = () => {
   const calculateStats = (data) => {
     const active = data.filter((i) => i.is_active).length;
     const inactive = data.length - active;
-    
+
     const byType = data.reduce((acc, inst) => {
       let normalizedType;
-      switch(inst.type) {
-        case 'MUNICIPALITY':
-          normalizedType = 'MUNICIPIU';
+      switch (inst.type) {
+        case "MUNICIPALITY":
+          normalizedType = "MUNICIPIU";
           break;
-        case 'WASTE_OPERATOR':
-          normalizedType = 'OPERATOR';
+        case "WASTE_OPERATOR":
+          normalizedType = "OPERATOR";
           break;
-        case 'TMB_OPERATOR':
-          normalizedType = 'TMB';
+        case "TMB_OPERATOR":
+          normalizedType = "TMB";
           break;
-        case 'DISPOSAL_CLIENT':
-          normalizedType = 'DEPOZIT';
+        case "DISPOSAL_CLIENT":
+          normalizedType = "DEPOZIT";
           break;
-        case 'RECYCLING_CLIENT':
-          normalizedType = 'RECICLATOR';
+        case "RECYCLING_CLIENT":
+          normalizedType = "RECICLATOR";
           break;
-        case 'RECOVERY_CLIENT':
-          normalizedType = 'VALORIFICARE';
+        case "RECOVERY_CLIENT":
+          normalizedType = "VALORIFICARE";
           break;
-        case 'SORTING_OPERATOR':
-          normalizedType = 'COLECTOR';
+        case "SORTING_OPERATOR":
+          normalizedType = "COLECTOR";
           break;
         default:
           normalizedType = inst.type;
       }
-      
+
       acc[normalizedType] = (acc[normalizedType] || 0) + 1;
       return acc;
     }, {});
@@ -177,28 +187,36 @@ const Institutions = () => {
   // LOAD CONTRACTS FOR INSTITUTION
   // ========================================================================
 
-  const loadContractsForInstitution = async (institutionId, forceReload = false) => {
+  const loadContractsForInstitution = async (
+    institutionId,
+    forceReload = false
+  ) => {
     if (institutionContracts[institutionId] && !forceReload) return;
-    
-    setLoadingContracts(prev => ({ ...prev, [institutionId]: true }));
-    
+
+    setLoadingContracts((prev) => ({ ...prev, [institutionId]: true }));
+
     try {
-      const response = await apiGet(`/api/institutions/${institutionId}/contracts`);
-      
+      const response = await apiGet(
+        `/api/institutions/${institutionId}/contracts`
+      );
+
       if (response.success) {
-        setInstitutionContracts(prev => ({
+        setInstitutionContracts((prev) => ({
           ...prev,
-          [institutionId]: response.data || []
+          [institutionId]: response.data || [],
         }));
       }
     } catch (err) {
-      console.error('Error loading contracts:', err);
-      setInstitutionContracts(prev => ({
+      console.error("Error loading contracts:", err);
+      setInstitutionContracts((prev) => ({
         ...prev,
-        [institutionId]: []
+        [institutionId]: [],
       }));
     } finally {
-      setLoadingContracts(prev => ({ ...prev, [institutionId]: false }));
+      setLoadingContracts((prev) => ({
+        ...prev,
+        [institutionId]: false,
+      }));
     }
   };
 
@@ -286,13 +304,16 @@ const Institutions = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) newErrors.name = "Denumirea este obligatorie";
     if (!formData.type) newErrors.type = "Tipul este obligatoriu";
-    if (formData.contact_email && !/\S+@\S+\.\S+/.test(formData.contact_email)) {
+    if (
+      formData.contact_email &&
+      !/\S+@\S+\.\S+/.test(formData.contact_email)
+    ) {
       newErrors.contact_email = "Email invalid";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -303,7 +324,7 @@ const Institutions = () => {
     setSaving(true);
     try {
       if (sidebarMode === "add") {
-        const data = await apiPost('/api/institutions', formData);
+        const data = await apiPost("/api/institutions", formData);
         if (data.success) {
           alert("Instituție adăugată cu succes!");
           await loadInstitutions();
@@ -312,7 +333,10 @@ const Institutions = () => {
           alert(data.message || "Eroare la adăugare");
         }
       } else if (sidebarMode === "edit") {
-        const data = await apiPut(`/api/institutions/${selectedInstitution.id}`, formData);
+        const data = await apiPut(
+          `/api/institutions/${selectedInstitution.id}`,
+          formData
+        );
         if (data.success) {
           alert("Instituție actualizată cu succes!");
           await loadInstitutions();
@@ -332,7 +356,9 @@ const Institutions = () => {
   const handleConfirmDelete = async () => {
     setSaving(true);
     try {
-      const data = await apiDelete(`/api/institutions/${selectedInstitution.id}`);
+      const data = await apiDelete(
+        `/api/institutions/${selectedInstitution.id}`
+      );
       if (data.success) {
         alert("Instituție ștearsă cu succes!");
         await loadInstitutions();
@@ -348,7 +374,7 @@ const Institutions = () => {
     }
   };
 
-  // ✅ AUTO-CLOSE EXPAND ROWS
+  // Auto-close expand rows: un singur rând deschis
   const toggleRowExpand = (id) => {
     if (expandedRows.has(id)) {
       setExpandedRows(new Set());
@@ -358,44 +384,66 @@ const Institutions = () => {
     }
   };
 
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+  };
+
+  const getSortIcon = (column) => {
+    if (sortBy !== column) {
+      return (
+        <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      );
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-emerald-500" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
+    );
+  };
+
   // ========================================================================
-  // FILTERING & PAGINATION
+  // FILTERING, SORTING & PAGINATION
   // ========================================================================
 
   const filteredInstitutions = institutions.filter((inst) => {
     if (activeTypeFilter) {
       let normalizedType;
-      switch(inst.type) {
-        case 'MUNICIPALITY':
-          normalizedType = 'MUNICIPIU';
+      switch (inst.type) {
+        case "MUNICIPALITY":
+          normalizedType = "MUNICIPIU";
           break;
-        case 'WASTE_OPERATOR':
-          normalizedType = 'OPERATOR';
+        case "WASTE_OPERATOR":
+          normalizedType = "OPERATOR";
           break;
-        case 'TMB_OPERATOR':
-          normalizedType = 'TMB';
+        case "TMB_OPERATOR":
+          normalizedType = "TMB";
           break;
-        case 'DISPOSAL_CLIENT':
-          normalizedType = 'DEPOZIT';
+        case "DISPOSAL_CLIENT":
+          normalizedType = "DEPOZIT";
           break;
-        case 'RECYCLING_CLIENT':
-          normalizedType = 'RECICLATOR';
+        case "RECYCLING_CLIENT":
+          normalizedType = "RECICLATOR";
           break;
-        case 'RECOVERY_CLIENT':
-          normalizedType = 'VALORIFICARE';
+        case "RECOVERY_CLIENT":
+          normalizedType = "VALORIFICARE";
           break;
-        case 'SORTING_OPERATOR':
-          normalizedType = 'COLECTOR';
+        case "SORTING_OPERATOR":
+          normalizedType = "COLECTOR";
           break;
         default:
           normalizedType = inst.type;
       }
-      
+
       if (normalizedType !== activeTypeFilter) {
         return false;
       }
     }
-    
+
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -406,10 +454,39 @@ const Institutions = () => {
     );
   });
 
-  const totalPages = Math.ceil(filteredInstitutions.length / itemsPerPage);
+  const sortedInstitutions = [...filteredInstitutions].sort((a, b) => {
+    let aValue;
+    let bValue;
+
+    switch (sortBy) {
+      case "name":
+        aValue = (a.name || "").toLowerCase();
+        bValue = (b.name || "").toLowerCase();
+        break;
+      case "type":
+        aValue = (a.type || "").toLowerCase();
+        bValue = (b.type || "").toLowerCase();
+        break;
+      case "sector":
+        aValue = a.sector || "";
+        bValue = b.sector || "";
+        break;
+      default:
+        aValue = a.id;
+        bValue = b.id;
+    }
+
+    if (sortOrder === "asc") {
+      return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+    } else {
+      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+    }
+  });
+
+  const totalPages = Math.ceil(sortedInstitutions.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedInstitutions = filteredInstitutions.slice(startIndex, endIndex);
+  const paginatedInstitutions = sortedInstitutions.slice(startIndex, endIndex);
 
   // ========================================================================
   // UTILS
@@ -417,22 +494,38 @@ const Institutions = () => {
 
   const getTypeBadgeColor = (type) => {
     const colors = {
-      MUNICIPIU: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      OPERATOR: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      COLECTOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      MUNICIPIU:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      OPERATOR:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      COLECTOR:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
       TMB: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
-      DEPOZIT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-      RECICLATOR: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-      VALORIFICARE: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-      MUNICIPALITY: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      WASTE_OPERATOR: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      SORTING_OPERATOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-      TMB_OPERATOR: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
-      DISPOSAL_CLIENT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-      RECYCLING_CLIENT: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-      RECOVERY_CLIENT: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      DEPOZIT:
+        "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      RECICLATOR:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      VALORIFICARE:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      MUNICIPALITY:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      WASTE_OPERATOR:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      SORTING_OPERATOR:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      TMB_OPERATOR:
+        "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+      DISPOSAL_CLIENT:
+        "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      RECYCLING_CLIENT:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      RECOVERY_CLIENT:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
-    return colors[type] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+    return (
+      colors[type] ||
+      "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+    );
   };
 
   const getTypeLabel = (type) => {
@@ -491,22 +584,22 @@ const Institutions = () => {
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('ro-RO', {
-      style: 'currency',
-      currency: 'RON',
-      minimumFractionDigits: 2
+    return new Intl.NumberFormat("ro-RO", {
+      style: "currency",
+      currency: "RON",
+      minimumFractionDigits: 2,
     }).format(value || 0);
   };
-  
+
   const formatDate = (date) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('ro-RO');
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("ro-RO");
   };
-  
+
   const formatNumber = (num) => {
-    return new Intl.NumberFormat('ro-RO', {
+    return new Intl.NumberFormat("ro-RO", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     }).format(num || 0);
   };
 
@@ -522,63 +615,67 @@ const Institutions = () => {
     const handleFileUpload = async (file) => {
       if (!file) return;
 
-      if (file.type !== 'application/pdf') {
-        alert('Doar fișiere PDF sunt acceptate');
+      if (file.type !== "application/pdf") {
+        alert("Doar fișiere PDF sunt acceptate");
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        alert('Fișierul este prea mare (max 10MB)');
+        alert("Fișierul este prea mare (max 10MB)");
         return;
       }
 
       setUploading(true);
 
       try {
-        const formData = new FormData();
-        formData.append('file', file);
+        const fd = new FormData();
+        fd.append("file", file);
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/contracts/${contractId}/upload`,
+          `${
+            import.meta.env.VITE_API_URL || "http://localhost:3000"
+          }/api/contracts/${contractId}/upload`,
           {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
-            body: formData,
+            body: fd,
           }
         );
 
         const data = await response.json();
 
         if (data.success) {
-          alert('Contract încărcat cu succes!');
+          alert("Contract încărcat cu succes!");
           onSuccess();
         } else {
-          alert(data.message || 'Eroare la upload');
+          alert(data.message || "Eroare la upload");
         }
       } catch (err) {
-        console.error('Upload error:', err);
-        alert('Eroare la încărcarea fișierului');
+        console.error("Upload error:", err);
+        alert("Eroare la încărcarea fișierului");
       } finally {
         setUploading(false);
       }
     };
 
     const handleDelete = async () => {
-      if (!confirm('Sigur vrei să ștergi acest contract?')) return;
+      if (!confirm("Sigur vrei să ștergi acest contract?")) return;
 
       setDeleting(true);
 
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/contracts/${contractId}/file`,
+          `${
+            import.meta.env.VITE_API_URL || "http://localhost:3000"
+          }/api/contracts/${contractId}/file`,
           {
-            method: 'DELETE',
+            method: "DELETE",
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -586,14 +683,14 @@ const Institutions = () => {
         const data = await response.json();
 
         if (data.success) {
-          alert('Contract șters cu succes!');
+          alert("Contract șters cu succes!");
           onSuccess();
         } else {
-          alert(data.message || 'Eroare la ștergere');
+          alert(data.message || "Eroare la ștergere");
         }
       } catch (err) {
-        console.error('Delete error:', err);
-        alert('Eroare la ștergerea fișierului');
+        console.error("Delete error:", err);
+        alert("Eroare la ștergerea fișierului");
       } finally {
         setDeleting(false);
       }
@@ -602,9 +699,9 @@ const Institutions = () => {
     const handleDrag = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.type === 'dragenter' || e.type === 'dragover') {
+      if (e.type === "dragenter" || e.type === "dragover") {
         setDragActive(true);
-      } else if (e.type === 'dragleave') {
+      } else if (e.type === "dragleave") {
         setDragActive(false);
       }
     };
@@ -640,7 +737,7 @@ const Institutions = () => {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => window.open(existingFile.url, '_blank')}
+              onClick={() => window.open(existingFile.url, "_blank")}
               className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
               title="Vizualizează"
             >
@@ -671,8 +768,8 @@ const Institutions = () => {
       <div
         className={`relative border-2 border-dashed rounded-lg p-3 transition-colors ${
           dragActive
-            ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-            : 'border-gray-300 dark:border-gray-600'
+            ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
+            : "border-gray-300 dark:border-gray-600"
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -692,7 +789,7 @@ const Institutions = () => {
         >
           <Upload className="w-6 h-6 text-gray-400 mb-1" />
           <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
-            {uploading ? 'Se încarcă...' : 'Drag & drop sau click'}
+            {uploading ? "Se încarcă..." : "Drag & drop sau click"}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-500">
             PDF, max 10MB
@@ -713,27 +810,32 @@ const Institutions = () => {
 
   const ContractRow = ({ contract, onRefresh, isActive }) => {
     const [showAmendments, setShowAmendments] = useState(false);
-    
+
     return (
-      <div className={`border rounded-lg overflow-hidden ${
-        isActive 
-          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10' 
-          : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50'
-      }`}>
-        
+      <div
+        className={`border rounded-lg overflow-hidden ${
+          isActive
+            ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10"
+            : "border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50"
+        }`}
+      >
         {/* HEADER ROW */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isActive 
-                ? 'bg-emerald-100 dark:bg-emerald-900/30' 
-                : 'bg-gray-200 dark:bg-gray-700'
-            }`}>
-              <FileText className={`w-4 h-4 ${
-                isActive 
-                  ? 'text-emerald-600 dark:text-emerald-400' 
-                  : 'text-gray-500 dark:text-gray-400'
-              }`} />
+            <div
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                isActive
+                  ? "bg-emerald-100 dark:bg-emerald-900/30"
+                  : "bg-gray-200 dark:bg-gray-700"
+              }`}
+            >
+              <FileText
+                className={`w-4 h-4 ${
+                  isActive
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              />
             </div>
             <div>
               <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -744,30 +846,40 @@ const Institutions = () => {
               </p>
             </div>
           </div>
-          
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-            isActive
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
-            {isActive ? 'Activ' : 'Inactiv'}
+
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+              isActive
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isActive ? "bg-emerald-500" : "bg-gray-400"
+              }`}
+            ></span>
+            {isActive ? "Activ" : "Inactiv"}
           </span>
         </div>
 
         {/* DETAILS GRID */}
         <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-white dark:bg-gray-800">
-          
           {/* Perioadă */}
           <div className="flex items-start gap-2">
             <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Perioadă</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                Perioadă
+              </p>
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {formatDate(contract.contract_date_start)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                → {formatDate(contract.effective_end_date || contract.contract_date_end) || 'nedeterminat'}
+                →{" "}
+                {formatDate(
+                  contract.effective_end_date || contract.contract_date_end
+                ) || "nedeterminat"}
               </p>
             </div>
           </div>
@@ -776,11 +888,15 @@ const Institutions = () => {
           <div className="flex items-start gap-2">
             <DollarSign className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Tarif</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                Tarif
+              </p>
               <p className="text-sm font-bold text-cyan-600 dark:text-cyan-400">
                 {formatCurrency(contract.tariff_per_ton)}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">per tonă</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                per tonă
+              </p>
             </div>
           </div>
 
@@ -788,11 +904,15 @@ const Institutions = () => {
           <div className="flex items-start gap-2">
             <Package className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Cantitate</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                Cantitate
+              </p>
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {formatNumber(contract.estimated_quantity_tons)} t
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">estimată</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                estimată
+              </p>
             </div>
           </div>
 
@@ -800,7 +920,9 @@ const Institutions = () => {
           <div className="flex items-start gap-2">
             <TrendingUp className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Valoare contract</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                Valoare contract
+              </p>
               <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                 {formatCurrency(contract.contract_value)}
               </p>
@@ -834,9 +956,9 @@ const Institutions = () => {
               className="w-full px-4 py-2 flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <span>Acte adiționale ({contract.amendments.length})</span>
-              <span>{showAmendments ? '▼' : '►'}</span>
+              <span>{showAmendments ? "▼" : "►"}</span>
             </button>
-            
+
             {showAmendments && (
               <div className="px-4 py-3 bg-white dark:bg-gray-800 space-y-2">
                 {contract.amendments.map((amendment) => (
@@ -868,7 +990,8 @@ const Institutions = () => {
         {contract.notes && (
           <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
-              <span className="font-semibold">Observații:</span> {contract.notes}
+              <span className="font-semibold">Observații:</span>{" "}
+              {contract.notes}
             </p>
           </div>
         )}
@@ -883,27 +1006,30 @@ const Institutions = () => {
   const InstitutionExpandedRow = ({ inst }) => {
     const contracts = institutionContracts[inst.id] || [];
     const isLoading = loadingContracts[inst.id];
-    
-    const activeContracts = contracts.filter(c => c.is_active);
-    const inactiveContracts = contracts.filter(c => !c.is_active);
-    
+
+    const activeContracts = contracts.filter((c) => c.is_active);
+    const inactiveContracts = contracts.filter((c) => !c.is_active);
+
     return (
       <tr className="bg-gray-50 dark:bg-gray-900/50">
         <td colSpan="7" className="px-6 py-6">
-          
           {/* INSTITUTION DETAILS */}
           <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Building className="w-4 h-4 text-gray-500" />
               Detalii Instituție
             </h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Adresă</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{inst.address || "-"}</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    Adresă
+                  </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {inst.address || "-"}
+                  </p>
                 </div>
               </div>
 
@@ -911,9 +1037,15 @@ const Institutions = () => {
                 <div className="flex items-start gap-3">
                   <Globe className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Website</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                      Website
+                    </p>
                     <a
-                      href={inst.website.startsWith("http") ? inst.website : `https://${inst.website}`}
+                      href={
+                        inst.website.startsWith("http")
+                          ? inst.website
+                          : `https://${inst.website}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
@@ -928,8 +1060,12 @@ const Institutions = () => {
                 <div className="flex items-start gap-3">
                   <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Cod Fiscal</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{inst.fiscal_code}</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                      Cod Fiscal
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {inst.fiscal_code}
+                    </p>
                   </div>
                 </div>
               )}
@@ -938,8 +1074,12 @@ const Institutions = () => {
                 <div className="flex items-start gap-3">
                   <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Nr. Înregistrare</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{inst.registration_no}</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                      Nr. Înregistrare
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {inst.registration_no}
+                    </p>
                   </div>
                 </div>
               )}
@@ -947,9 +1087,21 @@ const Institutions = () => {
               <div className="flex items-start gap-3">
                 <Building className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                  <span className={`inline-flex items-center gap-2 text-sm ${inst.is_active ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"}`}>
-                    <span className={`w-2 h-2 rounded-full ${inst.is_active ? "bg-emerald-400" : "bg-gray-400"}`}></span>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                    Status
+                  </p>
+                  <span
+                    className={`inline-flex items-center gap-2 text-sm ${
+                      inst.is_active
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        inst.is_active ? "bg-emerald-400" : "bg-gray-400"
+                      }`}
+                    ></span>
                     {inst.is_active ? "Activ" : "Inactiv"}
                   </span>
                 </div>
@@ -958,7 +1110,7 @@ const Institutions = () => {
           </div>
 
           {/* TMB CONTRACTS */}
-          {(inst.type === 'TMB_OPERATOR' || inst.type === 'TMB') && (
+          {(inst.type === "TMB_OPERATOR" || inst.type === "TMB") && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -988,7 +1140,9 @@ const Institutions = () => {
               ) : contracts.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
                   <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Nu există contracte</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Nu există contracte
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1001,10 +1155,12 @@ const Institutions = () => {
                         </p>
                       </div>
                       {activeContracts.map((contract) => (
-                        <ContractRow 
-                          key={contract.id} 
-                          contract={contract} 
-                          onRefresh={() => loadContractsForInstitution(inst.id, true)}
+                        <ContractRow
+                          key={contract.id}
+                          contract={contract}
+                          onRefresh={() =>
+                            loadContractsForInstitution(inst.id, true)
+                          }
                           isActive={true}
                         />
                       ))}
@@ -1020,10 +1176,12 @@ const Institutions = () => {
                         </p>
                       </div>
                       {inactiveContracts.map((contract) => (
-                        <ContractRow 
-                          key={contract.id} 
-                          contract={contract} 
-                          onRefresh={() => loadContractsForInstitution(inst.id, true)}
+                        <ContractRow
+                          key={contract.id}
+                          contract={contract}
+                          onRefresh={() =>
+                            loadContractsForInstitution(inst.id, true)
+                          }
                           isActive={false}
                         />
                       ))}
@@ -1035,7 +1193,7 @@ const Institutions = () => {
           )}
 
           {/* WASTE OPERATOR CONTRACTS */}
-          {inst.type === 'WASTE_OPERATOR' && (
+          {inst.type === "WASTE_OPERATOR" && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -1053,13 +1211,15 @@ const Institutions = () => {
                 </button>
               </div>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Coming soon...
+                </p>
               </div>
             </div>
           )}
 
           {/* SORTING CONTRACTS */}
-          {inst.type === 'SORTING_OPERATOR' && (
+          {inst.type === "SORTING_OPERATOR" && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -1077,13 +1237,15 @@ const Institutions = () => {
                 </button>
               </div>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Coming soon...
+                </p>
               </div>
             </div>
           )}
 
           {/* DISPOSAL CONTRACTS */}
-          {inst.type === 'DISPOSAL_CLIENT' && (
+          {inst.type === "DISPOSAL_CLIENT" && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -1101,7 +1263,9 @@ const Institutions = () => {
                 </button>
               </div>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Coming soon...
+                </p>
               </div>
             </div>
           )}
@@ -1117,7 +1281,10 @@ const Institutions = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader title="Gestionare Instituții" onSearchChange={handleSearchChange} />
+        <DashboardHeader
+          title="Gestionare Instituții"
+          onSearchChange={handleSearchChange}
+        />
         <div className="max-w-[1920px] mx-auto px-6 py-8">
           <div className="flex items-center justify-center py-20">
             <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
@@ -1129,27 +1296,38 @@ const Institutions = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
-      <DashboardHeader title="Gestionare Instituții" onSearchChange={handleSearchChange} />
+      <DashboardHeader
+        title="Gestionare Instituții"
+        onSearchChange={handleSearchChange}
+      />
 
       <div className="max-w-[1920px] mx-auto px-6 py-8 space-y-6">
-        
-         {/* STATS CARDS - MODERN COMPACT DESIGN */}
-         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-          
+        {/* STATS CARDS - MODERN COMPACT DESIGN */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {/* Total */}
-          <div 
+          <div
             onClick={() => handleTypeFilterClick(null)}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === null 
-                ? 'border-slate-400 dark:border-slate-500 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+              activeTypeFilter === null
+                ? "border-slate-400 dark:border-slate-500 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-slate-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Building2 className={`w-5 h-5 mb-2 ${activeTypeFilter === null ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.total}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Total</div>
+              <Building2
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === null
+                    ? "text-slate-600 dark:text-slate-300"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.total}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Total
+              </div>
               {activeTypeFilter === null && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-500 to-slate-600"></div>
               )}
@@ -1157,140 +1335,210 @@ const Institutions = () => {
           </div>
 
           {/* UAT/ADI */}
-          <div 
-            onClick={() => handleTypeFilterClick('MUNICIPIU')}
+          <div
+            onClick={() => handleTypeFilterClick("MUNICIPIU")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'MUNICIPIU' 
-                ? 'border-indigo-400 dark:border-indigo-500 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800'
+              activeTypeFilter === "MUNICIPIU"
+                ? "border-indigo-400 dark:border-indigo-500 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Building className={`w-5 h-5 mb-2 ${activeTypeFilter === 'MUNICIPIU' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.MUNICIPIU || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">UAT/ADI</div>
-              {activeTypeFilter === 'MUNICIPIU' && (
+              <Building
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "MUNICIPIU"
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.MUNICIPIU || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                UAT/ADI
+              </div>
+              {activeTypeFilter === "MUNICIPIU" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
               )}
             </div>
           </div>
 
           {/* Colector */}
-          <div 
-            onClick={() => handleTypeFilterClick('OPERATOR')}
+          <div
+            onClick={() => handleTypeFilterClick("OPERATOR")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'OPERATOR' 
-                ? 'border-emerald-400 dark:border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800'
+              activeTypeFilter === "OPERATOR"
+                ? "border-emerald-400 dark:border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'OPERATOR' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.OPERATOR || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Colector</div>
-              {activeTypeFilter === 'OPERATOR' && (
+              <Activity
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "OPERATOR"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.OPERATOR || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Colector
+              </div>
+              {activeTypeFilter === "OPERATOR" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
               )}
             </div>
           </div>
 
           {/* Sortator */}
-          <div 
-            onClick={() => handleTypeFilterClick('COLECTOR')}
+          <div
+            onClick={() => handleTypeFilterClick("COLECTOR")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'COLECTOR' 
-                ? 'border-violet-400 dark:border-violet-500 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/30 dark:to-violet-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-violet-200 dark:hover:border-violet-800'
+              activeTypeFilter === "COLECTOR"
+                ? "border-violet-400 dark:border-violet-500 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-900/30 dark:to-violet-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-violet-200 dark:hover:border-violet-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-violet-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Package className={`w-5 h-5 mb-2 ${activeTypeFilter === 'COLECTOR' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.COLECTOR || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Sortator</div>
-              {activeTypeFilter === 'COLECTOR' && (
+              <Package
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "COLECTOR"
+                    ? "text-violet-600 dark:text-violet-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.COLECTOR || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Sortator
+              </div>
+              {activeTypeFilter === "COLECTOR" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-violet-600"></div>
               )}
             </div>
           </div>
 
           {/* TMB */}
-          <div 
-            onClick={() => handleTypeFilterClick('TMB')}
+          <div
+            onClick={() => handleTypeFilterClick("TMB")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'TMB' 
-                ? 'border-cyan-400 dark:border-cyan-500 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-cyan-200 dark:hover:border-cyan-800'
+              activeTypeFilter === "TMB"
+                ? "border-cyan-400 dark:border-cyan-500 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/30 dark:to-cyan-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-cyan-200 dark:hover:border-cyan-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'TMB' ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.TMB || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">TMB</div>
-              {activeTypeFilter === 'TMB' && (
+              <Activity
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "TMB"
+                    ? "text-cyan-600 dark:text-cyan-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.TMB || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                TMB
+              </div>
+              {activeTypeFilter === "TMB" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-cyan-600"></div>
               )}
             </div>
           </div>
 
           {/* Depozitare */}
-          <div 
-            onClick={() => handleTypeFilterClick('DEPOZIT')}
+          <div
+            onClick={() => handleTypeFilterClick("DEPOZIT")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'DEPOZIT' 
-                ? 'border-rose-400 dark:border-rose-500 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-200 dark:hover:border-rose-800'
+              activeTypeFilter === "DEPOZIT"
+                ? "border-rose-400 dark:border-rose-500 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-rose-200 dark:hover:border-rose-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-rose-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Building2 className={`w-5 h-5 mb-2 ${activeTypeFilter === 'DEPOZIT' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.DEPOZIT || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Depozitare</div>
-              {activeTypeFilter === 'DEPOZIT' && (
+              <Building2
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "DEPOZIT"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.DEPOZIT || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Depozitare
+              </div>
+              {activeTypeFilter === "DEPOZIT" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-rose-600"></div>
               )}
             </div>
           </div>
 
           {/* Reciclator */}
-          <div 
-            onClick={() => handleTypeFilterClick('RECICLATOR')}
+          <div
+            onClick={() => handleTypeFilterClick("RECICLATOR")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'RECICLATOR' 
-                ? 'border-green-400 dark:border-green-500 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-green-200 dark:hover:border-green-800'
+              activeTypeFilter === "RECICLATOR"
+                ? "border-green-400 dark:border-green-500 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-green-200 dark:hover:border-green-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <Activity className={`w-5 h-5 mb-2 ${activeTypeFilter === 'RECICLATOR' ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.RECICLATOR || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Reciclator</div>
-              {activeTypeFilter === 'RECICLATOR' && (
+              <Activity
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "RECICLATOR"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.RECICLATOR || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Reciclator
+              </div>
+              {activeTypeFilter === "RECICLATOR" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600"></div>
               )}
             </div>
           </div>
 
           {/* Valorificator */}
-          <div 
-            onClick={() => handleTypeFilterClick('VALORIFICARE')}
+          <div
+            onClick={() => handleTypeFilterClick("VALORIFICARE")}
             className={`group relative overflow-hidden rounded-lg border cursor-pointer transition-all duration-300 hover:scale-105 ${
-              activeTypeFilter === 'VALORIFICARE' 
-                ? 'border-amber-400 dark:border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 shadow-lg' 
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-200 dark:hover:border-amber-800'
+              activeTypeFilter === "VALORIFICARE"
+                ? "border-amber-400 dark:border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 shadow-lg"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-200 dark:hover:border-amber-800"
             }`}
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-full"></div>
             <div className="relative p-3">
-              <TrendingUp className={`w-5 h-5 mb-2 ${activeTypeFilter === 'VALORIFICARE' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">{stats.byType.VALORIFICARE || 0}</div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Valorificator</div>
-              {activeTypeFilter === 'VALORIFICARE' && (
+              <TrendingUp
+                className={`w-5 h-5 mb-2 ${
+                  activeTypeFilter === "VALORIFICARE"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              />
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {stats.byType.VALORIFICARE || 0}
+              </div>
+              <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Valorificator
+              </div>
+              {activeTypeFilter === "VALORIFICARE" && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-amber-600"></div>
               )}
             </div>
@@ -1298,19 +1546,28 @@ const Institutions = () => {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-          
+        <div className="bg-[#141b28] rounded-xl border border-slate-700/50 shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Lista Instituții
-            </h2>
+          <div className="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between bg-[#1a2332]">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-1">
+                <Building2 className="w-5 h-5 text-emerald-400" />
+                Lista Instituții
+              </h2>
+              <p className="text-sm text-slate-400">
+                {sortedInstitutions.length}{" "}
+                {sortedInstitutions.length === 1
+                  ? "instituție"
+                  : "instituții"}
+                {activeTypeFilter &&
+                  ` • ${getTypeLabel(activeTypeFilter)}`}
+              </p>
+            </div>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
+              className="group flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-900/50 hover:shadow-emerald-900/70 hover:scale-105"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
               Adaugă Instituție
             </button>
           </div>
@@ -1318,43 +1575,77 @@ const Institutions = () => {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
+              <thead className="bg-[#0f1623] border-b border-slate-700/50">
                 <tr>
-                  <th className="w-12 px-6 py-3"></th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Denumire Instituție
+                  <th className="w-12 px-4 py-3"></th>
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("name")}
+                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                    >
+                      Denumire Instituție
+                      {getSortIcon("name")}
+                    </button>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Activitate
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("type")}
+                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                    >
+                      Activitate
+                      {getSortIcon("type")}
+                    </button>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Sector
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("sector")}
+                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                    >
+                      Sector
+                      {getSortIcon("sector")}
+                    </button>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Telefon
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Acțiuni
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-slate-700/30">
                 {paginatedInstitutions.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-600" />
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          {searchQuery ? "Nu s-au găsit instituții" : "Nu există instituții"}
-                        </p>
+                    <td colSpan="7" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="relative">
+                          <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center">
+                            <Building2 className="w-10 h-10 text-slate-600" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center">
+                            <Plus className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-white mb-1">
+                            {searchQuery
+                              ? "Niciun rezultat găsit"
+                              : "Nu există instituții"}
+                          </p>
+                          <p className="text-sm text-slate-400 mb-4">
+                            {searchQuery
+                              ? "Încearcă să schimbi termenii de căutare"
+                              : "Începe prin a adăuga prima instituție"}
+                          </p>
+                        </div>
                         <button
                           onClick={handleAdd}
-                          className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-900/50"
                         >
-                          Adaugă prima instituție
+                          Adaugă Instituție
                         </button>
                       </div>
                     </td>
@@ -1362,74 +1653,91 @@ const Institutions = () => {
                 ) : (
                   paginatedInstitutions.map((inst) => (
                     <>
-                      {/* Main Row */}
                       <tr
                         key={inst.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        className="group hover:bg-[#1a2332] transition-all duration-200"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <button
                             onClick={() => toggleRowExpand(inst.id)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                            className="p-1.5 hover:bg-slate-700 rounded-lg transition-all duration-200"
                           >
                             {expandedRows.has(inst.id) ? (
-                              <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                              <ChevronDown className="w-4 h-4 text-emerald-400" />
                             ) : (
-                              <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                              <ChevronRight className="w-4 h-4 text-slate-500" />
                             )}
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110 ${
+                                inst.type === "MUNICIPALITY"
+                                  ? "bg-gradient-to-br from-indigo-500 to-indigo-600"
+                                  : inst.type === "WASTE_OPERATOR"
+                                  ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
+                                  : inst.type === "SORTING_OPERATOR"
+                                  ? "bg-gradient-to-br from-violet-500 to-violet-600"
+                                  : inst.type === "TMB_OPERATOR"
+                                  ? "bg-gradient-to-br from-cyan-500 to-cyan-600"
+                                  : inst.type === "DISPOSAL_CLIENT"
+                                  ? "bg-gradient-to-br from-rose-500 to-rose-600"
+                                  : inst.type === "RECYCLING_CLIENT"
+                                  ? "bg-gradient-to-br from-green-500 to-green-600"
+                                  : inst.type === "RECOVERY_CLIENT"
+                                  ? "bg-gradient-to-br from-amber-500 to-amber-600"
+                                  : "bg-gradient-to-br from-slate-500 to-slate-600"
+                              }`}
+                            >
                               <Building2 className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">
                                 {inst.name}
                               </p>
                               {inst.short_name && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-slate-400 truncate">
                                   {inst.short_name}
                                 </p>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4">
                           <span
-                            className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${getTypeBadgeColor(
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg ${getTypeBadgeColor(
                               inst.type
                             )}`}
                           >
                             {getTypeLabel(inst.type)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4">
                           {getSectorBadges(inst.sector)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-slate-300 truncate max-w-[200px]">
                             {inst.contact_email || "-"}
                           </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-slate-400">
                             {inst.contact_phone || "-"}
                           </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleEdit(inst)}
-                              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200"
                               title="Editează"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(inst)}
-                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all duration-200"
                               title="Șterge"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1437,10 +1745,8 @@ const Institutions = () => {
                           </div>
                         </td>
                       </tr>
-
-                      {/* Expanded Row */}
                       {expandedRows.has(inst.id) && (
-                        <InstitutionExpandedRow inst={inst} />
+                        <InstitutionExpandedRow key={`${inst.id}-expanded`} inst={inst} />
                       )}
                     </>
                   ))
@@ -1451,40 +1757,58 @@ const Institutions = () => {
 
           {/* Pagination */}
           {paginatedInstitutions.length > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Pagina {currentPage} din {totalPages}
-                </span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-                >
-                  <option value={10}>10 / pagină</option>
-                  <option value={20}>20 / pagină</option>
-                  <option value={50}>50 / pagină</option>
-                </select>
-              </div>
+            <div className="px-6 py-4 border-t border-slate-700/50 bg-[#0f1623]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-400">
+                      Pagina
+                    </span>
+                    <div className="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-sm">
+                      {currentPage}
+                    </div>
+                    <span className="text-sm text-slate-500">
+                      din {totalPages}
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-slate-700"></div>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-3 py-1.5 bg-[#1a2332] border border-slate-700 rounded-lg text-sm text-slate-300 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none hover:border-slate-600 transition-colors cursor-pointer"
+                  >
+                    <option value={10}>10 / pagină</option>
+                    <option value={20}>20 / pagină</option>
+                    <option value={50}>50 / pagină</option>
+                    <option value={100}>100 / pagină</option>
+                  </select>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Următorul
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-[#1a2332] hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-slate-600"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        Math.min(totalPages, p + 1)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-[#1a2332] hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-slate-600"
+                  >
+                    Următorul
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1500,7 +1824,6 @@ const Institutions = () => {
           />
 
           <div className="fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto">
-            
             {/* HEADER */}
             <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between border-b border-emerald-700 z-10">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -1533,7 +1856,6 @@ const Institutions = () => {
 
             {/* CONTENT */}
             <div className="p-6">
-              
               {/* DELETE MODE */}
               {sidebarMode === "delete" && selectedInstitution && (
                 <div className="space-y-6">
@@ -1548,7 +1870,10 @@ const Institutions = () => {
                         </h4>
                         <p className="text-sm text-red-700 dark:text-red-300">
                           Ești sigur că vrei să ștergi instituția{" "}
-                          <span className="font-semibold">{selectedInstitution.name}</span>?
+                          <span className="font-semibold">
+                            {selectedInstitution.name}
+                          </span>
+                          ?
                         </p>
                         <p className="text-xs text-red-600 dark:text-red-400 mt-2">
                           Această acțiune nu poate fi anulată.
@@ -1588,7 +1913,6 @@ const Institutions = () => {
               {/* ADD/EDIT MODE */}
               {(sidebarMode === "add" || sidebarMode === "edit") && (
                 <div className="space-y-6">
-                  
                   {/* Denumire */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -1645,12 +1969,22 @@ const Institutions = () => {
                     >
                       <option value="">Selectează tipul</option>
                       <option value="MUNICIPALITY">Municipiu</option>
-                      <option value="WASTE_OPERATOR">Operator Colectare</option>
-                      <option value="SORTING_OPERATOR">Operator Sortare</option>
+                      <option value="WASTE_OPERATOR">
+                        Operator Colectare
+                      </option>
+                      <option value="SORTING_OPERATOR">
+                        Operator Sortare
+                      </option>
                       <option value="TMB_OPERATOR">Operator TMB</option>
-                      <option value="DISPOSAL_CLIENT">Client Depozit</option>
-                      <option value="RECYCLING_CLIENT">Client Reciclare</option>
-                      <option value="RECOVERY_CLIENT">Client Valorificare</option>
+                      <option value="DISPOSAL_CLIENT">
+                        Client Depozit
+                      </option>
+                      <option value="RECYCLING_CLIENT">
+                        Client Reciclare
+                      </option>
+                      <option value="RECOVERY_CLIENT">
+                        Client Valorificare
+                      </option>
                     </select>
                     {errors.type && (
                       <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
@@ -1673,7 +2007,8 @@ const Institutions = () => {
                       placeholder="Ex: 1,2,3 sau B pentru București"
                     />
                     <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      Separate prin virgulă pentru sectoare multiple (ex: 1,2,3)
+                      Separate prin virgulă pentru sectoare multiple (ex:
+                      1,2,3)
                     </p>
                   </div>
 
