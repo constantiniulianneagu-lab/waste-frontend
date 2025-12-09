@@ -1748,5 +1748,3 @@ const Institutions = () => {
 };
 
 export default Institutions;
-
-export default Institutions;
