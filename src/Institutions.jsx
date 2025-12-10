@@ -40,6 +40,8 @@ import WasteOperatorContractModal from "./WasteOperatorContractModal";
 import SortingContractModal from "./SortingContractModal";
 import DisposalContractModal from "./DisposalContractModal";
 
+const { user } = useAuth(); // sau cum accesezi contextul de auth
+
 const Institutions = () => {
   // ========================================================================
   // STATE
@@ -1199,16 +1201,18 @@ const Institutions = () => {
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                   Contracte Operator Colectare
                 </h4>
-                <button
-                  onClick={() => {
-                    setCurrentInstitutionId(inst.id);
-                    setSelectedContractForEdit(null);
-                    setWasteContractModalOpen(true);
-                  }}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  + Adaugă Contract
-                </button>
+                {(user.role === 'PLATFORM_ADMIN' || user.role === 'INSTITUTION_ADMIN') && (
+  <button
+    onClick={() => {
+      setCurrentInstitutionId(inst.id);
+      setSelectedContractForEdit(null);
+      setTmbContractModalOpen(true);
+    }}
+    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded-lg transition-colors"
+  >
+    + Adaugă Contract
+  </button>
+)}
               </div>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 text-center">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
