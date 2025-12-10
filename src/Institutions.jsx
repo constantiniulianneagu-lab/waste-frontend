@@ -1550,11 +1550,11 @@ const Institutions = () => {
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700/50 flex items-center justify-between bg-gray-50 dark:bg-[#1a2332]">
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
                 <Building2 className="w-5 h-5 text-emerald-400" />
                 Lista Instituții
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 {sortedInstitutions.length}{" "}
                 {sortedInstitutions.length === 1
                   ? "instituție"
@@ -1565,7 +1565,7 @@ const Institutions = () => {
             </div>
             <button
               onClick={handleAdd}
-              className="group flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-900/50 hover:shadow-emerald-900/70 hover:scale-105"
+              className="group flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-500/20 dark:shadow-emerald-900/50 hover:shadow-emerald-500/30 dark:hover:shadow-emerald-900/70 hover:scale-105"
             >
               <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
               Adaugă Instituție
@@ -1575,14 +1575,14 @@ const Institutions = () => {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
-            <thead className="bg-gray-100 dark:bg-[#0f1623] border-b border-gray-200 dark:border-slate-700/50">
+              <thead className="bg-gray-100 dark:bg-[#0f1623] border-b border-gray-200 dark:border-slate-700/50">
                 <tr>
                   <th className="w-12 px-4 py-3"></th>
                   <th className="px-4 py-3 text-left">
                     <button
                       onClick={() => handleSort("name")}
                       className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                      >
+                    >
                       Denumire Instituție
                       {getSortIcon("name")}
                     </button>
@@ -1591,7 +1591,7 @@ const Institutions = () => {
                     <button
                       onClick={() => handleSort("type")}
                       className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                      >
+                    >
                       Activitate
                       {getSortIcon("type")}
                     </button>
@@ -1600,42 +1600,42 @@ const Institutions = () => {
                     <button
                       onClick={() => handleSort("sector")}
                       className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                      >
+                    >
                       Sector
                       {getSortIcon("sector")}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                     Telefon
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                     Acțiuni
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/30">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700/30">
                 {paginatedInstitutions.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="relative">
-                          <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center">
-                            <Building2 className="w-10 h-10 text-slate-600" />
+                          <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-slate-800 flex items-center justify-center">
+                            <Building2 className="w-10 h-10 text-gray-400 dark:text-slate-600" />
                           </div>
                           <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center">
                             <Plus className="w-4 h-4 text-white" />
                           </div>
                         </div>
                         <div>
-                          <p className="text-base font-semibold text-white mb-1">
+                          <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">
                             {searchQuery
                               ? "Niciun rezultat găsit"
                               : "Nu există instituții"}
                           </p>
-                          <p className="text-sm text-slate-400 mb-4">
+                          <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
                             {searchQuery
                               ? "Încearcă să schimbi termenii de căutare"
                               : "Începe prin a adăuga prima instituție"}
@@ -1643,7 +1643,7 @@ const Institutions = () => {
                         </div>
                         <button
                           onClick={handleAdd}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-900/50"
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-emerald-500/20 dark:shadow-emerald-900/50"
                         >
                           Adaugă Instituție
                         </button>
@@ -1656,16 +1656,16 @@ const Institutions = () => {
                       <tr
                         key={inst.id}
                         className="group hover:bg-gray-50 dark:hover:bg-[#1a2332] transition-all duration-200"
-                        >
+                      >
                         <td className="px-4 py-4">
                           <button
                             onClick={() => toggleRowExpand(inst.id)}
                             className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-all duration-200"
-                            >
+                          >
                             {expandedRows.has(inst.id) ? (
                               <ChevronDown className="w-4 h-4 text-emerald-400" />
                             ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                              <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                             )}
                           </button>
                         </td>
@@ -1693,11 +1693,11 @@ const Institutions = () => {
                               <Building2 className="w-5 h-5 text-white" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-white truncate">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                                 {inst.name}
                               </p>
                               {inst.short_name && (
-                                <p className="text-xs text-slate-400 truncate">
+                                <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                                   {inst.short_name}
                                 </p>
                               )}
@@ -1717,12 +1717,12 @@ const Institutions = () => {
                           {getSectorBadges(inst.sector)}
                         </td>
                         <td className="px-4 py-4">
-                          <p className="text-sm text-slate-300 truncate max-w-[200px]">
+                          <p className="text-sm text-gray-700 dark:text-slate-300 truncate max-w-[200px]">
                             {inst.contact_email || "-"}
                           </p>
                         </td>
                         <td className="px-4 py-4">
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-gray-600 dark:text-slate-400">
                             {inst.contact_phone || "-"}
                           </p>
                         </td>
@@ -1730,14 +1730,14 @@ const Institutions = () => {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleEdit(inst)}
-                              className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200"
+                              className="p-2 text-gray-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all duration-200"
                               title="Editează"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(inst)}
-                              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all duration-200"
+                              className="p-2 text-gray-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all duration-200"
                               title="Șterge"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1761,15 +1761,15 @@ const Institutions = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-slate-400">
-                    Pagina
+                    <span className="text-sm font-medium text-gray-700 dark:text-slate-400">
+                      Pagina
                     </span>
                     <div className="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-sm">
                       {currentPage}
                     </div>
                     <span className="text-sm text-gray-600 dark:text-slate-500">
                       din {totalPages}
-                      </span>
+                    </span>
                   </div>
                   <div className="h-6 w-px bg-gray-300 dark:bg-slate-700"></div>
                   <select
@@ -1779,7 +1779,7 @@ const Institutions = () => {
                       setCurrentPage(1);
                     }}
                     className="px-3 py-1.5 bg-white dark:bg-[#1a2332] border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-700 dark:text-slate-300 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none hover:border-gray-400 dark:hover:border-slate-600 transition-colors cursor-pointer"
-                    >
+                  >
                     <option value={10}>10 / pagină</option>
                     <option value={20}>20 / pagină</option>
                     <option value={50}>50 / pagină</option>
@@ -1794,7 +1794,7 @@ const Institutions = () => {
                     }
                     disabled={currentPage === 1}
                     className="px-4 py-2 bg-white dark:bg-[#1a2332] hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-gray-300 dark:border-slate-700 hover:border-gray-400 dark:hover:border-slate-600"
-                    >
+                  >
                     Anterior
                   </button>
                   <button
@@ -1804,7 +1804,7 @@ const Institutions = () => {
                       )
                     }
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-[#1a2332] hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-slate-600"
+                    className="px-4 py-2 bg-white dark:bg-[#1a2332] hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-gray-300 dark:border-slate-700 hover:border-gray-400 dark:hover:border-slate-600"
                   >
                     Următorul
                   </button>
