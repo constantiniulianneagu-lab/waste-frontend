@@ -1546,9 +1546,9 @@ const Institutions = () => {
         </div>
 
         {/* TABLE */}
-        <div className="bg-[#141b28] rounded-xl border border-slate-700/50 shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-[#141b28] rounded-xl border border-gray-200 dark:border-slate-700/50 shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between bg-[#1a2332]">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700/50 flex items-center justify-between bg-gray-50 dark:bg-[#1a2332]">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-1">
                 <Building2 className="w-5 h-5 text-emerald-400" />
@@ -1575,14 +1575,14 @@ const Institutions = () => {
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#0f1623] border-b border-slate-700/50">
+            <thead className="bg-gray-100 dark:bg-[#0f1623] border-b border-gray-200 dark:border-slate-700/50">
                 <tr>
                   <th className="w-12 px-4 py-3"></th>
                   <th className="px-4 py-3 text-left">
                     <button
                       onClick={() => handleSort("name")}
-                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                    >
+                      className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                      >
                       Denumire Instituție
                       {getSortIcon("name")}
                     </button>
@@ -1590,8 +1590,8 @@ const Institutions = () => {
                   <th className="px-4 py-3 text-left">
                     <button
                       onClick={() => handleSort("type")}
-                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                    >
+                      className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                      >
                       Activitate
                       {getSortIcon("type")}
                     </button>
@@ -1599,8 +1599,8 @@ const Institutions = () => {
                   <th className="px-4 py-3 text-left">
                     <button
                       onClick={() => handleSort("sector")}
-                      className="group flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
-                    >
+                      className="group flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-slate-400 uppercase tracking-wider hover:text-emerald-400 transition-colors"
+                      >
                       Sector
                       {getSortIcon("sector")}
                     </button>
@@ -1655,17 +1655,17 @@ const Institutions = () => {
                     <>
                       <tr
                         key={inst.id}
-                        className="group hover:bg-[#1a2332] transition-all duration-200"
-                      >
+                        className="group hover:bg-gray-50 dark:hover:bg-[#1a2332] transition-all duration-200"
+                        >
                         <td className="px-4 py-4">
                           <button
                             onClick={() => toggleRowExpand(inst.id)}
-                            className="p-1.5 hover:bg-slate-700 rounded-lg transition-all duration-200"
-                          >
+                            className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-all duration-200"
+                            >
                             {expandedRows.has(inst.id) ? (
                               <ChevronDown className="w-4 h-4 text-emerald-400" />
                             ) : (
-                              <ChevronRight className="w-4 h-4 text-slate-500" />
+                            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                             )}
                           </button>
                         </td>
@@ -1757,29 +1757,29 @@ const Institutions = () => {
 
           {/* Pagination */}
           {paginatedInstitutions.length > 0 && (
-            <div className="px-6 py-4 border-t border-slate-700/50 bg-[#0f1623]">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700/50 bg-gray-100 dark:bg-[#0f1623]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-400">
-                      Pagina
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-400">
+                    Pagina
                     </span>
                     <div className="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-sm">
                       {currentPage}
                     </div>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-gray-600 dark:text-slate-500">
                       din {totalPages}
-                    </span>
+                      </span>
                   </div>
-                  <div className="h-6 w-px bg-slate-700"></div>
+                  <div className="h-6 w-px bg-gray-300 dark:bg-slate-700"></div>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-3 py-1.5 bg-[#1a2332] border border-slate-700 rounded-lg text-sm text-slate-300 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none hover:border-slate-600 transition-colors cursor-pointer"
-                  >
+                    className="px-3 py-1.5 bg-white dark:bg-[#1a2332] border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-700 dark:text-slate-300 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none hover:border-gray-400 dark:hover:border-slate-600 transition-colors cursor-pointer"
+                    >
                     <option value={10}>10 / pagină</option>
                     <option value={20}>20 / pagină</option>
                     <option value={50}>50 / pagină</option>
@@ -1793,8 +1793,8 @@ const Institutions = () => {
                       setCurrentPage((p) => Math.max(1, p - 1))
                     }
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-[#1a2332] hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 hover:border-slate-600"
-                  >
+                    className="px-4 py-2 bg-white dark:bg-[#1a2332] hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-gray-300 dark:border-slate-700 hover:border-gray-400 dark:hover:border-slate-600"
+                    >
                     Anterior
                   </button>
                   <button
