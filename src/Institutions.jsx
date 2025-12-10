@@ -39,8 +39,9 @@ import { apiGet, apiPost, apiPut, apiDelete } from "./api/apiClient";
 import WasteOperatorContractModal from "./WasteOperatorContractModal";
 import SortingContractModal from "./SortingContractModal";
 import DisposalContractModal from "./DisposalContractModal";
+import TMBContractModal from "./TMBContractModal";
 
-const { user } = useAuth(); // sau cum accesezi contextul de auth
+const user = JSON.parse(localStorage.getItem('wasteUser')) || { role: 'OPERATOR' };
 
 const Institutions = () => {
   // ========================================================================
@@ -107,6 +108,7 @@ const Institutions = () => {
   const [selectedContractForEdit, setSelectedContractForEdit] =
     useState(null);
   const [currentInstitutionId, setCurrentInstitutionId] = useState(null);
+  const [tmbContractModalOpen, setTmbContractModalOpen] = useState(false);
 
   // ========================================================================
   // LOAD DATA FROM BACKEND
@@ -189,27 +191,69 @@ const Institutions = () => {
   // LOAD CONTRACTS FOR INSTITUTION
   // ========================================================================
 
-  const loadContractsForInstitution = async (
-    institutionId,
-    forceReload = false
-  ) => {
+  const loadContractsForInstitution = async (institutionId, forceReload = false) => {
     if (institutionContracts[institutionId] && !forceReload) return;
-
+  
     setLoadingContracts((prev) => ({ ...prev, [institutionId]: true }));
-
+  
     try {
-      const response = await apiGet(
-        `/api/institutions/${institutionId}/contracts`
-      );
-
+      // Găsește instituția pentru a determina tipul
+      const institution = institutions.find(inst => inst.id === institutionId);
+      
+      if (!institution) {
+        console.error('Institution not found:', institutionId);
+        setInstitutionContracts((prev) => ({
+          ...prev,
+          [institutionId]: [],
+        }));
+        return;
+      }
+  
+      let endpoint = '';
+      
+      // Determină endpoint-ul în funcție de tipul instituției
+      switch (institution.type) {
+        case 'TMB_OPERATOR':
+        case 'TMB':
+          endpoint = `/api/institutions/${institutionId}/tmb-contracts`;
+          break;
+        case 'WASTE_OPERATOR':
+        case 'OPERATOR':
+          endpoint = `/api/institutions/${institutionId}/waste-contracts`;
+          break;
+        case 'SORTING_OPERATOR':
+        case 'COLECTOR':
+          endpoint = `/api/institutions/${institutionId}/sorting-contracts`;
+          break;
+        case 'DISPOSAL_CLIENT':
+        case 'DEPOZIT':
+          endpoint = `/api/institutions/${institutionId}/disposal-contracts`;
+          break;
+        default:
+          // Tipuri care nu au contracte
+          setInstitutionContracts((prev) => ({
+            ...prev,
+            [institutionId]: [],
+          }));
+          return;
+      }
+  
+      const response = await apiGet(endpoint);
+  
       if (response.success) {
         setInstitutionContracts((prev) => ({
           ...prev,
           [institutionId]: response.data || [],
         }));
+      } else {
+        console.error('Failed to load contracts:', response.message);
+        setInstitutionContracts((prev) => ({
+          ...prev,
+          [institutionId]: [],
+        }));
       }
     } catch (err) {
-      console.error("Error loading contracts:", err);
+      console.error('Error loading contracts:', err);
       setInstitutionContracts((prev) => ({
         ...prev,
         [institutionId]: [],
@@ -1119,6 +1163,18 @@ const Institutions = () => {
                   <FileText className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                   Contracte TMB
                 </h4>
+                {(user.role === 'PLATFORM_ADMIN' || user.role === 'INSTITUTION_ADMIN') && (
+  <button
+    onClick={() => {
+      setCurrentInstitutionId(inst.id);
+      setSelectedContractForEdit(null);
+      setTmbContractModalOpen(true);
+    }}
+    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded-lg transition-colors"
+  >
+    + Adaugă Contract
+  </button>
+)}
                 {contracts.length > 0 && (
                   <div className="flex items-center gap-4 text-xs">
                     <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
@@ -2207,6 +2263,21 @@ const Institutions = () => {
           }
         }}
       />
+      {/* TMB Contract Modal */}
+<TMBContractModal
+  isOpen={tmbContractModalOpen}
+  onClose={() => {
+    setTmbContractModalOpen(false);
+    setSelectedContractForEdit(null);
+  }}
+  institutionId={currentInstitutionId}
+  contract={selectedContractForEdit}
+  onSuccess={() => {
+    if (currentInstitutionId) {
+      loadContractsForInstitution(currentInstitutionId, true);
+    }
+  }}
+/>
     </div>
   );
 };
