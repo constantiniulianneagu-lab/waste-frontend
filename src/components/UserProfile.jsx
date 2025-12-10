@@ -1,12 +1,17 @@
 // src/components/UserProfile.jsx
 /**
  * ============================================================================
- * USER PROFILE - MODERN REDESIGN
+ * USER PROFILE - 2026 SAMSUNG/APPLE STYLE
  * ============================================================================
- * ✅ Layout modern, compact, intuitiv
- * ✅ Full-width cu grid responsiv
- * ✅ Fără spații inutile
- * ✅ Culori și iconițe moderne
+ * 
+ * Modern glassmorphism design with perfect light/dark mode
+ * 
+ * ✅ Samsung One UI 7.0 rounded corners (24-28px)
+ * ✅ Apple iOS 18 glassmorphism effects
+ * ✅ Premium gradients and micro-interactions
+ * ✅ Perfect light/dark mode adaptive colors
+ * ✅ Smooth animations (300ms)
+ * 
  * ============================================================================
  */
 
@@ -29,6 +34,8 @@ import {
   Users,
   Lock,
   CheckCircle2,
+  Shield,
+  Calendar,
 } from "lucide-react";
 import DashboardHeader from "./dashboard/DashboardHeader";
 
@@ -263,11 +270,11 @@ const UserProfile = () => {
 
   const getBadgeColor = (activity) => {
     const colors = {
-      "Colectare": "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-      "Tratare mecano-biologică": "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-      "Depozitare": "bg-red-500/10 text-red-400 border border-red-500/20",
+      "Colectare": "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30",
+      "Tratare mecano-biologică": "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/30",
+      "Depozitare": "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30",
     };
-    return colors[activity] || "bg-gray-500/10 text-gray-400 border border-gray-500/20";
+    return colors[activity] || "bg-gray-500/10 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/20 dark:border-gray-500/30";
   };
 
   // ========================================================================
@@ -276,12 +283,14 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f172a]">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <DashboardHeader title="Profil Utilizator" />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-12 h-12 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-sm text-gray-400">Se încarcă...</p>
+            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Se încarcă...
+            </p>
           </div>
         </div>
       </div>
@@ -289,75 +298,123 @@ const UserProfile = () => {
   }
 
   // ========================================================================
-  // RENDER
+  // RENDER - MODERN STYLE
   // ========================================================================
 
   return (
-    <div className="min-h-screen bg-[#0f172a]">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardHeader title="Profil Utilizator" />
 
       <div className="px-6 py-6 max-w-[1600px] mx-auto">
         
-        {/* HEADER CARD - Compact */}
-        <div className="bg-gradient-to-r from-[#1e293b] to-[#1e293b]/80 rounded-xl border border-gray-800 p-6 mb-6">
-          <div className="flex items-center gap-6">
-            {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <span className="text-white text-2xl font-bold">
-                  {getUserInitials()}
+        {/* HEADER CARD - Premium Samsung style */}
+        <div className="group relative mb-6">
+          <div className="relative bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                        rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                        p-6 shadow-sm dark:shadow-none overflow-hidden">
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-600 
+                          opacity-[0.02] dark:opacity-[0.04]" />
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center gap-6">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="w-24 h-24 rounded-[20px] 
+                              bg-gradient-to-br from-emerald-500 to-teal-600 
+                              flex items-center justify-center 
+                              shadow-xl shadow-emerald-500/20">
+                  <span className="text-white text-3xl font-bold">
+                    {getUserInitials()}
+                  </span>
+                </div>
+                
+                {/* Online indicator with pulse */}
+                <div className="absolute -bottom-2 -right-2">
+                  <div className="relative">
+                    <div className="w-6 h-6 bg-emerald-400 rounded-full 
+                                  border-4 border-white dark:border-gray-800" />
+                    <div className="absolute inset-0 w-6 h-6 bg-emerald-400 
+                                  rounded-full animate-ping opacity-40" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  {userData?.first_name} {userData?.last_name}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  {userData?.position || "Funcție nedefinită"}
+                </p>
+                <span className="inline-flex items-center gap-2 px-4 py-2 
+                               text-xs font-bold rounded-[14px] 
+                               bg-emerald-500/10 dark:bg-emerald-500/20 
+                               text-emerald-600 dark:text-emerald-400 
+                               border border-emerald-500/20 dark:border-emerald-500/30">
+                  <Shield className="w-3.5 h-3.5" />
+                  {formatRole(userData?.role)}
                 </span>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-[#1e293b]" />
-            </div>
-            
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-white mb-1">
-                {userData?.first_name} {userData?.last_name}
-              </h2>
-              <p className="text-sm text-gray-400 mb-2">
-                {userData?.position || "Funcție nedefinită"}
-              </p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <CheckCircle2 className="w-3 h-3" />
-                {formatRole(userData?.role)}
-              </span>
-            </div>
 
-            {/* Contact rapid */}
-            <div className="flex items-center gap-8 px-6 border-l border-gray-700">
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300">{userData?.phone || "-"}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300">{userData?.email}</span>
+              {/* Contact info - Desktop */}
+              <div className="hidden lg:flex flex-col gap-3 px-6 border-l border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-10 h-10 rounded-[12px] 
+                                bg-blue-500/10 dark:bg-blue-500/20 
+                                flex items-center justify-center">
+                    <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
+                    {userData?.phone || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-10 h-10 rounded-[12px] 
+                                bg-emerald-500/10 dark:bg-emerald-500/20 
+                                flex items-center justify-center">
+                    <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
+                    {userData?.email}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* GRID LAYOUT: 2 COLOANE */}
+        {/* GRID LAYOUT: 2 COLOANE - Modern cards */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           
           {/* INFO PERSONALE */}
-          <div className="bg-[#1e293b] rounded-xl border border-gray-800">
-            <div className="flex items-center justify-between p-5 border-b border-gray-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-400" />
+          <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                        rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                        shadow-sm dark:shadow-none overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700/50">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="w-8 h-8 rounded-[10px] bg-blue-500/10 dark:bg-blue-500/20 
+                              flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
                 Informații personale
               </h3>
               <button
                 onClick={handleEditPersonal}
-                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                className="p-2.5 text-blue-600 dark:text-blue-400 
+                         hover:bg-blue-500/10 dark:hover:bg-blue-500/20 
+                         rounded-[12px] transition-all duration-300
+                         active:scale-95"
+                title="Editează informații"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
             </div>
             
-            <div className="p-5 grid grid-cols-2 gap-4">
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
               <InfoField label="Nume" value={userData?.last_name} />
               <InfoField label="Prenume" value={userData?.first_name} />
               <InfoField label="Email" value={userData?.email} />
@@ -366,10 +423,17 @@ const UserProfile = () => {
               <InfoField label="Departament" value={userData?.department} />
             </div>
 
-            <div className="p-5 border-t border-gray-800">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700/50">
               <button
                 onClick={handleEditPassword}
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+                className="w-full px-5 py-3 
+                         bg-gradient-to-r from-blue-600 to-blue-700 
+                         hover:from-blue-700 hover:to-blue-800 
+                         text-white text-sm font-bold rounded-[16px] 
+                         transition-all duration-300
+                         active:scale-98
+                         flex items-center justify-center gap-2
+                         shadow-lg shadow-blue-500/20"
               >
                 <Lock className="w-4 h-4" />
                 Schimbă parola
@@ -379,50 +443,72 @@ const UserProfile = () => {
 
           {/* INFO ORGANIZAȚIE */}
           {institutionData && (
-            <div className="bg-[#1e293b] rounded-xl border border-gray-800">
-              <div className="p-5 border-b border-gray-800">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-emerald-400" />
+            <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                          rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                          shadow-sm dark:shadow-none overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700/50">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-[10px] bg-emerald-500/10 dark:bg-emerald-500/20 
+                                flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                   Informații organizație
                 </h3>
               </div>
               
-              <div className="p-5 space-y-4">
+              <div className="p-6 space-y-5">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 mb-1">Denumire</p>
-                  <p className="text-sm font-medium text-white leading-relaxed">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Denumire
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-relaxed">
                     {institutionData.name}
                   </p>
                 </div>
                 
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 mb-1">Adresă</p>
-                  <p className="text-sm text-gray-300 flex items-start gap-2 leading-relaxed">
-                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Adresă
+                  </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed">
+                    <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                     {institutionData.address || "-"}
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 mb-1">Telefon</p>
-                    <p className="text-sm text-gray-300">{institutionData.contact_phone || "-"}</p>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Telefon
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {institutionData.contact_phone || "-"}
+                    </p>
                   </div>
                   
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 mb-1">Email</p>
-                    <p className="text-sm text-gray-300">{institutionData.contact_email || "-"}</p>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Email
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {institutionData.contact_email || "-"}
+                    </p>
                   </div>
                 </div>
                 
                 {institutionData.website && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 mb-1">Website</p>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Website
+                    </p>
                     <a 
                       href={institutionData.website.startsWith('http') ? institutionData.website : `https://${institutionData.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2"
+                      className="text-sm text-blue-600 dark:text-blue-400 
+                               hover:text-blue-700 dark:hover:text-blue-300 
+                               hover:underline font-medium
+                               flex items-center gap-2 transition-colors"
                     >
                       <Globe className="w-4 h-4" />
                       {institutionData.website}
@@ -434,12 +520,17 @@ const UserProfile = () => {
           )}
         </div>
 
-        {/* TABEL OPERATORI */}
+        {/* TABEL OPERATORI - Modern table */}
         {currentUser?.role === "PLATFORM_ADMIN" && operators.length > 0 && (
-          <div className="bg-[#1e293b] rounded-xl border border-gray-800">
-            <div className="p-5 border-b border-gray-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-400" />
+          <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                        rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                        shadow-sm dark:shadow-none overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700/50">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="w-8 h-8 rounded-[10px] bg-purple-500/10 dark:bg-purple-500/20 
+                              flex items-center justify-center">
+                  <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                </div>
                 Operatori platformă
               </h3>
             </div>
@@ -447,44 +538,81 @@ const UserProfile = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Operator</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Email</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Telefon</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Activitate</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Beneficiar</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Acțiuni</th>
+                  <tr className="border-b border-gray-200 dark:border-gray-700/50">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Operator
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Telefon
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Activitate
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Beneficiar
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Acțiuni
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {operators.map((operator) => (
-                    <tr key={operator.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-medium text-white">{operator.name}</p>
+                    <tr 
+                      key={operator.id} 
+                      className="border-b border-gray-200 dark:border-gray-700/30 
+                               hover:bg-gray-50 dark:hover:bg-gray-900/30 
+                               transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {operator.name}
+                        </p>
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-gray-300">{operator.email}</p>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {operator.email}
+                        </p>
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-gray-300">{operator.phone}</p>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {operator.phone}
+                        </p>
                       </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-lg ${getBadgeColor(operator.activity)}`}>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-[10px] ${getBadgeColor(operator.activity)}`}>
                           {operator.activity}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-gray-300">{operator.beneficiary}</p>
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {operator.beneficiary}
+                        </p>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-6 py-4">
                         <span className="flex items-center gap-2 text-sm">
-                          <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                          <span className="text-gray-300">{operator.status}</span>
+                          <span className="relative">
+                            <span className="w-2 h-2 bg-emerald-400 rounded-full block" />
+                            <span className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-40" />
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400 font-medium">
+                            {operator.status}
+                          </span>
                         </span>
                       </td>
-                      <td className="px-5 py-4">
-                        <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+                      <td className="px-6 py-4">
+                        <button className="px-4 py-2 
+                                         bg-blue-600 hover:bg-blue-700 
+                                         text-white text-xs font-bold 
+                                         rounded-[10px] transition-all duration-300
+                                         active:scale-95
+                                         shadow-lg shadow-blue-500/20">
                           Vezi detalii
                         </button>
                       </td>
@@ -497,30 +625,44 @@ const UserProfile = () => {
         )}
       </div>
 
-      {/* SIDEBAR EDITARE */}
+      {/* SIDEBAR EDITARE - Modern glassmorphism */}
       {sidebarMode && (
         <>
           <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40 
+                     transition-opacity duration-300"
             onClick={handleCloseSidebar}
           />
           
-          <div className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-[#1e293b] shadow-2xl z-50 overflow-y-auto border-l border-gray-800">
-            <div className="p-5 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-[#1e293b] z-10">
-              <h3 className="text-base font-bold text-white">
+          <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] 
+                        bg-white dark:bg-gray-800 
+                        shadow-2xl z-50 overflow-y-auto 
+                        border-l border-gray-200 dark:border-gray-700
+                        animate-slide-in">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 
+                          flex items-center justify-between 
+                          sticky top-0 bg-white dark:bg-gray-800 z-10">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 {sidebarMode === "personal" ? "Editează informații" : "Schimbă parola"}
               </h3>
               <button
                 onClick={handleCloseSidebar}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2.5 text-gray-600 dark:text-gray-400 
+                         hover:text-gray-900 dark:hover:text-white 
+                         hover:bg-gray-100 dark:hover:bg-gray-700 
+                         rounded-[12px] transition-all duration-300
+                         active:scale-95"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-5">
+            {/* Form */}
+            <div className="p-6">
               {sidebarMode === "personal" ? (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <InputField
                     label="Prenume *"
                     name="firstName"
@@ -564,7 +706,7 @@ const UserProfile = () => {
                   />
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <PasswordField
                     label="Parola curentă *"
                     name="currentPassword"
@@ -583,25 +725,45 @@ const UserProfile = () => {
                     showPassword={showPassword.new}
                     toggleShow={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
                   />
-                  <p className="text-xs text-gray-400">
-                    Minim 8 caractere, o literă mare, o literă mică și un număr.
-                  </p>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 
+                                rounded-[14px] border border-blue-200 dark:border-blue-800/30">
+                    <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                      💡 Parola trebuie să conțină minim 8 caractere, o literă mare, o literă mică și un număr.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="p-5 border-t border-gray-800 flex gap-3 sticky bottom-0 bg-[#1e293b]">
+            {/* Footer buttons */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 
+                          flex gap-3 sticky bottom-0 bg-white dark:bg-gray-800">
               <button
                 onClick={handleCloseSidebar}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 px-5 py-3 
+                         bg-gray-100 dark:bg-gray-700 
+                         hover:bg-gray-200 dark:hover:bg-gray-600 
+                         text-gray-900 dark:text-white 
+                         font-bold rounded-[16px] 
+                         transition-all duration-300
+                         active:scale-98
+                         disabled:opacity-50"
               >
                 Anulează
               </button>
               <button
                 onClick={sidebarMode === "personal" ? handleSavePersonal : handleSavePassword}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-5 py-3 
+                         bg-gradient-to-r from-emerald-600 to-teal-600 
+                         hover:from-emerald-700 hover:to-teal-700 
+                         text-white font-bold rounded-[16px] 
+                         transition-all duration-300
+                         active:scale-98
+                         disabled:opacity-50 
+                         flex items-center justify-center gap-2
+                         shadow-lg shadow-emerald-500/20"
               >
                 {saving ? (
                   <>
@@ -624,54 +786,86 @@ const UserProfile = () => {
 };
 
 // ============================================================================
-// HELPER COMPONENTS
+// HELPER COMPONENTS - MODERN STYLE
 // ============================================================================
 
 const InfoField = ({ label, value }) => (
   <div>
-    <p className="text-xs font-semibold text-gray-400 mb-1">{label}</p>
-    <p className="text-sm text-white">{value || "-"}</p>
+    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+      {label}
+    </p>
+    <p className="text-sm font-medium text-gray-900 dark:text-white">
+      {value || "-"}
+    </p>
   </div>
 );
 
 const InputField = ({ label, name, type = "text", value, onChange, error }) => (
   <div>
-    <label className="block text-xs font-semibold text-gray-400 mb-1.5">{label}</label>
+    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 
+                    uppercase tracking-wider mb-2">
+      {label}
+    </label>
     <input
       type={type}
       name={name}
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2.5 bg-[#0f172a] border ${
-        error ? "border-red-500" : "border-gray-700"
-      } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-white text-sm transition-all`}
+      className={`w-full px-4 py-3 
+                bg-gray-50 dark:bg-gray-900/50 
+                border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} 
+                rounded-[14px] 
+                focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 
+                outline-none 
+                text-gray-900 dark:text-white text-sm 
+                transition-all duration-300
+                placeholder-gray-400 dark:placeholder-gray-500`}
     />
-    {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+    {error && (
+      <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium">
+        {error}
+      </p>
+    )}
   </div>
 );
 
 const PasswordField = ({ label, name, value, onChange, error, showPassword, toggleShow }) => (
   <div>
-    <label className="block text-xs font-semibold text-gray-400 mb-1.5">{label}</label>
+    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 
+                    uppercase tracking-wider mb-2">
+      {label}
+    </label>
     <div className="relative">
       <input
         type={showPassword ? "text" : "password"}
         name={name}
         value={value}
         onChange={onChange}
-        className={`w-full px-3 py-2.5 bg-[#0f172a] border ${
-          error ? "border-red-500" : "border-gray-700"
-        } rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-white text-sm pr-10 transition-all`}
+        className={`w-full px-4 py-3 pr-12
+                  bg-gray-50 dark:bg-gray-900/50 
+                  border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} 
+                  rounded-[14px] 
+                  focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 
+                  outline-none 
+                  text-gray-900 dark:text-white text-sm 
+                  transition-all duration-300`}
       />
       <button
         type="button"
         onClick={toggleShow}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+        className="absolute right-3 top-1/2 -translate-y-1/2 
+                 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+                 transition-colors rounded-[10px]
+                 hover:bg-gray-100 dark:hover:bg-gray-800"
       >
         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
       </button>
     </div>
-    {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+    {error && (
+      <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium">
+        {error}
+      </p>
+    )}
   </div>
 );
 

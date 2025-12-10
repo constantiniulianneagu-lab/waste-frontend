@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardLandfill.jsx
 /**
  * ============================================================================
- * DASHBOARD DEPOZITARE - FINAL WITH RECENT TICKETS COMPONENT
+ * DASHBOARD DEPOZITARE - FINAL WITH MODERN SUMMARY CARDS
  * ============================================================================
  */
 
@@ -249,23 +249,77 @@ const DashboardLandfill = () => {
   );
 };
 
+/**
+ * ============================================================================
+ * SUMMARY CARD - 2026 SAMSUNG/APPLE STYLE
+ * ============================================================================
+ * Modern premium card with glassmorphism, gradients, and perfect light/dark mode
+ */
 const SummaryCard = ({ title, value, subtitle, gradient, icon }) => (
-  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg transition-all group relative overflow-hidden">
-    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${gradient} group-hover:w-2 transition-all`} />
-    
-    <div className="flex items-start justify-between gap-3 pl-2">
-      <div className="flex-1">
-        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
-          {title}
-        </p>
-        <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent mb-1`}>
-          {value}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+  <div className="group relative">
+    {/* Card Container - Samsung One UI rounded style */}
+    <div className="relative h-full
+                  bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                  border border-gray-200 dark:border-gray-700/50
+                  rounded-[24px] p-6
+                  shadow-sm dark:shadow-none
+                  hover:shadow-lg dark:hover:shadow-xl
+                  hover:border-gray-300 dark:hover:border-gray-600
+                  hover:-translate-y-1
+                  transition-all duration-300 ease-out
+                  overflow-hidden">
+      
+      {/* Accent line - left edge with gradient */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                    bg-gradient-to-b ${gradient}
+                    group-hover:w-1.5 transition-all duration-300`} />
+      
+      {/* Subtle gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} 
+                    opacity-[0.02] dark:opacity-[0.04] 
+                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
+                    transition-opacity duration-500`} />
+
+      {/* Content wrapper */}
+      <div className="relative z-10 flex items-start justify-between gap-4">
+        
+        {/* Text content */}
+        <div className="flex-1 min-w-0">
+          {/* Title - uppercase label */}
+          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 
+                      uppercase tracking-widest mb-3">
+            {title}
+          </p>
+          
+          {/* Value - large gradient number */}
+          <p className={`text-3xl sm:text-4xl font-bold 
+                       bg-gradient-to-r ${gradient} 
+                       bg-clip-text text-transparent 
+                       mb-2 leading-tight`}>
+            {value}
+          </p>
+          
+          {/* Subtitle - description */}
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            {subtitle}
+          </p>
+        </div>
+
+        {/* Icon badge - Samsung soft circles */}
+        <div className={`flex-shrink-0 w-14 h-14 rounded-[18px]
+                      bg-gradient-to-br ${gradient}
+                      flex items-center justify-center
+                      shadow-lg
+                      group-hover:scale-110 group-hover:rotate-3
+                      transition-all duration-300`}>
+          <span className="text-2xl">{icon}</span>
+        </div>
       </div>
-      <div className={`w-12 h-12 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-xl shadow-lg`}>
-        <span>{icon}</span>
-      </div>
+
+      {/* Status indicator dot */}
+      <div className={`absolute top-4 left-4 w-1.5 h-1.5 rounded-full
+                    bg-gradient-to-br ${gradient}
+                    opacity-40 dark:opacity-60 animate-pulse`} />
     </div>
   </div>
 );

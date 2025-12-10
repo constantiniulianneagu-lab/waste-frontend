@@ -1,11 +1,12 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - CORECT CONFORM COD VECHI
+ * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE
  * ============================================================================
  * 
- * 🔧 FIX COMPLET:
- * ✅ Ani: Array de 10 ani (2025, 2024, 2023, ..., 2016)
+ * Modern UI with glassmorphism, perfect light/dark mode, and premium gradients
+ * 
+ * ✅ Ani: Array de 2 ani (2025, 2024)
  * ✅ Filtre: start_date / end_date (nu from/to)
  * ✅ Sectoare: Hardcoded București + Sector 1-6
  * ✅ Default: An curent, startOfYear, today
@@ -14,7 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle, Factory, Trash2, Package } from "lucide-react";
+import { AlertCircle, Factory, Trash2, Package, TrendingUp, Activity } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
 
@@ -25,6 +26,20 @@ import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+
+/**
+ * ============================================================================
+ * PROGRESS BAR COMPONENT - MODERN STYLE
+ * ============================================================================
+ */
+const ProgressBar = ({ value, gradient }) => (
+  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+    <div
+      className={`h-2 rounded-full bg-gradient-to-r ${gradient} transition-all duration-700 ease-out`}
+      style={{ width: `${Math.min(value, 100)}%` }}
+    />
+  </div>
+);
 
 const DashboardTmb = () => {
   const [loading, setLoading] = useState(true);
@@ -200,7 +215,7 @@ const DashboardTmb = () => {
   if (!data) return null;
 
   // ========================================================================
-  // ANI - ARRAY DE 10 ANI (CA LA DEPOZITARE)
+  // ANI - ARRAY DE 2 ANI (CA LA DEPOZITARE)
   // ========================================================================
 
   const availableYears = Array.from({ length: 2 }, (_, i) => currentYear - i);
@@ -237,22 +252,31 @@ const DashboardTmb = () => {
     depozitate: parseFloat(item.landfill_tons) || 0
   })) || [];
 
-  // ========================================================================
-  // PROGRESS BAR COMPONENT
-  // ========================================================================
 
-  const ProgressBar = ({ value, color }) => (
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
-      <div
-        className={`h-1 rounded-full ${color} transition-all duration-700`}
-        style={{ width: `${Math.min(value, 100)}%` }}
-      />
-    </div>
-  );
 
   // ========================================================================
-  // RENDER CHART
+  // RENDER CHART WITH MODERN TOOLTIP
   // ========================================================================
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-[16px] p-4 shadow-xl">
+          <p className="text-xs font-bold text-gray-900 dark:text-white mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center gap-2 text-xs">
+              <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: entry.color }} />
+              <span className="text-gray-600 dark:text-gray-400">{entry.name}:</span>
+              <span className="font-bold text-gray-900 dark:text-white">
+                {formatNumberRO(entry.value)} tone
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const renderChart = () => {
     const commonProps = {
@@ -263,31 +287,25 @@ const DashboardTmb = () => {
     if (chartType === 'bar') {
       return (
         <BarChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-          <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
-            formatter={(value) => `${formatNumberRO(value)} tone`}
-          />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Bar dataKey="Deșeuri tratate" fill="#10b981" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Deșeuri depozitate" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Deșeuri tratate" fill="#10b981" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="Deșeuri depozitate" fill="#ef4444" radius={[8, 8, 0, 0]} />
         </BarChart>
       );
     } else if (chartType === 'line') {
       return (
         <LineChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-          <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
-            formatter={(value) => `${formatNumberRO(value)} tone`}
-          />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Line type="monotone" dataKey="Deșeuri tratate" stroke="#10b981" strokeWidth={2} />
-          <Line type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={2} />
+          <Line type="monotone" dataKey="Deșeuri tratate" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 4 }} />
+          <Line type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 4 }} />
         </LineChart>
       );
     } else {
@@ -295,21 +313,18 @@ const DashboardTmb = () => {
         <AreaChart {...commonProps}>
           <defs>
             <linearGradient id="colorTratate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
             </linearGradient>
             <linearGradient id="colorDepozitate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-          <XAxis dataKey="month" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
-            formatter={(value) => `${formatNumberRO(value)} tone`}
-          />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
+          <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
           <Area type="monotone" dataKey="Deșeuri tratate" stroke="#10b981" strokeWidth={2} fill="url(#colorTratate)" />
           <Area type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={2} fill="url(#colorDepozitate)" />
@@ -356,71 +371,70 @@ const DashboardTmb = () => {
           </div>
         ) : (
           <>
-            {/* LINIA 1: CARDS + GRAFIC */}
+            {/* LINIA 1: CARDS + GRAFIC - MODERN CARDS */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               
+              {/* LEFT COLUMN - 3 MODERN CARDS */}
               <div className="space-y-4">
                 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-4 hover:border-emerald-300 dark:hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                      <Trash2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Deșeuri total colectate</p>
-                  </div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                    {formatNumberRO(data.summary.total_collected)} tone
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">Cod deșeu: 20 03 01</p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">100% din total</p>
-                </div>
+                {/* CARD 1 - TOTAL COLECTATE */}
+                <StatCard
+                  icon={<Trash2 className="w-5 h-5" />}
+                  iconGradient="from-emerald-500 to-teal-600"
+                  label="Deșeuri total colectate"
+                  value={`${formatNumberRO(data.summary.total_collected)} tone`}
+                  subtitle="Cod deșeu: 20 03 01"
+                  percentage="100% din total"
+                  percentageColor="text-emerald-600 dark:text-emerald-400"
+                />
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-500/30 p-4 hover:border-red-300 dark:hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center">
-                      <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Deșeuri depozitate</p>
-                  </div>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">
-                    {formatNumberRO(data.summary.total_landfill_direct)} tone
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Cod deșeu: 20 03 01</p>
-                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{data.summary.landfill_percent}% din total</p>
-                </div>
+                {/* CARD 2 - DEPOZITATE */}
+                <StatCard
+                  icon={<Package className="w-5 h-5" />}
+                  iconGradient="from-red-500 to-rose-600"
+                  label="Deșeuri depozitate"
+                  value={`${formatNumberRO(data.summary.total_landfill_direct)} tone`}
+                  subtitle="Cod deșeu: 20 03 01"
+                  percentage={`${data.summary.landfill_percent}% din total`}
+                  percentageColor="text-red-600 dark:text-red-400"
+                />
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-cyan-200 dark:border-cyan-500/30 p-4 hover:border-cyan-300 dark:hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                      <Factory className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Trimise la TMB</p>
-                  </div>
-                  <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400 mb-1">
-                    {formatNumberRO(data.summary.total_tmb_input)} tone
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Cod deșeu: 20 03 01</p>
-                  <p className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">{data.summary.tmb_percent}% din total</p>
-                </div>
+                {/* CARD 3 - TMB */}
+                <StatCard
+                  icon={<Factory className="w-5 h-5" />}
+                  iconGradient="from-cyan-500 to-blue-600"
+                  label="Trimise la TMB"
+                  value={`${formatNumberRO(data.summary.total_tmb_input)} tone`}
+                  subtitle="Cod deșeu: 20 03 01"
+                  percentage={`${data.summary.tmb_percent}% din total`}
+                  percentageColor="text-cyan-600 dark:text-cyan-400"
+                />
               </div>
 
-              <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              {/* RIGHT COLUMN - CHART */}
+              <div className="lg:col-span-3 bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] border border-gray-200 dark:border-gray-700/50 p-6 shadow-sm dark:shadow-none">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
                     Evoluția cantităților de deșeuri
                   </h3>
+                  
+                  {/* CHART TYPE SWITCHER - Samsung pills */}
                   <div className="flex gap-2">
-                    {['bar', 'line', 'area'].map(type => (
+                    {[
+                      { type: 'bar', label: 'Bare' },
+                      { type: 'line', label: 'Linii' },
+                      { type: 'area', label: 'Arie' }
+                    ].map(({ type, label }) => (
                       <button 
                         key={type}
                         onClick={() => setChartType(type)}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ${
                           chartType === type 
-                            ? 'bg-emerald-600 text-white' 
-                            : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg scale-105' 
+                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                         }`}
                       >
-                        {type === 'bar' ? 'Bare' : type === 'line' ? 'Linii' : 'Arie'}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -432,163 +446,152 @@ const DashboardTmb = () => {
               </div>
             </div>
 
-            {/* RESTUL COMPONENTELOR - Output Cards, Distribuție, Tabel */}
-            {/* Copiază din /mnt/user-data/outputs/DashboardTmb_URGENT_FIX.jsx de la linia ~520 */}
-            
+            {/* OUTPUT CARDS - 4 MODERN CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-emerald-300 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-700 dark:text-gray-400">Reciclabile</p>
-                  <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-lg">Raport</span>
-                </div>
-                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                  {formatNumberRO(data.outputs.recycling.sent)} tone
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
-                  {data.outputs.percentages.recycling}% din total TMB
-                </p>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Trimisă:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.recycling.sent)} t</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Acceptată:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.recycling.accepted)} t</span>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <ProgressBar value={parseFloat(data.outputs.recycling.acceptance_rate)} color="bg-emerald-500" />
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1.5">
-                    Rata acceptare: {data.outputs.recycling.acceptance_rate}%
-                  </p>
-                </div>
-              </div>
+              
+              {/* CARD 1 - RECICLABILE */}
+              <OutputCard
+                label="Reciclabile"
+                badgeColor="bg-emerald-500"
+                value={formatNumberRO(data.outputs.recycling.sent)}
+                percentage={`${data.outputs.percentages.recycling}% din total TMB`}
+                sent={formatNumberRO(data.outputs.recycling.sent)}
+                accepted={formatNumberRO(data.outputs.recycling.accepted)}
+                acceptanceRate={data.outputs.recycling.acceptance_rate}
+                gradient="from-emerald-500 to-teal-600"
+              />
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-red-300 dark:hover:border-red-500/50 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-700 dark:text-gray-400">Valorificare energetică</p>
-                  <span className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-lg">Raport</span>
-                </div>
-                <p className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
-                  {formatNumberRO(data.outputs.recovery.sent)} tone
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
-                  {data.outputs.percentages.recovery}% din total TMB
-                </p>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Trimisă:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.recovery.sent)} t</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Acceptată:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.recovery.accepted)} t</span>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <ProgressBar value={parseFloat(data.outputs.recovery.acceptance_rate)} color="bg-red-500" />
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1.5">
-                    Rata acceptare: {data.outputs.recovery.acceptance_rate}%
-                  </p>
-                </div>
-              </div>
+              {/* CARD 2 - VALORIFICARE */}
+              <OutputCard
+                label="Valorificare energetică"
+                badgeColor="bg-red-500"
+                value={formatNumberRO(data.outputs.recovery.sent)}
+                percentage={`${data.outputs.percentages.recovery}% din total TMB`}
+                sent={formatNumberRO(data.outputs.recovery.sent)}
+                accepted={formatNumberRO(data.outputs.recovery.accepted)}
+                acceptanceRate={data.outputs.recovery.acceptance_rate}
+                gradient="from-red-500 to-rose-600"
+              />
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-700 dark:text-gray-400">Depozitat</p>
-                  <span className="px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-lg">Raport</span>
-                </div>
-                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                  {formatNumberRO(data.outputs.disposal.sent)} tone
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mb-3">
-                  {data.outputs.percentages.disposal}% din total TMB
-                </p>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Trimisă:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.disposal.sent)} t</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>Acceptată:</span>
-                    <span className="text-gray-900 dark:text-white">{formatNumberRO(data.outputs.disposal.accepted)} t</span>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <ProgressBar value={parseFloat(data.outputs.disposal.acceptance_rate)} color="bg-purple-500" />
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1.5">
-                    Rata acceptare: {data.outputs.disposal.acceptance_rate}%
-                  </p>
-                </div>
-              </div>
+              {/* CARD 3 - DEPOZITAT */}
+              <OutputCard
+                label="Depozitat"
+                badgeColor="bg-purple-500"
+                value={formatNumberRO(data.outputs.disposal.sent)}
+                percentage={`${data.outputs.percentages.disposal}% din total TMB`}
+                sent={formatNumberRO(data.outputs.disposal.sent)}
+                accepted={formatNumberRO(data.outputs.disposal.accepted)}
+                acceptanceRate={data.outputs.disposal.acceptance_rate}
+                gradient="from-purple-500 to-violet-600"
+              />
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:border-amber-300 dark:hover:border-amber-500/50 hover:shadow-lg transition-all duration-300">
-                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4">Stoc/Diferență</p>
-                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-1">
-                  {formatNumberRO(data.summary.stock_difference)} tone
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  {((parseFloat(data.summary.stock_difference) / parseFloat(data.summary.total_tmb_input)) * 100).toFixed(2)}% din total TMB
-                </p>
+              {/* CARD 4 - STOC/DIFERENȚĂ */}
+              <div className="group relative">
+                <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                              rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
+                              hover:border-amber-300 dark:hover:border-amber-500/50
+                              hover:-translate-y-1 hover:shadow-xl
+                              transition-all duration-300 overflow-hidden">
+                  
+                  {/* Accent line */}
+                  <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                                bg-gradient-to-b from-amber-500 to-orange-600
+                                group-hover:w-1.5 transition-all duration-300" />
+                  
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600
+                                opacity-[0.02] dark:opacity-[0.04]
+                                group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
+                                transition-opacity duration-500" />
+                  
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-4">
+                      Stoc/Diferență
+                    </p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 
+                                bg-clip-text text-transparent mb-2">
+                      {formatNumberRO(data.summary.stock_difference)} tone
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {((parseFloat(data.summary.stock_difference) / parseFloat(data.summary.total_tmb_input)) * 100).toFixed(2)}% din total TMB
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
+            {/* BOTTOM ROW - CHART + TABLE */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-6">
+              
+              {/* SECTOR DISTRIBUTION CHART */}
+              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
+                            border border-gray-200 dark:border-gray-700/50 p-6 
+                            shadow-sm dark:shadow-none">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-6">
                   Distribuția pe sectoare
                 </h3>
                 <ResponsiveContainer width="100%" height={350}>
                   <BarChart data={sectorPieData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-                    <XAxis dataKey="name" stroke="#9ca3af" style={{ fontSize: '11px' }} />
-                    <YAxis stroke="#9ca3af" style={{ fontSize: '11px' }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
-                      formatter={(value) => `${formatNumberRO(value)} tone`}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+                    <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+                    <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                    <Bar dataKey="tratate" name="Tratate" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="depozitate" name="Depozitate" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="tratate" name="Tratate" fill="#10b981" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="depozitate" name="Depozitate" fill="#ef4444" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-base font-semibold text-emerald-600 dark:text-emerald-400 mb-6">
+              {/* OPERATORS TABLE */}
+              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
+                            border border-gray-200 dark:border-gray-700/50 p-6 
+                            shadow-sm dark:shadow-none">
+                <h3 className="text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 
+                            bg-clip-text text-transparent mb-6">
                   Cantități gestionate de operatori
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="border-b border-gray-200 dark:border-gray-700">
                       <tr className="text-left text-xs text-gray-600 dark:text-gray-400">
-                        <th className="pb-3 font-medium">#</th>
-                        <th className="pb-3 font-medium">Operator</th>
-                        <th className="pb-3 font-medium text-right">TMB</th>
-                        <th className="pb-3 font-medium text-right">Depozitat</th>
+                        <th className="pb-3 font-bold uppercase tracking-wider">#</th>
+                        <th className="pb-3 font-bold uppercase tracking-wider">Operator</th>
+                        <th className="pb-3 font-bold uppercase tracking-wider text-right">TMB</th>
+                        <th className="pb-3 font-bold uppercase tracking-wider text-right">Depozitat</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {data.operators && data.operators.slice(0, 6).map((op, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                          <td className="py-3">
-                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-bold">
+                        <tr key={idx} className="group hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-all">
+                          <td className="py-4">
+                            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-purple-500 to-pink-500 
+                                          flex items-center justify-center text-white text-xs font-bold
+                                          shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all">
                               {idx + 1}
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <span className="text-gray-900 dark:text-white font-medium">
+                              {op.name}
                             </span>
                           </td>
-                          <td className="py-3 text-gray-900 dark:text-white font-medium">{op.name}</td>
-                          <td className="py-3 text-right">
+                          <td className="py-4 text-right">
                             <div className="text-emerald-600 dark:text-emerald-400 font-bold">
                               {formatNumberRO(op.tmb_total_tons)} t
                             </div>
-                            <div className="text-xs text-gray-500">{op.tmb_percent}%</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {op.tmb_percent}%
+                            </div>
                           </td>
-                          <td className="py-3 text-right">
+                          <td className="py-4 text-right">
                             <div className="text-red-600 dark:text-red-400 font-bold">
                               {formatNumberRO(op.landfill_total_tons)} t
                             </div>
-                            <div className="text-xs text-gray-500">{op.landfill_percent}%</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {op.landfill_percent}%
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -603,5 +606,141 @@ const DashboardTmb = () => {
     </div>
   );
 };
+
+/**
+ * ============================================================================
+ * STAT CARD - 2026 SAMSUNG/APPLE STYLE
+ * ============================================================================
+ */
+const StatCard = ({ icon, iconGradient, label, value, subtitle, percentage, percentageColor }) => (
+  <div className="group relative">
+    <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                  rounded-[24px] p-5 border border-gray-200 dark:border-gray-700/50
+                  hover:border-gray-300 dark:hover:border-gray-600
+                  hover:-translate-y-1 hover:shadow-xl
+                  transition-all duration-300 overflow-hidden">
+      
+      {/* Accent line */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                    bg-gradient-to-b ${iconGradient}
+                    group-hover:w-1.5 transition-all duration-300`} />
+      
+      {/* Gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient}
+                    opacity-[0.02] dark:opacity-[0.04]
+                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
+                    transition-opacity duration-500`} />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Icon + Label */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-10 h-10 rounded-[14px] bg-gradient-to-br ${iconGradient}
+                        flex items-center justify-center text-white shadow-lg
+                        group-hover:scale-110 group-hover:rotate-3 transition-all`}>
+            {icon}
+          </div>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            {label}
+          </p>
+        </div>
+        
+        {/* Value */}
+        <p className={`text-2xl font-bold bg-gradient-to-r ${iconGradient} 
+                    bg-clip-text text-transparent mb-1`}>
+          {value}
+        </p>
+        
+        {/* Subtitle */}
+        <p className="text-[10px] text-gray-500 dark:text-gray-500 mb-2">
+          {subtitle}
+        </p>
+        
+        {/* Percentage */}
+        <p className={`text-xs font-bold ${percentageColor}`}>
+          {percentage}
+        </p>
+      </div>
+
+      {/* Pulse dot indicator */}
+      <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full
+                    bg-gradient-to-br ${iconGradient}
+                    opacity-40 dark:opacity-60 animate-pulse`} />
+    </div>
+  </div>
+);
+
+/**
+ * ============================================================================
+ * OUTPUT CARD - 2026 SAMSUNG/APPLE STYLE
+ * ============================================================================
+ */
+const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acceptanceRate, gradient }) => (
+  <div className="group relative">
+    <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                  rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
+                  hover:border-gray-300 dark:hover:border-gray-600
+                  hover:-translate-y-1 hover:shadow-xl
+                  transition-all duration-300 overflow-hidden">
+      
+      {/* Accent line */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                    bg-gradient-to-b ${gradient}
+                    group-hover:w-1.5 transition-all duration-300`} />
+      
+      {/* Gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}
+                    opacity-[0.02] dark:opacity-[0.04]
+                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
+                    transition-opacity duration-500`} />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header with badge */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            {label}
+          </p>
+          <span className={`px-3 py-1.5 ${badgeColor} text-white text-[10px] font-bold rounded-[10px] shadow-lg
+                        group-hover:scale-110 transition-all`}>
+            Raport
+          </span>
+        </div>
+        
+        {/* Main value */}
+        <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} 
+                    bg-clip-text text-transparent mb-2`}>
+          {value} tone
+        </p>
+        
+        {/* Percentage */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {percentage}
+        </p>
+        
+        {/* Details */}
+        <div className="space-y-2 text-xs mb-4">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 dark:text-gray-400">Trimisă:</span>
+            <span className="font-bold text-gray-900 dark:text-white">{sent} t</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 dark:text-gray-400">Acceptată:</span>
+            <span className="font-bold text-gray-900 dark:text-white">{accepted} t</span>
+          </div>
+        </div>
+        
+        {/* Progress bar */}
+        <div>
+          <ProgressBar value={parseFloat(acceptanceRate)} gradient={gradient} />
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+            <Activity className="w-3 h-3" />
+            Rata acceptare: {acceptanceRate}%
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default DashboardTmb;
