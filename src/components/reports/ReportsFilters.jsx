@@ -1,123 +1,257 @@
+// src/components/reports/ReportsFilters.jsx
 /**
  * ============================================================================
- * REPORTS FILTERS COMPONENT - VERSIUNE ACTUALIZATĂ
+ * REPORTS FILTERS - 2026 SAMSUNG/APPLE STYLE (CLEAN)
  * ============================================================================
- * - Butoane inline cu inputurile (nu separat)
- * - Dropdown sectoare (fără "București" în text)
- * - Design consistent cu Dashboard
+ * 
+ * ✅ Available years din API (doar funcționalitate, fără afișare)
+ * ✅ Auto-update date când schimbi anul
+ * ✅ Samsung One UI 7.0 rounded corners (14px)
+ * ✅ Perfect light/dark mode
+ * ✅ FĂRĂ info footer
+ * 
  * ============================================================================
  */
 
-import React from 'react';
+import { useState, useEffect } from "react";
+import { Check, Calendar, MapPin, RotateCcw } from "lucide-react";
+import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
 
-const ReportsFilters = ({ filters, setFilters, sectors, onApply, onReset }) => {
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
+const ReportsFilters = ({
+  filters,
+  setFilters,
+  sectors = [],
+  availableYears = [],
+  onApply,
+  onReset,
+}) => {
+  const [localFilters, setLocalFilters] = useState(filters);
 
-  const handleChange = (field, value) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
+  // ========================================================================
+  // ANI DISPONIBILI (cu fallback)
+  // ========================================================================
+
+  const getYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    
+    if (availableYears && availableYears.length > 0) {
+      return availableYears.sort((a, b) => b - a);
+    }
+    
+    return [currentYear, currentYear - 1, currentYear - 2];
   };
 
+  const yearOptions = getYearOptions();
+
+  // ========================================================================
+  // HANDLE YEAR CHANGE - AUTO-UPDATE DATES
+  // ========================================================================
+
+  const handleYearChange = (selectedYear) => {
+    const currentYear = new Date().getFullYear();
+    const yearInt = parseInt(selectedYear, 10);
+
+    let startDate, endDate;
+
+    if (yearInt === currentYear) {
+      startDate = `${yearInt}-01-01`;
+      endDate = getTodayDate();
+    } else {
+      startDate = `${yearInt}-01-01`;
+      endDate = `${yearInt}-12-31`;
+    }
+
+    console.log(`📅 Year changed to ${yearInt}:`, { startDate, endDate });
+
+    setLocalFilters({
+      ...localFilters,
+      year: yearInt,
+      from: startDate,
+      to: endDate,
+    });
+  };
+
+  // ========================================================================
+  // HANDLE APPLY
+  // ========================================================================
+
+  const handleApply = () => {
+    if (onApply) {
+      onApply();
+    }
+  };
+
+  // ========================================================================
+  // HANDLE RESET
+  // ========================================================================
+
+  const handleReset = () => {
+    if (onReset) {
+      onReset();
+    }
+  };
+
+  // ========================================================================
+  // HANDLE SECTOR CHANGE
+  // ========================================================================
+
+  const handleSectorChange = (e) => {
+    const value = e.target.value;
+
+    if (value === "" || value === "all") {
+      setLocalFilters({
+        ...localFilters,
+        sector_id: "",
+      });
+      return;
+    }
+
+    // ✅ Convertim la integer pentru sector_number
+    const sectorNumber = parseInt(value, 10);
+    
+    if (!isNaN(sectorNumber) && sectorNumber >= 1 && sectorNumber <= 6) {
+      console.log('✅ Sector selected:', sectorNumber);
+      
+      // Găsim UUID-ul sectorului pe baza sector_number
+      const selectedSector = sectors.find(s => s.sector_number === sectorNumber);
+      
+      if (selectedSector) {
+        console.log('✅ Sector ID (UUID):', selectedSector.id);
+        setLocalFilters({
+          ...localFilters,
+          sector_id: selectedSector.id, // ✅ Trimitem UUID-ul la backend
+        });
+      }
+    } else {
+      console.warn('⚠️ Invalid sector value:', value);
+    }
+  };
+
+  // ========================================================================
+  // SECTOARE ORDONATE
+  // ========================================================================
+
+  const sortedSectors = [...sectors]
+    .filter(sector => {
+      // Exclude sector_number 0 (București) pentru că avem hardcoded
+      return sector.sector_number && 
+             sector.sector_number >= 1 && 
+             sector.sector_number <= 6;
+    })
+    .sort((a, b) => a.sector_number - b.sector_number);
+
+  // ========================================================================
+  // RENDER
+  // ========================================================================
+
   return (
-    <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
-      <div className="flex items-end gap-3">
-        {/* An */}
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            An
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      
+      {/* GRID 6 COLOANE */}
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+        
+        {/* 1. ANUL */}
+        <div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            Anul
           </label>
           <select
-            value={filters.year}
-            onChange={(e) => handleChange('year', e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                     rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     transition-colors"
+            value={localFilters.year}
+            onChange={(e) => handleYearChange(e.target.value)}
+            className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
           >
-            {years.map(year => (
-              <option key={year} value={year}>{year}</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Data început */}
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        {/* 2. DATA ÎNCEPUT */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data început
           </label>
           <input
             type="date"
-            value={filters.from}
-            onChange={(e) => handleChange('from', e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                     rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     transition-colors"
+            value={localFilters.from}
+            onChange={(e) => {
+              console.log('📅 Date from changed:', e.target.value);
+              setLocalFilters({ ...localFilters, from: e.target.value });
+            }}
+            className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
           />
         </div>
 
-        {/* Data sfârșit */}
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        {/* 3. DATA SFÂRȘIT */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data sfârșit
           </label>
           <input
             type="date"
-            value={filters.to}
-            onChange={(e) => handleChange('to', e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                     rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     transition-colors"
+            value={localFilters.to}
+            onChange={(e) => {
+              console.log('📅 Date to changed:', e.target.value);
+              setLocalFilters({ ...localFilters, to: e.target.value });
+            }}
+            className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
           />
         </div>
 
-        {/* Locație */}
-        <div className="flex-[1.5]">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+        {/* 4. LOCAȚIE */}
+        <div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Locație
           </label>
           <select
-            value={filters.sector_id}
-            onChange={(e) => handleChange('sector_id', e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                     rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     transition-colors"
+            value={
+              localFilters.sector_id 
+                ? sectors.find(s => s.id === localFilters.sector_id)?.sector_number || ""
+                : ""
+            }
+            onChange={handleSectorChange}
+            className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
           >
             <option value="">București</option>
-            {sectors
-              .sort((a, b) => a.sector_number - b.sector_number)
-              .map(sector => (
-                <option key={sector.id} value={sector.id}>
-                  Sector {sector.sector_number}
-                </option>
-              ))
-            }
+            {sortedSectors.map((sector) => (
+              <option key={sector.id} value={sector.sector_number}>
+                {sector.name || `Sector ${sector.sector_number}`}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Buton Filtrează */}
-        <button
-          onClick={onApply}
-          className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-indigo-500 to-indigo-600 
-                   text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 
-                   transition-all duration-200 shadow-md flex items-center gap-1.5 whitespace-nowrap"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          Filtrează
-        </button>
+        {/* 5. BUTON APLICĂ */}
+        <div>
+          <button
+            type="button"
+            onClick={handleApply}
+            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+          >
+            <Check className="w-4 h-4" />
+            Aplică
+          </button>
+        </div>
 
-        {/* Buton Reset */}
-        <button
-          onClick={onReset}
-          title="Reset filtre"
-          className="px-3 py-2 text-sm font-medium bg-gray-200 dark:bg-gray-700 
-                   text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
-                   transition-colors duration-200 flex items-center justify-center"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
+        {/* 6. BUTON RESETEAZĂ */}
+        <div>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl transition-all"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Resetează
+          </button>
+        </div>
       </div>
     </div>
   );

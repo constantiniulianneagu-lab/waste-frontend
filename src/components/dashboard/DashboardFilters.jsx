@@ -1,13 +1,13 @@
 // src/components/dashboard/DashboardFilters.jsx
 /**
  * ============================================================================
- * DASHBOARD FILTERS - ALIGNED & CONSISTENT HEIGHT
+ * DASHBOARD FILTERS - CLEAN VERSION
  * ============================================================================
  * 
- * 🎨 FIX:
- * - Toate inputurile aceeași înălțime (py-2.5)
- * - Aliniate perfect (items-end pe grid)
- * - Date picker cu styling consistent
+ * ✅ Available years din API (doar funcționalitate)
+ * ✅ Auto-update date când schimbi anul
+ * ✅ Design consistent cu cardurile existente
+ * ✅ FĂRĂ info footer
  * 
  * ============================================================================
  */
@@ -44,7 +44,7 @@ const DashboardFilters = ({
   const yearOptions = getYearOptions();
 
   // ========================================================================
-  // HANDLE YEAR CHANGE
+  // HANDLE YEAR CHANGE - AUTO-UPDATE DATES
   // ========================================================================
 
   const handleYearChange = (selectedYear) => {
@@ -147,7 +147,7 @@ const DashboardFilters = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       
-      {/* GRID 6 COLOANE - ITEMS END PENTRU ALINIAMENT */}
+      {/* GRID 6 COLOANE */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
         
         {/* 1. ANUL */}
@@ -170,7 +170,7 @@ const DashboardFilters = ({
           </select>
         </div>
 
-        {/* 2. DATA ÎNCEPUT - ICONIȚĂ EMERALD */}
+        {/* 2. DATA ÎNCEPUT */}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data început
@@ -187,7 +187,7 @@ const DashboardFilters = ({
           />
         </div>
 
-        {/* 3. DATA SFÂRȘIT - ICONIȚĂ EMERALD */}
+        {/* 3. DATA SFÂRȘIT */}
         <div>
           <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Data sfârșit
@@ -225,7 +225,7 @@ const DashboardFilters = ({
           </select>
         </div>
 
-        {/* 5. BUTON APLICĂ - ACEEAȘI ÎNĂLȚIME */}
+        {/* 5. BUTON APLICĂ */}
         <div>
           <button
             type="button"
@@ -238,7 +238,7 @@ const DashboardFilters = ({
           </button>
         </div>
 
-        {/* 6. BUTON RESETEAZĂ - ACEEAȘI ÎNĂLȚIME */}
+        {/* 6. BUTON RESETEAZĂ */}
         <div>
           <button
             type="button"
