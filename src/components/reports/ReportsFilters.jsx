@@ -96,7 +96,7 @@ const ReportsFilters = ({
   };
 
   // ========================================================================
-  // HANDLE SECTOR CHANGE
+  // HANDLE SECTOR CHANGE (identic cu DashboardFilters)
   // ========================================================================
 
   const handleSectorChange = (e) => {
@@ -110,22 +110,15 @@ const ReportsFilters = ({
       return;
     }
 
-    // ✅ Convertim la integer pentru sector_number
+    // ✅ Convertim la integer și setăm direct sector_number (nu UUID)
     const sectorNumber = parseInt(value, 10);
     
     if (!isNaN(sectorNumber) && sectorNumber >= 1 && sectorNumber <= 6) {
-      console.log('✅ Sector selected:', sectorNumber);
-      
-      // ✅ Găsim sector_id pe baza sector_number
-      const selectedSector = sectors.find(s => s.sector_number === sectorNumber);
-      
-      if (selectedSector) {
-        console.log('✅ Sector ID:', selectedSector.sector_id);
-        setLocalFilters({
-          ...localFilters,
-          sector_id: selectedSector.sector_id, // ✅ Folosim sector_id (nu id)
-        });
-      }
+      console.log('✅ Valid sector selected:', sectorNumber);
+      setLocalFilters({
+        ...localFilters,
+        sector_id: sectorNumber, // ✅ Setăm direct sector_number (1-6)
+      });
     } else {
       console.warn('⚠️ Invalid sector value:', value);
     }
@@ -212,11 +205,7 @@ const ReportsFilters = ({
             Locație
           </label>
           <select
-            value={
-              localFilters.sector_id 
-                ? sectors.find(s => s.sector_id === localFilters.sector_id)?.sector_number || ""
-                : ""
-            }
+            value={localFilters.sector_id || ""}
             onChange={handleSectorChange}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
           >
