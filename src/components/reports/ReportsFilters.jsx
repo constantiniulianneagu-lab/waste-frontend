@@ -116,14 +116,14 @@ const ReportsFilters = ({
     if (!isNaN(sectorNumber) && sectorNumber >= 1 && sectorNumber <= 6) {
       console.log('✅ Sector selected:', sectorNumber);
       
-      // Găsim UUID-ul sectorului pe baza sector_number
+      // ✅ Găsim sector_id pe baza sector_number
       const selectedSector = sectors.find(s => s.sector_number === sectorNumber);
       
       if (selectedSector) {
-        console.log('✅ Sector ID (UUID):', selectedSector.id);
+        console.log('✅ Sector ID:', selectedSector.sector_id);
         setLocalFilters({
           ...localFilters,
-          sector_id: selectedSector.id, // ✅ Trimitem UUID-ul la backend
+          sector_id: selectedSector.sector_id, // ✅ Folosim sector_id (nu id)
         });
       }
     } else {
@@ -214,7 +214,7 @@ const ReportsFilters = ({
           <select
             value={
               localFilters.sector_id 
-                ? sectors.find(s => s.id === localFilters.sector_id)?.sector_number || ""
+                ? sectors.find(s => s.sector_id === localFilters.sector_id)?.sector_number || ""
                 : ""
             }
             onChange={handleSectorChange}
@@ -222,8 +222,8 @@ const ReportsFilters = ({
           >
             <option value="">București</option>
             {sortedSectors.map((sector) => (
-              <option key={sector.id} value={sector.sector_number}>
-                {sector.name || `Sector ${sector.sector_number}`}
+              <option key={sector.sector_id} value={sector.sector_number}>
+                {sector.sector_name || `Sector ${sector.sector_number}`}
               </option>
             ))}
           </select>
