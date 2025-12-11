@@ -3,30 +3,31 @@
  * ============================================================================
  * REPORTS FILTERS - 2026 SAMSUNG/APPLE STYLE (CLEAN)
  * ============================================================================
- * 
+ *
  * ✅ Available years din API (doar funcționalitate, fără afișare)
  * ✅ Auto-update date când schimbi anul
  * ✅ Samsung One UI 7.0 rounded corners (14px)
  * ✅ Perfect light/dark mode
  * ✅ FĂRĂ info footer
- * 
+ *
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
 import { Check, Calendar, MapPin, RotateCcw } from "lucide-react";
-import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
+import { getTodayDate } from "../../utils/dashboardUtils.js";
 
 const ReportsFilters = ({
   filters,
   setFilters,
-  sectors = [],
+  sectors = [],          // din getAuxiliaryData: { id, name, sector_number }
   availableYears = [],
   onApply,
   onReset,
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
 
+  // Sincronizăm cu parent
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
@@ -37,11 +38,12 @@ const ReportsFilters = ({
 
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
-    
+
     if (availableYears && availableYears.length > 0) {
-      return availableYears.sort((a, b) => b - a);
+      // copie ca să nu modificăm props in-place
+      return [...availableYears].sort((a, b) => b - a);
     }
-    
+
     return [currentYear, currentYear - 1, currentYear - 2];
   };
 
@@ -67,12 +69,37 @@ const ReportsFilters = ({
 
     console.log(`📅 Year changed to ${yearInt}:`, { startDate, endDate });
 
-    setLocalFilters({
-      ...localFilters,
+    setLocalFilters((prev) => ({
+      ...prev,
       year: yearInt,
       from: startDate,
       to: endDate,
-    });
+    }));
+  };
+
+  // ========================================================================
+  // HANDLE SECTOR CHANGE
+  //  - sector_id în filtre = UUID (sector.id)
+  // ========================================================================
+
+  const handleSectorChange = (e) => {
+    const value = e.target.value; // "" sau UUID
+
+    if (value === "") {
+      console.log("🌐 Locație: București (fără sector_id)");
+      setLocalFilters((prev) => ({
+        ...prev,
+        sector_id: "",
+      }));
+      return;
+    }
+
+    console.log("✅ Sector UUID selected:", value);
+
+    setLocalFilters((prev) => ({
+      ...prev,
+      sector_id: value, // UUID string
+    }));
   };
 
   // ========================================================================
@@ -80,8 +107,12 @@ const ReportsFilters = ({
   // ========================================================================
 
   const handleApply = () => {
+    console.log("📤 Applying filters:", localFilters);
+    if (setFilters) {
+      setFilters(localFilters);        // propagăm la parent
+    }
     if (onApply) {
-      onApply();
+      onApply(localFilters);           // declanșăm fetch cu filtrele noi
     }
   };
 
@@ -93,47 +124,20 @@ const ReportsFilters = ({
     if (onReset) {
       onReset();
     }
+    // parent resetează `filters`, iar useEffect actualizează `localFilters`
   };
 
   // ========================================================================
-  // HANDLE SECTOR CHANGE (identic cu DashboardFilters)
-  // ========================================================================
-
-  const handleSectorChange = (e) => {
-    const value = e.target.value;
-
-    if (value === "" || value === "all") {
-      setLocalFilters({
-        ...localFilters,
-        sector_id: "",
-      });
-      return;
-    }
-
-    // ✅ Convertim la integer și setăm direct sector_number (nu UUID)
-    const sectorNumber = parseInt(value, 10);
-    
-    if (!isNaN(sectorNumber) && sectorNumber >= 1 && sectorNumber <= 6) {
-      console.log('✅ Valid sector selected:', sectorNumber);
-      setLocalFilters({
-        ...localFilters,
-        sector_id: sectorNumber, // ✅ Setăm direct sector_number (1-6)
-      });
-    } else {
-      console.warn('⚠️ Invalid sector value:', value);
-    }
-  };
-
-  // ========================================================================
-  // SECTOARE ORDONATE
+  // SECTOARE ORDONATE (după sector_number, 1–6)
   // ========================================================================
 
   const sortedSectors = [...sectors]
-    .filter(sector => {
-      // Exclude sector_number 0 (București) pentru că avem hardcoded
-      return sector.sector_number && 
-             sector.sector_number >= 1 && 
-             sector.sector_number <= 6;
+    .filter((sector) => {
+      return (
+        sector.sector_number &&
+        sector.sector_number >= 1 &&
+        sector.sector_number <= 6
+      );
     })
     .sort((a, b) => a.sector_number - b.sector_number);
 
@@ -143,10 +147,7 @@ const ReportsFilters = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-      
-      {/* GRID 6 COLOANE */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
-        
         {/* 1. ANUL */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -154,7 +155,11 @@ const ReportsFilters = ({
             Anul
           </label>
           <select
-            value={localFilters.year}
+            value={
+              localFilters.year !== undefined && localFilters.year !== null
+                ? String(localFilters.year)
+                : ""
+            }
             onChange={(e) => handleYearChange(e.target.value)}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
           >
@@ -173,11 +178,10 @@ const ReportsFilters = ({
           </label>
           <input
             type="date"
-            value={localFilters.from}
-            onChange={(e) => {
-              console.log('📅 Date from changed:', e.target.value);
-              setLocalFilters({ ...localFilters, from: e.target.value });
-            }}
+            value={localFilters.from || ""}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, from: e.target.value }))
+            }
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
           />
         </div>
@@ -189,11 +193,10 @@ const ReportsFilters = ({
           </label>
           <input
             type="date"
-            value={localFilters.to}
-            onChange={(e) => {
-              console.log('📅 Date to changed:', e.target.value);
-              setLocalFilters({ ...localFilters, to: e.target.value });
-            }}
+            value={localFilters.to || ""}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, to: e.target.value }))
+            }
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
           />
         </div>
@@ -205,14 +208,17 @@ const ReportsFilters = ({
             Locație
           </label>
           <select
-            value={localFilters.sector_id || ""}
+            value={localFilters.sector_id || ""}  // "" sau UUID
             onChange={handleSectorChange}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
           >
             <option value="">București</option>
             {sortedSectors.map((sector) => (
-              <option key={sector.sector_id} value={sector.sector_number}>
-                {sector.sector_name || `Sector ${sector.sector_number}`}
+              <option
+                key={sector.id}
+                value={sector.id} // 👈 UUID spre backend
+              >
+                {sector.name || `Sector ${sector.sector_number}`}
               </option>
             ))}
           </select>
