@@ -81,6 +81,38 @@ const ReportTMB = () => {
   };
 
   // ========================================================================
+  // GROUPING: name -> total + codes breakdown (pentru suppliers/clients)
+  //  - backend întoarce adesea câte un rând / cod, iar noi vrem grupare ca în Landfill
+  // ========================================================================
+
+  const groupRowsByNameWithCodes = (rows = []) => {
+    const map = new Map();
+
+    rows.forEach((row) => {
+      const name = row?.name || row?.supplier_name || row?.client_name || 'N/A';
+      const code = row?.code || row?.waste_code || row?.wasteCode || null;
+      const qtyRaw = row?.total_tons ?? row?.total ?? row?.quantity ?? row?.tons ?? 0;
+      const qty = Number(qtyRaw) || 0;
+
+      if (!map.has(name)) {
+        map.set(name, { name, total: 0, codes: [] });
+      }
+
+      const entry = map.get(name);
+      entry.total += qty;
+
+      if (code) {
+        entry.codes.push({ code, quantity: qty });
+      }
+    });
+
+    return Array.from(map.values()).map((e) => ({
+      ...e,
+      codes: (e.codes || []).sort((a, b) => (b.quantity || 0) - (a.quantity || 0)),
+    }));
+  };
+
+  // ========================================================================
   // FETCH DATA
   // ========================================================================
 
@@ -176,22 +208,14 @@ const ReportTMB = () => {
             date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
             sector: sectors.find(s => s.id === filters.sector_id)?.name || 'București'
           },
-          suppliers: (response.data.suppliers || []).map(supplier => ({
-            name: supplier.name,
-            total: supplier.total_tons,
-            codes: [{ 
-              code: supplier.code || supplier.waste_code || '20 03 01', 
-              quantity: supplier.total_tons 
-            }]
-          })),
+          // ✅ Grupare Furnizori (colectori) după nume + coduri
+          suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
           operators: (response.data.operators || []).map(operator => ({
             name: operator.name,
             total: operator.total_tons
           })),
-          clients: (response.data.clients || []).map(client => ({
-            name: client.name,
-            total: client.total_tons
-          }))
+          // ✅ Grupare Clienți după nume + coduri (dacă API întoarce pe cod)
+          clients: groupRowsByNameWithCodes(response.data.clients || [])
         };
 
         setSummaryData(summary);
@@ -414,11 +438,17 @@ const ReportTMB = () => {
               </div>
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold">Perioada analizată</h3>
-                <p className="text-2xl font-bold truncate">{formatNumberRO(summaryData?.total_quantity || 0)} tone</p>
               </div>
             </div>
           </div>
           <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
+            {/* ✅ Total în conținut (nu în titlu) */}
+            <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-gray-600 dark:text-gray-400">Total:</span>
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {formatNumberRO(summaryData?.total_quantity || 0)} t
+              </span>
+            </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">An:</span>
               <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.year}</span>
@@ -459,12 +489,21 @@ const ReportTMB = () => {
           <div className="p-4 overflow-y-auto flex-1">
             <div className="space-y-3">
               {(activeTab === 'rejected' ? summaryData?.operators : summaryData?.suppliers)?.map((item, idx) => (
-                <div key={idx} className="border-l-3 border-cyan-500 pl-3">
+                <div
+                  key={idx}
+                  className={`border-l-3 pl-3 ${
+                    activeTab === 'rejected' ? 'border-purple-500' : 'border-cyan-500'
+                  }`}
+                >
                   <div className="flex justify-between items-start gap-2 mb-1">
                     <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
                       {item.name}
                     </p>
-                    <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap">
+                    <span className={`text-sm font-bold whitespace-nowrap ${
+                      activeTab === 'rejected'
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : 'text-cyan-600 dark:text-cyan-400'
+                    }`}>
                       {formatNumberRO(item.total)} t
                     </span>
                   </div>
@@ -507,15 +546,48 @@ const ReportTMB = () => {
             </div>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
-            <div className="space-y-2">
-              {(activeTab === 'tmb' ? summaryData?.operators : activeTab === 'rejected' ? summaryData?.suppliers : summaryData?.clients)?.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+            <div className="space-y-3">
+              {(activeTab === 'tmb'
+                ? summaryData?.operators
+                : activeTab === 'rejected'
+                ? summaryData?.suppliers
+                : summaryData?.clients
+              )?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`border-l-3 pl-3 ${
+                    activeTab === 'tmb' ? 'border-pink-500' : 'border-orange-500'
+                  }`}
+                >
+                  <div className="flex justify-between items-start gap-2 mb-1">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
+                      {item.name}
+                    </p>
+                    <span
+                      className={`text-sm font-bold whitespace-nowrap ${
+                        activeTab === 'tmb'
+                          ? 'text-pink-600 dark:text-pink-400'
+                          : 'text-orange-600 dark:text-orange-400'
+                      }`}
+                    >
+                      {formatNumberRO(item.total)} t
+                    </span>
                   </div>
-                  <span className="text-sm font-bold text-pink-600 dark:text-pink-400 whitespace-nowrap">
-                    {formatNumberRO(item.total)} t
-                  </span>
+
+                  {item.codes && item.codes.length > 0 && (
+                    <div className="space-y-1">
+                      {item.codes.map((code, codeIdx) => (
+                        <div key={codeIdx} className="flex justify-between text-xs gap-2">
+                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
+                            {code.code}
+                          </span>
+                          <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                            {formatNumberRO(code.quantity)} t
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
