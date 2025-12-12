@@ -176,22 +176,12 @@ const ReportTMB = () => {
             date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
             sector: sectors.find(s => s.id === filters.sector_id)?.name || 'București'
           },
-          suppliers: (response.data.suppliers || []).map(supplier => ({
-            name: supplier.name,
-            total: supplier.total_tons,
-            codes: [{ 
-              code: supplier.code || supplier.waste_code || '20 03 01', 
-              quantity: supplier.total_tons 
-            }]
-          })),
+          suppliers: response.data.suppliers || [],  // ✅ Folosește direct din backend!
           operators: (response.data.operators || []).map(operator => ({
             name: operator.name,
             total: operator.total_tons
           })),
-          clients: (response.data.clients || []).map(client => ({
-            name: client.name,
-            total: client.total_tons
-          }))
+          clients: response.data.clients || []  // ✅ Folosește direct din backend!
         };
 
         setSummaryData(summary);
