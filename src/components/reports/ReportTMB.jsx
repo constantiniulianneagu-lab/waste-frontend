@@ -414,16 +414,11 @@ const ReportTMB = () => {
               </div>
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold">Perioada analizată</h3>
+                <p className="text-2xl font-bold truncate">{formatNumberRO(summaryData?.total_quantity || 0)} tone</p>
               </div>
             </div>
           </div>
           <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
-            <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-gray-600 dark:text-gray-400">Total:</span>
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatNumberRO(summaryData?.total_quantity || 0)} t
-              </span>
-            </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">An:</span>
               <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.year}</span>
@@ -443,7 +438,7 @@ const ReportTMB = () => {
           </div>
         </div>
 
-        {/* Card 2 - Furnizori (operatori TMB) */}
+        {/* Card 2 - Furnizori SAU Prestatori based on tab */}
         <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className={`bg-gradient-to-br ${
             activeTab === 'rejected' ? 'from-purple-500 to-purple-600' : 'from-cyan-500 to-cyan-600'
@@ -455,25 +450,27 @@ const ReportTMB = () => {
                 </svg>
               </div>
               <h3 className="text-sm font-semibold">
-                Furnizori (operatori TMB)
+                {activeTab === 'rejected' 
+                  ? 'Prestatori (operatori TMB)' 
+                  : 'Furnizori (colectori)'}
               </h3>
             </div>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
             <div className="space-y-3">
-              {summaryData?.suppliers?.map((supplier, idx) => (
+              {(activeTab === 'rejected' ? summaryData?.operators : summaryData?.suppliers)?.map((item, idx) => (
                 <div key={idx} className="border-l-3 border-cyan-500 pl-3">
                   <div className="flex justify-between items-start gap-2 mb-1">
                     <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                      {supplier.name}
+                      {item.name}
                     </p>
                     <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap">
-                      {formatNumberRO(supplier.total)} t
+                      {formatNumberRO(item.total)} t
                     </span>
                   </div>
-                  {supplier.codes && (
+                  {item.codes && (
                     <div className="space-y-1">
-                      {supplier.codes.map((code, codeIdx) => (
+                      {item.codes.map((code, codeIdx) => (
                         <div key={codeIdx} className="flex justify-between text-xs gap-2">
                           <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code.code}</span>
                           <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
@@ -489,42 +486,36 @@ const ReportTMB = () => {
           </div>
         </div>
 
-        {/* Card 3 - Clienți (reciclatori) */}
+        {/* Card 3 - Prestatori SAU Clienți based on tab */}
         <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 flex-shrink-0">
+          <div className={`bg-gradient-to-br ${
+            activeTab === 'tmb' ? 'from-pink-500 to-pink-600' : 'from-orange-500 to-orange-600'
+          } p-4 flex-shrink-0`}>
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold">Clienți (reciclatori)</h3>
+              <h3 className="text-sm font-semibold">
+                {activeTab === 'tmb' 
+                  ? 'Prestatori (operatori TMB)' 
+                  : activeTab === 'rejected'
+                  ? 'Furnizori (colectori)'
+                  : `Clienți (${activeTab === 'recycling' ? 'reciclatori' : activeTab === 'recovery' ? 'valorificatori' : 'operator depozitare'})`}
+              </h3>
             </div>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
-            <div className="space-y-3">
-              {summaryData?.clients?.map((client, idx) => (
-                <div key={idx} className="border-l-3 border-emerald-500 pl-3">
-                  <div className="flex justify-between items-start gap-2 mb-1">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                      {client.name}
-                    </p>
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {formatNumberRO(client.total)} t
-                    </span>
+            <div className="space-y-2">
+              {(activeTab === 'tmb' ? summaryData?.operators : activeTab === 'rejected' ? summaryData?.suppliers : summaryData?.clients)?.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
                   </div>
-                  {client.codes && (
-                    <div className="space-y-1">
-                      {client.codes.map((code, codeIdx) => (
-                        <div key={codeIdx} className="flex justify-between text-xs gap-2">
-                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code.code}</span>
-                          <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                            {formatNumberRO(code.quantity)} t
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-sm font-bold text-pink-600 dark:text-pink-400 whitespace-nowrap">
+                    {formatNumberRO(item.total)} t
+                  </span>
                 </div>
               ))}
             </div>
@@ -585,7 +576,8 @@ const ReportTMB = () => {
                     <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
                     <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Livrată</th>
                     <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Acceptată</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
+                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Diferență</th>
+                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">% Acceptare</th>
                   </>
                 )}
                 {(activeTab === 'recovery' || activeTab === 'disposal') && (
@@ -687,8 +679,11 @@ const ReportTMB = () => {
                         <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {formatNumberRO(ticket.accepted_quantity_tons)} t
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.sector_name || 'N/A'}
+                        <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400 whitespace-nowrap">
+                          {formatNumberRO(ticket.difference_tons)} t
+                        </td>
+                        <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          {formatNumberRO(ticket.acceptance_percentage)}%
                         </td>
                       </>
                     )}
@@ -795,7 +790,7 @@ const ReportTMB = () => {
                   {/* Expanded Row */}
                   {expandedRows.has(ticket.id) && (
                     <tr className="bg-gray-50 dark:bg-gray-800/30">
-                      <td colSpan={activeTab === 'recycling' ? "10" : "11"} className="px-4 py-4">
+                      <td colSpan="10" className="px-4 py-4">
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
                           {activeTab === 'tmb' && (
                             <>
@@ -816,21 +811,15 @@ const ReportTMB = () => {
                           {activeTab === 'recycling' && (
                             <>
                               <div className="text-left">
+                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {ticket.sector_name}
+                                </p>
+                              </div>
+                              <div className="text-left">
                                 <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
                                 <p className="font-medium text-gray-900 dark:text-white">
-                                  {ticket.waste_description}
-                                </p>
-                              </div>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
-                                <p className="font-medium text-red-600 dark:text-red-400">
-                                  {formatNumberRO(ticket.difference_tons)} t
-                                </p>
-                              </div>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">% Acceptare:</span>
-                                <p className="font-medium text-emerald-600 dark:text-emerald-400">
-                                  {formatNumberRO(ticket.acceptance_percentage)}%
+                                  {ticket.waste_code} - {ticket.waste_description}
                                 </p>
                               </div>
                             </>
@@ -867,22 +856,18 @@ const ReportTMB = () => {
                               </div>
                             </>
                           )}
-                          {activeTab !== 'recycling' && (
-                            <>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone brut:</span>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {formatNumberRO(ticket.net_weight_tons || ticket.delivered_quantity_tons || ticket.rejected_quantity_tons)} t
-                                </p>
-                              </div>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone tară:</span>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {formatNumberRO((ticket.net_weight_tons || ticket.delivered_quantity_tons || ticket.rejected_quantity_tons) * 0.1)} t
-                                </p>
-                              </div>
-                            </>
-                          )}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone brut:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {formatNumberRO(ticket.net_weight_tons || ticket.delivered_quantity_tons || ticket.rejected_quantity_tons)} t
+                            </p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone tară:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {formatNumberRO((ticket.net_weight_tons || ticket.delivered_quantity_tons || ticket.rejected_quantity_tons) * 0.1)} t
+                            </p>
+                          </div>
                           <div className="text-left flex gap-2">
                             <button
                               onClick={() => handleEdit(ticket)}
