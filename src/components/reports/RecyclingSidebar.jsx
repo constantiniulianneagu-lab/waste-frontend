@@ -1,10 +1,14 @@
 /**
  * ============================================================================
- * RECYCLING SIDEBAR COMPONENT
+ * RECYCLING SIDEBAR COMPONENT - CU API REAL
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
+import { 
+  createRecyclingTicket,
+  updateRecyclingTicket 
+} from '../../services/wasteTicketsService';
 
 const RecyclingSidebar = ({ 
   isOpen, 
@@ -23,6 +27,7 @@ const RecyclingSidebar = ({
   const [formData, setFormData] = useState({
     ticket_number: '',
     ticket_date: new Date().toISOString().split('T')[0],
+    ticket_time: '00:00',
     sector_id: '',
     supplier_id: '',
     client_id: '',
@@ -39,9 +44,10 @@ const RecyclingSidebar = ({
       setFormData({
         ticket_number: ticket.ticket_number || '',
         ticket_date: ticket.ticket_date || new Date().toISOString().split('T')[0],
+        ticket_time: ticket.ticket_time || '00:00',
         sector_id: ticket.sector_id || '',
         supplier_id: ticket.supplier_id || '',
-        client_id: ticket.client_id || '',
+        client_id: ticket.recipient_id || ticket.client_id || '',
         waste_code_id: ticket.waste_code_id || '',
         vehicle_number: ticket.vehicle_number || '',
         delivered_quantity_kg: ticket.delivered_quantity_tons ? Math.round(ticket.delivered_quantity_tons * 1000) : '',
@@ -53,6 +59,7 @@ const RecyclingSidebar = ({
       setFormData({
         ticket_number: '',
         ticket_date: new Date().toISOString().split('T')[0],
+        ticket_time: '00:00',
         sector_id: '',
         supplier_id: '',
         client_id: '',
@@ -120,18 +127,33 @@ const RecyclingSidebar = ({
 
     try {
       setLoading(true);
+      
       const submitData = {
-        ...formData,
-        delivered_quantity_kg: parseInt(formData.delivered_quantity_kg),
-        accepted_quantity_kg: parseInt(formData.accepted_quantity_kg),
-        difference_kg: parseInt(formData.difference_kg),
-        acceptance_percentage: parseFloat(formData.acceptance_percentage)
+        ticketNumber: formData.ticket_number,
+        ticketDate: formData.ticket_date,
+        ticketTime: formData.ticket_time,
+        sectorId: formData.sector_id,
+        supplierId: formData.supplier_id,
+        recipientId: formData.client_id,
+        wasteCodeId: formData.waste_code_id,
+        vehicleNumber: formData.vehicle_number,
+        deliveredQuantityKg: parseInt(formData.delivered_quantity_kg),
+        acceptedQuantityKg: parseInt(formData.accepted_quantity_kg)
       };
 
-      // TODO: Implement API call
-      console.log('Submit recycling:', submitData);
-      alert('Funcția va fi implementată cu API real');
-      onSuccess();
+      let response;
+      if (mode === 'edit') {
+        response = await updateRecyclingTicket(ticket.id, submitData);
+      } else {
+        response = await createRecyclingTicket(submitData);
+      }
+
+      if (response.success) {
+        alert(mode === 'edit' ? 'Tichet actualizat cu succes!' : 'Tichet creat cu succes!');
+        onSuccess();
+      } else {
+        alert('Eroare: ' + response.message);
+      }
     } catch (error) {
       console.error('Submit error:', error);
       alert('Eroare la salvare: ' + error.message);
@@ -163,94 +185,196 @@ const RecyclingSidebar = ({
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Tichet <span className="text-red-500">*</span></label>
-                <input type="text" name="ticket_number" value={formData.ticket_number} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.ticket_number ? 'border-red-500' : 'border-gray-300'}`} />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Tichet <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="ticket_number" 
+                  value={formData.ticket_number} 
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                    errors.ticket_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Data <span className="text-red-500">*</span></label>
-                <input type="date" name="ticket_date" value={formData.ticket_date} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.ticket_date ? 'border-red-500' : 'border-gray-300'}`} />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Data <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  name="ticket_date" 
+                  value={formData.ticket_date} 
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                    errors.ticket_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`} 
+                />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Sector <span className="text-red-500">*</span></label>
-              <select name="sector_id" value={formData.sector_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.sector_id ? 'border-red-500' : 'border-gray-300'}`}>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Sector <span className="text-red-500">*</span>
+              </label>
+              <select 
+                name="sector_id" 
+                value={formData.sector_id} 
+                onChange={handleChange}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                  errors.sector_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              >
                 <option value="">Selectează</option>
                 {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Furnizor (Operator TMB) <span className="text-red-500">*</span></label>
-              <select name="supplier_id" value={formData.supplier_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.supplier_id ? 'border-red-500' : 'border-gray-300'}`}>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Furnizor (Operator TMB) <span className="text-red-500">*</span>
+              </label>
+              <select 
+                name="supplier_id" 
+                value={formData.supplier_id} 
+                onChange={handleChange}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                  errors.supplier_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              >
                 <option value="">Selectează</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Client (Reciclator) <span className="text-red-500">*</span></label>
-              <select name="client_id" value={formData.client_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.client_id ? 'border-red-500' : 'border-gray-300'}`}>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Client (Reciclator) <span className="text-red-500">*</span>
+              </label>
+              <select 
+                name="client_id" 
+                value={formData.client_id} 
+                onChange={handleChange}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                  errors.client_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              >
                 <option value="">Selectează</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Cod deșeu <span className="text-red-500">*</span></label>
-              <select name="waste_code_id" value={formData.waste_code_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.waste_code_id ? 'border-red-500' : 'border-gray-300'}`}>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Cod deșeu <span className="text-red-500">*</span>
+              </label>
+              <select 
+                name="waste_code_id" 
+                value={formData.waste_code_id} 
+                onChange={handleChange}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                  errors.waste_code_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              >
                 <option value="">Selectează</option>
-                {wasteCodes.map(wc => <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>)}
+                {wasteCodes.map(wc => (
+                  <option key={wc.id} value={wc.id}>
+                    {wc.code} - {wc.description}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Nr. Auto <span className="text-red-500">*</span></label>
-              <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.vehicle_number ? 'border-red-500' : 'border-gray-300'}`} />
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Nr. Auto <span className="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="vehicle_number" 
+                value={formData.vehicle_number} 
+                onChange={handleChange}
+                className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                  errors.vehicle_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`} 
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Cantitate livrată (kg) <span className="text-red-500">*</span></label>
-                <input type="number" name="delivered_quantity_kg" value={formData.delivered_quantity_kg} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.delivered_quantity_kg ? 'border-red-500' : 'border-gray-300'}`} />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Cantitate livrată (kg) <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="delivered_quantity_kg" 
+                  value={formData.delivered_quantity_kg} 
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                    errors.delivered_quantity_kg ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`} 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Cantitate acceptată (kg) <span className="text-red-500">*</span></label>
-                <input type="number" name="accepted_quantity_kg" value={formData.accepted_quantity_kg} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.accepted_quantity_kg ? 'border-red-500' : 'border-gray-300'}`} />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Cantitate acceptată (kg) <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  name="accepted_quantity_kg" 
+                  value={formData.accepted_quantity_kg} 
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-white ${
+                    errors.accepted_quantity_kg ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`} 
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Diferență (kg)</label>
-                <input type="number" name="difference_kg" value={formData.difference_kg} readOnly
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-100 cursor-not-allowed" />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Diferență (kg)
+                </label>
+                <input 
+                  type="number" 
+                  name="difference_kg" 
+                  value={formData.difference_kg} 
+                  readOnly
+                  className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed" 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">% Acceptare</label>
-                <input type="text" name="acceptance_percentage" value={formData.acceptance_percentage} readOnly
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-100 cursor-not-allowed" />
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  % Acceptare
+                </label>
+                <input 
+                  type="text" 
+                  name="acceptance_percentage" 
+                  value={formData.acceptance_percentage} 
+                  readOnly
+                  className="w-full px-3 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white cursor-not-allowed" 
+                />
               </div>
             </div>
           </div>
 
           <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="flex gap-3">
-              <button type="submit" disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg">
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg disabled:opacity-50"
+              >
                 {loading ? 'Se salvează...' : 'Salvează'}
               </button>
-              <button type="button" onClick={onClose} disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">
+              <button 
+                type="button" 
+                onClick={onClose} 
+                disabled={loading}
+                className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+              >
                 Anulează
               </button>
             </div>
