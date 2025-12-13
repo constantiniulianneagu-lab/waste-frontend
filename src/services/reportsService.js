@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * REPORTS SERVICE - CU TMB
+ * REPORTS SERVICE - COMPLETE WITH RECYCLING
  * ============================================================================
  */
 
@@ -327,23 +327,6 @@ export const deleteTmbTicket = async (ticketId) => {
   }
 };
 
-export default {
-  getLandfillReports,
-  exportLandfillReports,
-  getAuxiliaryData,
-  createLandfillTicket,
-  updateLandfillTicket,
-  deleteLandfillTicket,
-  getTmbReports,
-  getRecyclingReports,
-  getRecoveryReports,
-  getDisposalReports,
-  getRejectedReports,
-  createTmbTicket,
-  updateTmbTicket,
-  deleteTmbTicket
-};
-
 /**
  * ============================================================================
  * RECYCLING TICKETS CRUD
@@ -364,7 +347,7 @@ export const createRecyclingTicket = async (ticketData) => {
     console.error('❌ createRecyclingTicket error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Eroare la crearea tichetului'
+      message: error.response?.data?.message || 'Eroare la crearea tichetului de reciclare'
     };
   }
 };
@@ -383,7 +366,7 @@ export const updateRecyclingTicket = async (ticketId, ticketData) => {
     console.error('❌ updateRecyclingTicket error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Eroare la actualizarea tichetului'
+      message: error.response?.data?.message || 'Eroare la actualizarea tichetului de reciclare'
     };
   }
 };
@@ -401,7 +384,7 @@ export const deleteRecyclingTicket = async (ticketId) => {
     console.error('❌ deleteRecyclingTicket error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Eroare la ștergerea tichetului'
+      message: error.response?.data?.message || 'Eroare la ștergerea tichetului de reciclare'
     };
   }
 };
@@ -419,7 +402,7 @@ export const getRecyclingTicketById = async (ticketId) => {
     console.error('❌ getRecyclingTicketById error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Eroare la obținerea tichetului'
+      message: error.response?.data?.message || 'Eroare la obținerea tichetului de reciclare'
     };
   }
 };
@@ -455,7 +438,42 @@ export const exportRecyclingReports = async (filters) => {
     console.error('❌ exportRecyclingReports error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Eroare la export'
+      message: error.response?.data?.message || 'Eroare la exportul datelor de reciclare'
     };
   }
+};
+
+/**
+ * ============================================================================
+ * DEFAULT EXPORT - ALL FUNCTIONS
+ * ============================================================================
+ */
+
+export default {
+  // Landfill
+  getLandfillReports,
+  exportLandfillReports,
+  getAuxiliaryData,
+  createLandfillTicket,
+  updateLandfillTicket,
+  deleteLandfillTicket,
+  
+  // TMB Reports
+  getTmbReports,
+  getRecyclingReports,
+  getRecoveryReports,
+  getDisposalReports,
+  getRejectedReports,
+  
+  // TMB Tickets CRUD
+  createTmbTicket,
+  updateTmbTicket,
+  deleteTmbTicket,
+  
+  // Recycling Tickets CRUD (✅ ADĂUGAT)
+  createRecyclingTicket,
+  updateRecyclingTicket,
+  deleteRecyclingTicket,
+  getRecyclingTicketById,
+  exportRecyclingReports
 };

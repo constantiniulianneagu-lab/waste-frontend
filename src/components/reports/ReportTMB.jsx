@@ -1,15 +1,10 @@
 /**
  * ============================================================================
- * REPORTS TMB COMPONENT - VERSIUNE FINALĂ
+ * REPORTS TMB COMPONENT - VERSIUNE FINALĂ CU RECYCLING COMPLETE
  * ============================================================================
- * - Format românesc pentru numere (1.234,56)
- * - Cards scrollable cu dimensiune fixă
- * - Total alături de nume la furnizori/operatori
- * - Pagination dropdown (10/20/50/100)
- * - Traduceri corecte
- * - Expand button în dreapta (fără coloană Acțiuni)
- * - Gradient buttons
- * - API REAL conectat
+ * - RecyclingSidebar importat și integrat
+ * - DELETE handler per tab (recycling + tmb)
+ * - Expanded row corect pentru recycling (Proveniență, fără Tone brut/tară)
  * ============================================================================
  */
 
@@ -26,7 +21,8 @@ import {
   getRecoveryReports,
   getDisposalReports,
   getRejectedReports,
-  deleteTmbTicket, 
+  deleteTmbTicket,
+  deleteRecyclingTicket,  // ✅ ADĂUGAT
   getAuxiliaryData 
 } from '../../services/reportsService';
 
@@ -34,7 +30,7 @@ const ReportTMB = () => {
   // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('tmb'); // 🆕 ADĂUGAT
+  const [activeTab, setActiveTab] = useState('tmb');
   
   // Filters
   const [filters, setFilters] = useState({
@@ -81,8 +77,7 @@ const ReportTMB = () => {
   };
 
   // ========================================================================
-  // GROUPING: name -> total + codes breakdown (pentru suppliers/clients)
-  //  - backend întoarce adesea câte un rând / cod, iar noi vrem grupare ca în Landfill
+  // GROUPING
   // ========================================================================
 
   const groupRowsByNameWithCodes = (rows = []) => {
@@ -122,15 +117,13 @@ const ReportTMB = () => {
 
   useEffect(() => {
     fetchReports();
-  }, [filters.page, filters.per_page, activeTab]); // 🆕 ADĂUGAT activeTab
+  }, [filters.page, filters.per_page, activeTab]);
 
   const fetchSectors = async () => {
     try {
-      // Fetch auxiliary data (sectoare, waste codes, operators)
       const response = await getAuxiliaryData();
       
       if (response.success && response.data) {
-        // Sectoare pentru filtre (cu București)
         const realSectors = response.data.sectors || [];
         setSectors([
           { id: '', name: 'București', sector_number: 0 },
@@ -141,7 +134,6 @@ const ReportTMB = () => {
           }))
         ]);
 
-        // Waste codes
         const wasteCodesData = response.data.waste_codes || [];
         setWasteCodes(wasteCodesData.map(wc => ({
           id: wc.id,
@@ -149,14 +141,12 @@ const ReportTMB = () => {
           description: wc.description
         })));
 
-        // Operators (pentru sidebar) - folosim instituții tip operator
         const operatorsData = response.data.operators || [];
         setOperators(operatorsData.map(op => ({
           id: op.id,
           name: op.name
         })));
 
-        // Suppliers (folosim aceiași operatori pentru suppliers temporar)
         setSuppliers(operatorsData.map(op => ({
           id: op.id,
           name: op.name
@@ -164,7 +154,6 @@ const ReportTMB = () => {
       }
     } catch (error) {
       console.error('Error fetching auxiliary data:', error);
-      // Fallback data
       setSectors([
         { id: '', name: 'București', sector_number: 0 }
       ]);
@@ -176,7 +165,6 @@ const ReportTMB = () => {
       setLoading(true);
       setError(null);
 
-      // Select API function based on activeTab
       let response;
       switch (activeTab) {
         case 'tmb':
@@ -199,7 +187,6 @@ const ReportTMB = () => {
       }
       
       if (response.success) {
-        // Transform data pentru summary cards
         const summary = {
           total_quantity: response.data.summary.total_tons || response.data.summary.total_delivered || response.data.summary.total_accepted || response.data.summary.total_rejected || 0,
           period: {
@@ -208,13 +195,11 @@ const ReportTMB = () => {
             date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
             sector: sectors.find(s => s.id === filters.sector_id)?.name || 'București'
           },
-          // ✅ Grupare Furnizori (colectori) după nume + coduri
           suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
           operators: (response.data.operators || []).map(operator => ({
             name: operator.name,
             total: operator.total_tons
           })),
-          // ✅ Grupare Clienți după nume + coduri (dacă API întoarce pe cod)
           clients: groupRowsByNameWithCodes(response.data.clients || [])
         };
 
@@ -290,13 +275,26 @@ const ReportTMB = () => {
     setSidebarOpen(true);
   };
 
+  // ✅ DELETE HANDLER PER TAB
   const handleDelete = async (ticketId) => {
     if (!window.confirm('Sigur vrei să ștergi această înregistrare?')) {
       return;
     }
 
     try {
-      const response = await deleteTmbTicket(ticketId);
+      let response;
+      
+      switch (activeTab) {
+        case 'recycling':
+          response = await deleteRecyclingTicket(ticketId);
+          break;
+        case 'tmb':
+        default:
+          response = await deleteTmbTicket(ticketId);
+          break;
+        // TODO: Add cases for recovery, disposal, rejected when implemented
+      }
+
       if (response.success) {
         alert('Înregistrare ștearsă cu succes!');
         fetchReports();
@@ -442,7 +440,6 @@ const ReportTMB = () => {
             </div>
           </div>
           <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
-            {/* ✅ Total în conținut (nu în titlu) */}
             <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
               <span className="text-gray-600 dark:text-gray-400">Total:</span>
               <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -648,8 +645,6 @@ const ReportTMB = () => {
                     <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
                     <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Livrată</th>
                     <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Acceptată</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Diferență</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">% Acceptare</th>
                   </>
                 )}
                 {(activeTab === 'recovery' || activeTab === 'disposal') && (
@@ -750,12 +745,6 @@ const ReportTMB = () => {
                         </td>
                         <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {formatNumberRO(ticket.accepted_quantity_tons)} t
-                        </td>
-                        <td className="px-4 py-3 text-sm text-red-600 dark:text-red-400 whitespace-nowrap">
-                          {formatNumberRO(ticket.difference_tons)} t
-                        </td>
-                        <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                          {formatNumberRO(ticket.acceptance_percentage)}%
                         </td>
                       </>
                     )}
@@ -859,8 +848,75 @@ const ReportTMB = () => {
                     </td>
                   </tr>
 
-                  {/* Expanded Row */}
-                  {expandedRows.has(ticket.id) && (
+                  {/* ✅ EXPANDED ROW PENTRU RECYCLING */}
+                  {expandedRows.has(ticket.id) && activeTab === 'recycling' && (
+                    <tr className="bg-gray-50 dark:bg-gray-800/30">
+                      <td colSpan="11" className="px-4 py-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+                          {/* Proveniență (sector_name) */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.sector_name}
+                            </p>
+                          </div>
+
+                          {/* Cod deșeu complet */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.waste_code} - {ticket.waste_description}
+                            </p>
+                          </div>
+
+                          {/* Diferență */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
+                            <p className="font-medium text-red-600 dark:text-red-400">
+                              {formatNumberRO(ticket.difference_tons)} t
+                            </p>
+                          </div>
+
+                          {/* % Acceptare */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">% Acceptare:</span>
+                            <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                              {formatNumberRO(ticket.acceptance_percentage)}%
+                            </p>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="text-left flex gap-2">
+                            <button
+                              onClick={() => handleEdit(ticket)}
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
+                                       hover:from-emerald-600 hover:to-emerald-700 text-white rounded 
+                                       transition-all duration-200 shadow-md flex items-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Editează
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ticket.id)}
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
+                                       hover:from-red-600 hover:to-red-700 text-white rounded 
+                                       transition-all duration-200 shadow-md flex items-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Șterge
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Expanded Rows pentru alte tab-uri (TMB, Recovery, etc) */}
+                  {expandedRows.has(ticket.id) && activeTab !== 'recycling' && (
                     <tr className="bg-gray-50 dark:bg-gray-800/30">
                       <td colSpan="10" className="px-4 py-4">
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
@@ -870,22 +926,6 @@ const ReportTMB = () => {
                                 <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor:</span>
                                 <p className="font-medium text-gray-900 dark:text-white">
                                   {ticket.supplier_name}
-                                </p>
-                              </div>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {ticket.waste_code} - {ticket.waste_description}
-                                </p>
-                              </div>
-                            </>
-                          )}
-                          {activeTab === 'recycling' && (
-                            <>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {ticket.sector_name}
                                 </p>
                               </div>
                               <div className="text-left">
@@ -1019,18 +1059,76 @@ const ReportTMB = () => {
         )}
       </div>
 
-      {/* Sidebar pentru Add/Edit TMB */}
-      <ReportsTmbSidebar
-        isOpen={sidebarOpen}
-        mode={sidebarMode}
-        ticket={selectedTicket}
-        wasteCodes={wasteCodes}
-        operators={operators}
-        suppliers={suppliers}
-        sectors={sectors}
-        onClose={handleSidebarClose}
-        onSuccess={handleSidebarSuccess}
-      />
+      {/* ✅ SIDEBAR PER TAB */}
+      {activeTab === 'tmb' && (
+        <ReportsTmbSidebar
+          isOpen={sidebarOpen}
+          mode={sidebarMode}
+          ticket={selectedTicket}
+          wasteCodes={wasteCodes}
+          operators={operators}
+          suppliers={suppliers}
+          sectors={sectors}
+          onClose={handleSidebarClose}
+          onSuccess={handleSidebarSuccess}
+        />
+      )}
+
+      {activeTab === 'recycling' && (
+        <RecyclingSidebar
+          isOpen={sidebarOpen}
+          mode={sidebarMode}
+          ticket={selectedTicket}
+          wasteCodes={wasteCodes}
+          clients={operators}
+          suppliers={suppliers}
+          sectors={sectors}
+          onClose={handleSidebarClose}
+          onSuccess={handleSidebarSuccess}
+        />
+      )}
+
+      {activeTab === 'recovery' && (
+        <RecoverySidebar
+          isOpen={sidebarOpen}
+          mode={sidebarMode}
+          ticket={selectedTicket}
+          wasteCodes={wasteCodes}
+          clients={operators}
+          suppliers={suppliers}
+          sectors={sectors}
+          onClose={handleSidebarClose}
+          onSuccess={handleSidebarSuccess}
+        />
+      )}
+
+      {activeTab === 'disposal' && (
+        <DisposalSidebar
+          isOpen={sidebarOpen}
+          mode={sidebarMode}
+          ticket={selectedTicket}
+          wasteCodes={wasteCodes}
+          clients={operators}
+          suppliers={suppliers}
+          sectors={sectors}
+          onClose={handleSidebarClose}
+          onSuccess={handleSidebarSuccess}
+        />
+      )}
+
+      {activeTab === 'rejected' && (
+        <RejectedSidebar
+          isOpen={sidebarOpen}
+          mode={sidebarMode}
+          ticket={selectedTicket}
+          wasteCodes={wasteCodes}
+          operators={operators}
+          suppliers={suppliers}
+          sectors={sectors}
+          onClose={handleSidebarClose}
+          onSuccess={handleSidebarSuccess}
+        />
+      )}
     </div>
   );
 };
