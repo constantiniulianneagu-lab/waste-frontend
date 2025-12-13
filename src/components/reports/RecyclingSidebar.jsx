@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   createRecyclingTicket,
   updateRecyclingTicket 
-} from '../../services/wasteTicketsService';
+} from '../../services/reportsService';  // ✅ FIXED: Import from reportsService
 
 const RecyclingSidebar = ({ 
   isOpen, 
