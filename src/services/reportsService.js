@@ -343,3 +343,119 @@ export default {
   updateTmbTicket,
   deleteTmbTicket
 };
+
+/**
+ * ============================================================================
+ * RECYCLING TICKETS CRUD
+ * ============================================================================
+ */
+
+export const createRecyclingTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/tickets/recycling`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ createRecyclingTicket error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Eroare la crearea tichetului'
+    };
+  }
+};
+
+export const updateRecyclingTicket = async (ticketId, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/tickets/recycling/${ticketId}`,
+      ticketData,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ updateRecyclingTicket error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Eroare la actualizarea tichetului'
+    };
+  }
+};
+
+export const deleteRecyclingTicket = async (ticketId) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/tickets/recycling/${ticketId}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ deleteRecyclingTicket error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Eroare la ștergerea tichetului'
+    };
+  }
+};
+
+export const getRecyclingTicketById = async (ticketId) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.get(
+      `${API_BASE_URL}/tickets/recycling/${ticketId}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ getRecyclingTicketById error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Eroare la obținerea tichetului'
+    };
+  }
+};
+
+/**
+ * ============================================================================
+ * EXPORT RECYCLING REPORTS (pentru Export dropdown)
+ * ============================================================================
+ */
+
+export const exportRecyclingReports = async (filters) => {
+  try {
+    const headers = createAuthHeaders();
+    const params = new URLSearchParams({
+      year: filters.year,
+      start_date: filters.from,
+      end_date: filters.to,
+      page: 1,
+      limit: 100000 // Get ALL records for export
+    });
+    
+    if (filters.sector_id) {
+      params.append('sector_id', filters.sector_id);
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/reports/tmb/recycling?${params}`,
+      headers
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ exportRecyclingReports error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Eroare la export'
+    };
+  }
+};
