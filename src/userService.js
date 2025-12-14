@@ -64,7 +64,22 @@ export const userService = {
       };
     }
   },
-
+ /**
+   * Get operators visible to current user (✅ NOU)
+   * GET /api/users/profile/operators
+   */
+ getProfileOperators: async () => {
+  try {
+    const data = await apiGet('/api/users/profile/operators');
+    return data;
+  } catch (error) {
+    console.error('getProfileOperators error:', error);
+    return {
+      success: false,
+      message: error.message || 'Eroare la încărcarea operatorilor'
+    };
+  }
+},
   // ========================================================================
   // USER MANAGEMENT (PLATFORM_ADMIN ONLY)
   // ========================================================================
@@ -169,5 +184,32 @@ export const userService = {
         message: error.message || 'Eroare la încărcarea statisticilor'
       };
     }
+  }
+};
+export const getProfileOperators = async () => {
+  const token = localStorage.getItem('wasteAccessToken');
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/profile/operators`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch operators');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ getProfileOperators error:', error);
+    return {
+      success: false,
+      message: error.message || 'Network error'
+    };
   }
 };

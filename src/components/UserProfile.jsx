@@ -11,11 +11,12 @@
  * ✅ Premium gradients and micro-interactions
  * ✅ Perfect light/dark mode adaptive colors
  * ✅ Smooth animations (300ms)
+ * ✅ Operators table with expand row
  * 
  * ============================================================================
  */
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../AuthContext";
 import { userService } from "../userService";
 import {
@@ -33,9 +34,8 @@ import {
   Briefcase,
   Users,
   Lock,
-  CheckCircle2,
   Shield,
-  Calendar,
+  FileText,
 } from "lucide-react";
 import DashboardHeader from "./dashboard/DashboardHeader";
 
@@ -45,7 +45,11 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [institutionData, setInstitutionData] = useState(null);
+  
+  // ✅ OPERATORS STATE
   const [operators, setOperators] = useState([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
+  const [expandedOperator, setExpandedOperator] = useState(null);
   
   const [sidebarMode, setSidebarMode] = useState(null);
   const [showPassword, setShowPassword] = useState({ current: false, new: false });
@@ -70,9 +74,7 @@ const UserProfile = () => {
 
   useEffect(() => {
     loadUserProfile();
-    if (currentUser?.role === "PLATFORM_ADMIN") {
-      loadOperators();
-    }
+    loadOperators(); // ✅ LOAD OPERATORS
   }, []);
 
   const loadUserProfile = async () => {
@@ -104,39 +106,22 @@ const UserProfile = () => {
     }
   };
 
+  // ✅ LOAD OPERATORS FROM API
   const loadOperators = async () => {
+    setOperatorsLoading(true);
     try {
-      setOperators([
-        {
-          id: 1,
-          name: "ROMPREST SERVICE S.A.",
-          email: "office@romprest.eu",
-          phone: "+40 731 798 141",
-          activity: "Colectare",
-          beneficiary: "S1",
-          status: "Activ",
-        },
-        {
-          id: 2,
-          name: "IRIDEX GROUP IMPORT EXPORT S.R.L.",
-          email: "office@iridex.ro",
-          phone: "+40 723 685 252",
-          activity: "Tratare mecano-biologică",
-          beneficiary: "S2, S3, S4",
-          status: "Activ",
-        },
-        {
-          id: 3,
-          name: "ECO SUD S.A.",
-          email: "office@ecosud.ro",
-          phone: "+40 731 798 141",
-          activity: "Depozitare",
-          beneficiary: "S1, S2, S3, S4, S5, S6",
-          status: "Activ",
-        },
-      ]);
+      const response = await userService.getProfileOperators();
+      
+      if (response.success) {
+        setOperators(response.data.operators || []);
+        console.log('✅ Operators loaded:', response.data.operators.length);
+      } else {
+        console.error('Failed to load operators:', response.message);
+      }
     } catch (err) {
-      console.error("Error loading operators:", err);
+      console.error('Error loading operators:', err);
+    } finally {
+      setOperatorsLoading(false);
     }
   };
 
@@ -247,6 +232,31 @@ const UserProfile = () => {
     }
   };
 
+  // ✅ OPERATORS HANDLERS
+  const toggleExpandOperator = (operatorId) => {
+    setExpandedOperator(expandedOperator === operatorId ? null : operatorId);
+  };
+
+  const getOperatorTypeLabel = (type) => {
+    const labels = {
+      'WASTE_COLLECTOR': 'Colectare',
+      'SORTING_OPERATOR': 'Sortare',
+      'TMB_OPERATOR': 'Tratare mecano-biologică',
+      'DISPOSAL_OPERATOR': 'Depozitare'
+    };
+    return labels[type] || type;
+  };
+
+  const getOperatorTypeBadgeColor = (type) => {
+    const colors = {
+      'WASTE_COLLECTOR': 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/30',
+      'SORTING_OPERATOR': 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/20 dark:border-purple-500/30',
+      'TMB_OPERATOR': 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30',
+      'DISPOSAL_OPERATOR': 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/30'
+    };
+    return colors[type] || 'bg-gray-500/10 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/20 dark:border-gray-500/30';
+  };
+
   // ========================================================================
   // UTILS
   // ========================================================================
@@ -262,19 +272,12 @@ const UserProfile = () => {
     const roleMap = {
       PLATFORM_ADMIN: "Administrator Platformă",
       ADMIN_INSTITUTION: "Administrator Instituție",
+      INSTITUTION_ADMIN: "Administrator Instituție",
       EDITOR_INSTITUTION: "Editor Instituție",
       REGULATOR_VIEWER: "Vizualizator",
+      OPERATOR_USER: "Operator",
     };
     return roleMap[role] || role;
-  };
-
-  const getBadgeColor = (activity) => {
-    const colors = {
-      "Colectare": "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30",
-      "Tratare mecano-biologică": "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/30",
-      "Depozitare": "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 dark:border-red-500/30",
-    };
-    return colors[activity] || "bg-gray-500/10 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border border-gray-500/20 dark:border-gray-500/30";
   };
 
   // ========================================================================
@@ -520,107 +523,293 @@ const UserProfile = () => {
           )}
         </div>
 
-        {/* TABEL OPERATORI - Modern table */}
-        {currentUser?.role === "PLATFORM_ADMIN" && operators.length > 0 && (
+        {/* ✅ TABEL OPERATORI - NEW WITH EXPAND ROW */}
+        {operators.length > 0 && (
           <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
                         rounded-[28px] border border-gray-200 dark:border-gray-700/50 
                         shadow-sm dark:shadow-none overflow-hidden">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700/50">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div className="w-8 h-8 rounded-[10px] bg-purple-500/10 dark:bg-purple-500/20 
-                              flex items-center justify-center">
-                  <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-[10px] bg-purple-500/10 dark:bg-purple-500/20 
+                                flex items-center justify-center">
+                    <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  Operatori de salubritate
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Total: <span className="font-bold text-gray-900 dark:text-white">{operators.length}</span>
+                  </span>
                 </div>
-                Operatori platformă
-              </h3>
+              </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700/50">
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Operator
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Telefon
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Activitate
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Beneficiar
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Acțiuni
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {operators.map((operator) => (
-                    <tr 
-                      key={operator.id} 
-                      className="border-b border-gray-200 dark:border-gray-700/30 
-                               hover:bg-gray-50 dark:hover:bg-gray-900/30 
-                               transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {operator.name}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {operator.email}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {operator.phone}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-[10px] ${getBadgeColor(operator.activity)}`}>
-                          {operator.activity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {operator.beneficiary}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="flex items-center gap-2 text-sm">
-                          <span className="relative">
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full block" />
-                            <span className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-40" />
-                          </span>
-                          <span className="text-gray-600 dark:text-gray-400 font-medium">
-                            {operator.status}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button className="px-4 py-2 
-                                         bg-blue-600 hover:bg-blue-700 
-                                         text-white text-xs font-bold 
-                                         rounded-[10px] transition-all duration-300
-                                         active:scale-95
-                                         shadow-lg shadow-blue-500/20">
-                          Vezi detalii
-                        </button>
-                      </td>
+            {operatorsLoading ? (
+              <div className="p-12 text-center">
+                <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent 
+                              rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Se încarcă operatorii...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700/50">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Operator
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Tip activitate
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Telefon
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Sectoare
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Contracte
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Detalii
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {operators.map((operator) => (
+                      <React.Fragment key={operator.id}>
+                        {/* Main Row */}
+                        <tr className="border-b border-gray-200 dark:border-gray-700/30 
+                                     hover:bg-gray-50 dark:hover:bg-gray-900/30 
+                                     transition-colors group">
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {operator.name}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-[10px] border ${getOperatorTypeBadgeColor(operator.operator_type)}`}>
+                              {getOperatorTypeLabel(operator.operator_type)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {operator.contact_email || '-'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {operator.contact_phone || '-'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {operator.sectors_served || '-'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                {operator.active_contracts_count}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                / {operator.total_contracts_count}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="flex items-center gap-2 text-sm">
+                              <span className="relative">
+                                <span className={`w-2 h-2 rounded-full block ${
+                                  operator.status === 'Activ' 
+                                    ? 'bg-emerald-400' 
+                                    : 'bg-gray-400'
+                                }`} />
+                                {operator.status === 'Activ' && (
+                                  <span className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-40" />
+                                )}
+                              </span>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">
+                                {operator.status}
+                              </span>
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button 
+                              onClick={() => toggleExpandOperator(operator.id)}
+                              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+                                       hover:bg-gray-100 dark:hover:bg-gray-800 
+                                       rounded-[10px] transition-all duration-300"
+                              title={expandedOperator === operator.id ? "Ascunde detalii" : "Arată detalii"}
+                            >
+                              <svg 
+                                className={`w-5 h-5 transition-transform duration-200 ${
+                                  expandedOperator === operator.id ? 'rotate-180' : ''
+                                }`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+
+                        {/* Expanded Row */}
+                        {expandedOperator === operator.id && (
+                          <tr className="bg-gray-50 dark:bg-gray-800/50">
+                            <td colSpan="8" className="px-6 py-6">
+                              <div className="space-y-6">
+                                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                  Contracte ({operator.contracts.length})
+                                </h4>
+                                
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                  {operator.contracts.map((contract, idx) => (
+                                    <div 
+                                      key={idx}
+                                      className="p-4 bg-white dark:bg-gray-900/50 
+                                               rounded-[16px] border border-gray-200 dark:border-gray-700"
+                                    >
+                                      {/* Contract Header */}
+                                      <div className="flex items-start justify-between mb-3">
+                                        <div>
+                                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                            {contract.contract_number}
+                                          </p>
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Sector {contract.sector_number} - {contract.sector_name}
+                                          </p>
+                                        </div>
+                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-[8px] ${
+                                          contract.is_active 
+                                            ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' 
+                                            : 'bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400'
+                                        }`}>
+                                          {contract.is_active ? 'Activ' : 'Inactiv'}
+                                        </span>
+                                      </div>
+
+                                      {/* Contract Details */}
+                                      <div className="grid grid-cols-2 gap-3 text-xs">
+                                        <div>
+                                          <p className="text-gray-500 dark:text-gray-400 mb-1">Dată început:</p>
+                                          <p className="font-medium text-gray-900 dark:text-white">
+                                            {new Date(contract.contract_date_start).toLocaleDateString('ro-RO')}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-500 dark:text-gray-400 mb-1">Dată sfârșit:</p>
+                                          <p className="font-medium text-gray-900 dark:text-white">
+                                            {contract.contract_date_end 
+                                              ? new Date(contract.contract_date_end).toLocaleDateString('ro-RO')
+                                              : 'Nedefinit'}
+                                          </p>
+                                        </div>
+                                        
+                                        {/* Tariff info */}
+                                        {contract.tariff_per_ton && (
+                                          <>
+                                            <div>
+                                              <p className="text-gray-500 dark:text-gray-400 mb-1">Tarif:</p>
+                                              <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                                                {parseFloat(contract.tariff_per_ton).toFixed(2)} {contract.currency || 'RON'}/t
+                                              </p>
+                                            </div>
+                                            {contract.estimated_quantity_tons && (
+                                              <div>
+                                                <p className="text-gray-500 dark:text-gray-400 mb-1">Cantitate:</p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                  {parseFloat(contract.estimated_quantity_tons).toFixed(2)} t
+                                                </p>
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
+
+                                        {/* Disposal specific */}
+                                        {contract.cec_tax_per_ton !== undefined && (
+                                          <>
+                                            <div>
+                                              <p className="text-gray-500 dark:text-gray-400 mb-1">Taxa CEC:</p>
+                                              <p className="font-medium text-gray-900 dark:text-white">
+                                                {parseFloat(contract.cec_tax_per_ton).toFixed(2)} {contract.currency || 'RON'}/t
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <p className="text-gray-500 dark:text-gray-400 mb-1">Total/t:</p>
+                                              <p className="font-bold text-blue-600 dark:text-blue-400">
+                                                {parseFloat(contract.total_per_ton).toFixed(2)} {contract.currency || 'RON'}
+                                              </p>
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+
+                                      {/* Amendments */}
+                                      {contract.amendments_count > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                          <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-2">
+                                            Acte adiționale: {contract.amendments_count}
+                                          </p>
+                                          <div className="space-y-2">
+                                            {contract.amendments.slice(0, 2).map((amendment, aIdx) => (
+                                              <div key={aIdx} className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-600 dark:text-gray-400">
+                                                  {amendment.amendment_number}
+                                                </span>
+                                                <span className="text-gray-500 dark:text-gray-500">
+                                                  {new Date(amendment.amendment_date).toLocaleDateString('ro-RO')}
+                                                </span>
+                                              </div>
+                                            ))}
+                                            {contract.amendments_count > 2 && (
+                                              <p className="text-xs text-blue-600 dark:text-blue-400">
+                                                +{contract.amendments_count - 2} acte adiționale
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Notes */}
+                                      {contract.notes && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                                            {contract.notes}
+                                          </p>
+                                        </div>
+                                      )}
+
+                                      {/* File indicator */}
+                                      {contract.has_file && (
+                                        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                                          <FileText className="w-3.5 h-3.5" />
+                                          <span>Contract disponibil</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
