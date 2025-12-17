@@ -40,6 +40,7 @@ import WasteOperatorContractModal from "./WasteOperatorContractModal";
 import SortingContractModal from "./SortingContractModal";
 import DisposalContractModal from "./DisposalContractModal";
 import TMBContractModal from "./TMBContractModal";
+import { INSTITUTION_TYPES, getInstitutionTypeLabel } from "./constants/institutionTypes";
 
 const user = JSON.parse(localStorage.getItem('wasteUser')) || { role: 'OPERATOR' };
 
@@ -153,7 +154,7 @@ const Institutions = () => {
         case "MUNICIPALITY":
           normalizedType = "MUNICIPIU";
           break;
-        case "WASTE_OPERATOR":
+        case "WASTE_COLLECTOR":
           normalizedType = "OPERATOR";
           break;
         case "TMB_OPERATOR":
@@ -217,7 +218,7 @@ const Institutions = () => {
         case 'TMB':
           endpoint = `/api/institutions/${institutionId}/tmb-contracts`;
           break;
-        case 'WASTE_OPERATOR':
+        case 'WASTE_COLLECTOR':
         case 'OPERATOR':
           endpoint = `/api/institutions/${institutionId}/waste-contracts`;
           break;
@@ -463,7 +464,7 @@ const Institutions = () => {
         case "MUNICIPALITY":
           normalizedType = "MUNICIPIU";
           break;
-        case "WASTE_OPERATOR":
+        case "WASTE_COLLECTOR":
           normalizedType = "OPERATOR";
           break;
         case "TMB_OPERATOR":
@@ -555,7 +556,7 @@ const Institutions = () => {
         "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
       MUNICIPALITY:
         "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-      WASTE_OPERATOR:
+      WASTE_COLLECTOR:
         "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       SORTING_OPERATOR:
         "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
@@ -584,7 +585,7 @@ const Institutions = () => {
       RECICLATOR: "Reciclator",
       VALORIFICARE: "Valorificare",
       MUNICIPALITY: "Municipiu",
-      WASTE_OPERATOR: "Operator",
+      WASTE_COLLECTOR: "Operator Colectare",
       SORTING_OPERATOR: "Colector",
       TMB_OPERATOR: "Tratare mecano-biologică",
       DISPOSAL_CLIENT: "Depozit",
@@ -1251,7 +1252,7 @@ const Institutions = () => {
           )}
 
           {/* WASTE OPERATOR CONTRACTS */}
-          {inst.type === "WASTE_OPERATOR" && (
+          {inst.type === "WASTE_COLLECTOR" && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -1735,7 +1736,7 @@ const Institutions = () => {
                               className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110 ${
                                 inst.type === "MUNICIPALITY"
                                   ? "bg-gradient-to-br from-indigo-500 to-indigo-600"
-                                  : inst.type === "WASTE_OPERATOR"
+                                  : inst.type === "WASTE_COLLECTOR"
                                   ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
                                   : inst.type === "SORTING_OPERATOR"
                                   ? "bg-gradient-to-br from-violet-500 to-violet-600"
@@ -2029,7 +2030,7 @@ const Institutions = () => {
                     >
                       <option value="">Selectează tipul</option>
                       <option value="MUNICIPALITY">Municipiu</option>
-                      <option value="WASTE_OPERATOR">
+                      <option value="WASTE_COLLECTOR">
                         Operator Colectare
                       </option>
                       <option value="SORTING_OPERATOR">
