@@ -99,13 +99,14 @@ const Users = () => {
   const loadInstitutions = async () => {
     setLoadingInstitutions(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions?limit=500`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       const data = await response.json();
       if (data.success) {
+        // Backend returnează direct în data array, nu în data.data
         setInstitutions(data.data || []);
       }
     } catch (err) {
