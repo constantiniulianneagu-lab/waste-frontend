@@ -25,6 +25,7 @@ import Institutions from "./Institutions";
 import ReportsMain from './components/reports/ReportsMain';
 import ReportTMB from './components/reports/ReportTMB';
 import UserProfile from './components/UserProfile'; // ✅ ADĂUGAT
+import Sectors from './Sectors';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -142,6 +143,15 @@ function App() {
                 <Institutions />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+           path="/sectors" 
+           element={
+            <ProtectedRoute>
+            <Sectors />
+            </ProtectedRoute>
+           }
           />
 
           {/* ✅ USER PROFILE ROUTE - NOU */}
