@@ -247,9 +247,9 @@ const Users = () => {
     setPage(1);
   }, [filters]);
 
-  // ========== ROLE LABELS ==========
+  // ========== ROLE LABELS ========== (✅ ACTUALIZAT)
   const roleLabels = {
-    SUPER_ADMIN: { label: "Super Admin", color: "red" },
+    PLATFORM_ADMIN: { label: "Admin Platformă", color: "red" },
     ADMIN_INSTITUTION: { label: "Admin Instituție", color: "blue" },
     EDITOR_INSTITUTION: { label: "Editor Instituție", color: "emerald" },
     REGULATOR_VIEWER: { label: "Regulator", color: "purple" }
@@ -272,9 +272,9 @@ const Users = () => {
     );
   };
 
-  // Access label (pentru coloana "Acces Date")
+  // Access label (pentru coloana "Acces Date") (✅ ACTUALIZAT)
   const getAccessLabel = (user) => {
-    if (user.role === 'SUPER_ADMIN') {
+    if (user.role === 'PLATFORM_ADMIN') {
       return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">🌍 Total</span>;
     }
     
@@ -343,14 +343,14 @@ const Users = () => {
             />
           </div>
 
-          {/* Role Filter */}
+          {/* Role Filter (✅ ACTUALIZAT) */}
           <select
             value={filters.role}
             onChange={(e) => setFilters({ ...filters, role: e.target.value })}
             className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
           >
             <option value="">Toate rolurile</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
+            <option value="PLATFORM_ADMIN">Admin Platformă</option>
             <option value="ADMIN_INSTITUTION">Admin Instituție</option>
             <option value="EDITOR_INSTITUTION">Editor Instituție</option>
             <option value="REGULATOR_VIEWER">Regulator</option>
