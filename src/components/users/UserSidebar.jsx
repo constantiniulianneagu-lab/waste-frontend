@@ -1,5 +1,5 @@
 // src/components/users/UserSidebar.jsx
-import { X, Eye, EyeOff, Save, User, Mail, Shield, Building2, Calendar, Phone, Briefcase, Users as UsersIcon } from 'lucide-react';
+import { X, Eye, EyeOff, Save, User, Mail, Shield, Building2, Calendar, Phone, Briefcase, Users as UsersIcon, Edit2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 const UserSidebar = ({
@@ -19,18 +19,18 @@ const UserSidebar = ({
   const isEditMode = mode === 'edit';
   const isCreateMode = mode === 'create';
 
-  // Role labels
+  // ========== ROLE LABELS ========== (✅ ACTUALIZAT)
   const roleLabels = {
-    SUPER_ADMIN: 'Super Admin',
+    PLATFORM_ADMIN: 'Admin Platformă',
     ADMIN_INSTITUTION: 'Admin Instituție',
     EDITOR_INSTITUTION: 'Editor Instituție',
     REGULATOR_VIEWER: 'Regulator'
   };
 
-  // Role badge
+  // ========== ROLE BADGE ========== (✅ ACTUALIZAT)
   const getRoleBadge = (role) => {
     const styles = {
-      SUPER_ADMIN: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+      PLATFORM_ADMIN: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
       ADMIN_INSTITUTION: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
       EDITOR_INSTITUTION: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
       REGULATOR_VIEWER: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
@@ -55,40 +55,51 @@ const UserSidebar = ({
     });
   };
 
-  // Filter institutions based on role
+  // ========== FILTER INSTITUTIONS ========== (✅ FIX COMPLET)
   const availableInstitutions = useMemo(() => {
-    if (!formData.role) return institutions;
+    console.log('🔍 Filter institutions - role:', formData.role);
+    console.log('📋 Total institutions:', institutions.length);
+    
+    if (!formData.role) {
+      console.log('⚠️ No role selected, returning all institutions');
+      return institutions;
+    }
 
-    if (formData.role === 'SUPER_ADMIN') {
-      // Doar ADIGDMB
-      return institutions.filter(i => i.type === 'ASSOCIATION');
+    if (formData.role === 'PLATFORM_ADMIN') {
+      const filtered = institutions.filter(i => i.type === 'ASSOCIATION');
+      console.log('✅ PLATFORM_ADMIN → ASSOCIATION only:', filtered.length);
+      return filtered;
     }
 
     if (formData.role === 'ADMIN_INSTITUTION') {
-      // Doar PMB și Primării
-      return institutions.filter(i => i.type === 'MUNICIPALITY');
+      const filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
+      console.log('✅ ADMIN_INSTITUTION → MUNICIPALITY only:', filtered.length);
+      return filtered;
     }
 
     if (formData.role === 'EDITOR_INSTITUTION') {
-      // Same ca creator (dacă e edit, păstrăm instituția)
       if (isEditMode && user?.institution) {
+        console.log('✅ EDITOR_INSTITUTION (edit) → locked to:', user.institution.name);
         return [user.institution];
       }
-      // În create mode, ADMIN_INSTITUTION va seta automat
-      return institutions.filter(i => i.type === 'MUNICIPALITY');
+      const filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
+      console.log('✅ EDITOR_INSTITUTION (create) → MUNICIPALITY:', filtered.length);
+      return filtered;
     }
 
     if (formData.role === 'REGULATOR_VIEWER') {
-      // Regulator + Operatori
-      return institutions.filter(i => 
+      const filtered = institutions.filter(i => 
         i.type === 'REGULATOR' || 
         i.type === 'WASTE_COLLECTOR' || 
         i.type === 'TMB_OPERATOR' || 
         i.type === 'SORTING_OPERATOR' ||
         i.type === 'LANDFILL'
       );
+      console.log('✅ REGULATOR_VIEWER → Regulators + Operators:', filtered.length);
+      return filtered;
     }
 
+    console.log('⚠️ Unknown role, returning all');
     return institutions;
   }, [formData.role, institutions, isEditMode, user]);
 
@@ -112,8 +123,10 @@ const UserSidebar = ({
     onSubmit(formData);
   };
 
-  // Handle role change
+  // ========== HANDLE ROLE CHANGE ========== (✅ ACTUALIZAT)
   const handleRoleChange = (newRole) => {
+    console.log('🔄 Role change:', formData.role, '→', newRole);
+    
     const newFormData = { ...formData, role: newRole };
 
     // Reset institution când schimbi rolul
@@ -127,14 +140,18 @@ const UserSidebar = ({
       operator_institution_id: null
     };
 
-    // Auto-select ADIGDMB pentru SUPER_ADMIN
-    if (newRole === 'SUPER_ADMIN') {
+    // Auto-select ADIGDMB pentru PLATFORM_ADMIN
+    if (newRole === 'PLATFORM_ADMIN') {
       const adigdmb = institutions.find(i => i.type === 'ASSOCIATION');
       if (adigdmb) {
+        console.log('✅ Auto-select ADIGDMB:', adigdmb.name);
         newFormData.institutionId = adigdmb.id;
+      } else {
+        console.log('⚠️ ADIGDMB not found in institutions!');
       }
     }
 
+    console.log('📤 New form data:', newFormData);
     onFormChange(newFormData);
   };
 
@@ -413,7 +430,7 @@ const UserSidebar = ({
                   className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                   required
                 >
-                  <option value="SUPER_ADMIN">Super Admin</option>
+                  <option value="PLATFORM_ADMIN">Admin Platformă</option>
                   <option value="ADMIN_INSTITUTION">Admin Instituție</option>
                   <option value="EDITOR_INSTITUTION">Editor Instituție</option>
                   <option value="REGULATOR_VIEWER">Regulator</option>
@@ -422,22 +439,33 @@ const UserSidebar = ({
 
               {/* Institution */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Instituție *</label>
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                  Instituție * 
+                  <span className="ml-2 text-xs font-normal text-gray-500">
+                    (Disponibile: {availableInstitutions.length})
+                  </span>
+                </label>
                 <select
                   value={formData.institutionId || ''}
-                  onChange={(e) => onFormChange({ ...formData, institutionId: parseInt(e.target.value) })}
+                  onChange={(e) => {
+                    const newId = e.target.value ? parseInt(e.target.value) : null;
+                    console.log('📝 Institution selected:', newId);
+                    onFormChange({ ...formData, institutionId: newId });
+                  }}
                   className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                   required
-                  disabled={formData.role === 'SUPER_ADMIN' || (isEditMode && formData.role === 'EDITOR_INSTITUTION')}
+                  disabled={formData.role === 'PLATFORM_ADMIN' || (isEditMode && formData.role === 'EDITOR_INSTITUTION')}
                 >
                   <option value="">Selectează instituție</option>
                   {availableInstitutions.map(inst => (
-                    <option key={inst.id} value={inst.id}>{inst.name}</option>
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name} ({inst.type})
+                    </option>
                   ))}
                 </select>
-                {formData.role === 'SUPER_ADMIN' && (
+                {formData.role === 'PLATFORM_ADMIN' && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    ℹ️ Super Admin poate fi asociat doar cu ADIGDMB
+                    ℹ️ Admin Platformă poate fi asociat doar cu ADIGDMB
                   </p>
                 )}
                 {isEditMode && formData.role === 'EDITOR_INSTITUTION' && (
@@ -602,34 +630,6 @@ const UserSidebar = ({
           <div className="flex gap-3">
             {isViewMode ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSidebarMode('edit');
-                    setFormData({
-                      email: user.email,
-                      password: '',
-                      firstName: user.first_name,
-                      lastName: user.last_name,
-                      phone: user.phone || '',
-                      position: user.position || '',
-                      department: user.department || '',
-                      role: user.role,
-                      isActive: user.is_active,
-                      institutionId: user.institution?.id || null,
-                      permissions: user.permissions || {
-                        can_edit_data: false,
-                        access_type: null,
-                        sector_id: null,
-                        operator_institution_id: null
-                      }
-                    });
-                  }}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Editează
-                </button>
                 <button
                   type="button"
                   onClick={onClose}
