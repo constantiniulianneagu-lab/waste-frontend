@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Recycle,
+  Layers,
 } from "lucide-react";
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -81,6 +82,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       iconColor: "text-amber-500 dark:text-amber-400",
       hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
     },
+    // ⬇️ ADAUGĂ ASTA:
+  {
+    title: "Sectoare",
+    icon: Layers,
+    path: "/sectors",
+    gradient: "from-blue-500 to-indigo-600",
+    iconColor: "text-blue-500 dark:text-blue-400",
+    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
+  },
   ];
 
   const isActive = (path) => 
