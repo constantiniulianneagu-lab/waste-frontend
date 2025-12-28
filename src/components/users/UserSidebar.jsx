@@ -56,52 +56,58 @@ const UserSidebar = ({
   };
 
   // ========== FILTER INSTITUTIONS ========== (✅ FIX COMPLET)
-  const availableInstitutions = useMemo(() => {
-    console.log('🔍 Filter institutions - role:', formData.role);
-    console.log('📋 Total institutions:', institutions.length);
-    
-    if (!formData.role) {
-      console.log('⚠️ No role selected, returning all institutions');
-      return institutions;
-    }
+const availableInstitutions = useMemo(() => {
+  console.log('🔍 Filter institutions - role:', formData.role);
+  console.log('📋 Total institutions:', institutions.length);
+  
+  if (!formData.role) {
+    console.log('⚠️ No role selected, returning empty');
+    return [];
+  }
 
-    if (formData.role === 'PLATFORM_ADMIN') {
-      const filtered = institutions.filter(i => i.type === 'ASSOCIATION');
+  let filtered = [];
+
+  switch (formData.role) {
+    case 'PLATFORM_ADMIN':
+      // Doar ASSOCIATION (ADIGDMB)
+      filtered = institutions.filter(i => i.type === 'ASSOCIATION');
       console.log('✅ PLATFORM_ADMIN → ASSOCIATION only:', filtered.length);
-      return filtered;
-    }
+      break;
 
-    if (formData.role === 'ADMIN_INSTITUTION') {
-      const filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
-      console.log('✅ ADMIN_INSTITUTION → MUNICIPALITY only:', filtered.length);
-      return filtered;
-    }
+    case 'ADMIN_INSTITUTION':
+    case 'EDITOR_INSTITUTION':
+      // PMB + Sectoarele 1-6
+      filtered = institutions.filter(i => 
+        i.type === 'MUNICIPALITY' ||
+        (i.short_name && /^S[1-6]$/i.test(i.short_name))
+      );
+      console.log('✅ ADMIN/EDITOR_INSTITUTION → MUNICIPALITY:', filtered.length);
+      break;
 
-    if (formData.role === 'EDITOR_INSTITUTION') {
-      if (isEditMode && user?.institution) {
-        console.log('✅ EDITOR_INSTITUTION (edit) → locked to:', user.institution.name);
-        return [user.institution];
-      }
-      const filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
-      console.log('✅ EDITOR_INSTITUTION (create) → MUNICIPALITY:', filtered.length);
-      return filtered;
-    }
+    case 'REGULATOR_VIEWER':
+      // Doar instituții de tip REGULATOR
+      filtered = institutions.filter(i => i.type === 'REGULATOR');
+      console.log('✅ REGULATOR_VIEWER → REGULATOR only:', filtered.length);
+      break;
 
-    if (formData.role === 'REGULATOR_VIEWER') {
-      const filtered = institutions.filter(i => 
-        i.type === 'REGULATOR' || 
-        i.type === 'WASTE_COLLECTOR' || 
-        i.type === 'TMB_OPERATOR' || 
+    case 'OPERATOR_USER':
+      // Doar operatorii
+      filtered = institutions.filter(i => 
+        i.type === 'WASTE_COLLECTOR' ||
+        i.type === 'TMB_OPERATOR' ||
         i.type === 'SORTING_OPERATOR' ||
         i.type === 'LANDFILL'
       );
-      console.log('✅ REGULATOR_VIEWER → Regulators + Operators:', filtered.length);
-      return filtered;
-    }
+      console.log('✅ OPERATOR_USER → Operators:', filtered.length);
+      break;
 
-    console.log('⚠️ Unknown role, returning all');
-    return institutions;
-  }, [formData.role, institutions, isEditMode, user]);
+    default:
+      console.log('⚠️ Unknown role, returning empty');
+      filtered = [];
+  }
+
+  return filtered;
+}, [formData.role, institutions, isEditMode, user]);
 
   // Selected institution
   const selectedInstitution = useMemo(() => {
@@ -438,42 +444,57 @@ const UserSidebar = ({
               </div>
 
               {/* Institution */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
-                  Instituție * 
-                  <span className="ml-2 text-xs font-normal text-gray-500">
-                    (Disponibile: {availableInstitutions.length})
-                  </span>
-                </label>
-                <select
-                  value={formData.institutionId || ''}
-                  onChange={(e) => {
-                    const newId = e.target.value ? parseInt(e.target.value) : null;
-                    console.log('📝 Institution selected:', newId);
-                    onFormChange({ ...formData, institutionId: newId });
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                  required
-                  disabled={formData.role === 'PLATFORM_ADMIN' || (isEditMode && formData.role === 'EDITOR_INSTITUTION')}
-                >
-                  <option value="">Selectează instituție</option>
-                  {availableInstitutions.map(inst => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.type})
-                    </option>
-                  ))}
-                </select>
-                {formData.role === 'PLATFORM_ADMIN' && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    ℹ️ Admin Platformă poate fi asociat doar cu ADIGDMB
-                  </p>
-                )}
-                {isEditMode && formData.role === 'EDITOR_INSTITUTION' && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    ℹ️ Instituția nu poate fi modificată pentru Editor
-                  </p>
-                )}
-              </div>
+<div>
+  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+    Instituție * 
+    <span className="ml-2 text-xs font-normal text-gray-500">
+      ({availableInstitutions.length} disponibile)
+    </span>
+  </label>
+  
+  {availableInstitutions.length === 0 ? (
+    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-[14px]">
+      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+        {formData.role === 'PLATFORM_ADMIN' && 'Nu există ADIGDMB în sistem. Adaugă instituția ADIGDMB mai întâi.'}
+        {formData.role === 'ADMIN_INSTITUTION' && 'Nu există municipii. Adaugă PMB sau Sectoarele mai întâi.'}
+        {formData.role === 'EDITOR_INSTITUTION' && 'Nu există municipii. Adaugă PMB sau Sectoarele mai întâi.'}
+        {formData.role === 'REGULATOR_VIEWER' && 'Nu există instituții REGULATOR. Adaugă Garda Mediu sau alte instituții de reglementare.'}
+        {formData.role === 'OPERATOR_USER' && 'Nu există operatori. Adaugă operatori de colectare, TMB, sortare sau depozitare.'}
+        {!formData.role && 'Selectează un rol mai întâi.'}
+      </p>
+    </div>
+  ) : (
+    <select
+      value={formData.institutionId || ''}
+      onChange={(e) => {
+        const newId = e.target.value ? parseInt(e.target.value) : null;
+        console.log('📝 Institution selected:', newId);
+        onFormChange({ ...formData, institutionId: newId });
+      }}
+      className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+      required
+      disabled={formData.role === 'PLATFORM_ADMIN' && availableInstitutions.length === 1}
+    >
+      <option value="">Selectează instituția</option>
+      {availableInstitutions.map(inst => (
+        <option key={inst.id} value={inst.id}>
+          {inst.short_name ? `${inst.short_name} - ${inst.name}` : inst.name}
+        </option>
+      ))}
+    </select>
+  )}
+  
+  {/* Helper text bazat pe rol */}
+  {formData.role && availableInstitutions.length > 0 && (
+    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      {formData.role === 'PLATFORM_ADMIN' && '💡 Administrator de platformă - asociat cu ADIGDMB'}
+      {formData.role === 'ADMIN_INSTITUTION' && '💡 Administrator instituție - selectează PMB sau un Sector'}
+      {formData.role === 'EDITOR_INSTITUTION' && '💡 Editor instituție - selectează PMB sau un Sector'}
+      {formData.role === 'REGULATOR_VIEWER' && '💡 Regulator - selectează instituția de reglementare'}
+      {formData.role === 'OPERATOR_USER' && '💡 Operator - selectează operatorul de salubritate'}
+    </p>
+  )}
+</div>
 
               {/* Sectors Display */}
               {selectedInstitution?.sectors && selectedInstitution.sectors.length > 0 && (

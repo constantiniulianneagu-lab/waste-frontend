@@ -2014,45 +2014,37 @@ const Institutions = () => {
                   </div>
 
                   {/* Tip Instituție */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Tip Instituție *
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
-                        errors.type
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
-                    >
-                      <option value="">Selectează tipul</option>
-                      <option value="MUNICIPALITY">Municipiu</option>
-                      <option value="WASTE_COLLECTOR">
-                        Operator Colectare
-                      </option>
-                      <option value="SORTING_OPERATOR">
-                        Operator Sortare
-                      </option>
-                      <option value="TMB_OPERATOR">Operator TMB</option>
-                      <option value="DISPOSAL_CLIENT">
-                        Client Depozit
-                      </option>
-                      <option value="RECYCLING_CLIENT">
-                        Client Reciclare
-                      </option>
-                      <option value="RECOVERY_CLIENT">
-                        Client Valorificare
-                      </option>
-                    </select>
-                    {errors.type && (
-                      <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                        {errors.type}
-                      </p>
-                    )}
-                  </div>
+<div>
+  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+    Tip Instituție *
+  </label>
+  <select
+    name="type"
+    value={formData.type}
+    onChange={handleInputChange}
+    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+      errors.type
+        ? "border-red-500"
+        : "border-gray-300 dark:border-gray-600"
+    } rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all`}
+  >
+    <option value="">Selectează tipul</option>
+    <option value="ASSOCIATION">Asociație (ADIGDMB)</option>
+    <option value="MUNICIPALITY">Municipiu (PMB, Sectoare)</option>
+    <option value="WASTE_COLLECTOR">Operator Colectare</option>
+    <option value="SORTING_OPERATOR">Operator Sortare</option>
+    <option value="TMB_OPERATOR">Operator TMB</option>
+    <option value="LANDFILL">Depozit</option>
+    <option value="RECYCLING_CLIENT">Client Reciclare</option>
+    <option value="RECOVERY_CLIENT">Client Valorificare</option>
+    <option value="REGULATOR">Regulator (Garda Mediu, Ministere)</option>
+  </select>
+  {errors.type && (
+    <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+      {errors.type}
+    </p>
+  )}
+</div>
 
                   {/* Sector */}
                   <div>
