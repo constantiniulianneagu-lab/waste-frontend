@@ -94,15 +94,33 @@ const Users = () => {
   const loadInstitutions = async () => {
     setLoadingInstitutions(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions?limit=500`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      console.log('🔄 Loading institutions...');
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions?limit=1000`, {
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
       const data = await response.json();
+      console.log('📦 API Response:', data);
+  
       if (data.success) {
-        setInstitutions(data.data || []);
+        // Backend returnează: { success: true, data: { institutions: [...], total: X } }
+        const institutionsArray = data.data?.institutions || [];
+        
+        console.log('✅ Institutions loaded:', institutionsArray.length);
+        console.log('📋 First 3 institutions:', institutionsArray.slice(0, 3));
+        
+        setInstitutions(institutionsArray);
+      } else {
+        console.error('❌ Failed to load institutions:', data.message);
+        setInstitutions([]);
       }
     } catch (err) {
-      console.error("Error loading institutions:", err);
+      console.error('💥 Error loading institutions:', err);
+      setInstitutions([]);
     } finally {
       setLoadingInstitutions(false);
     }
