@@ -55,7 +55,7 @@ const UserSidebar = ({
     });
   };
 
-  // ========== FILTER INSTITUTIONS ========== (✅ FIX COMPLET)
+  // ========== FILTER INSTITUTIONS ========== (✅ FIX FINAL)
 const availableInstitutions = useMemo(() => {
   console.log('🔍 Filter institutions - role:', formData.role);
   console.log('📋 Total institutions:', institutions.length);
@@ -76,16 +76,13 @@ const availableInstitutions = useMemo(() => {
 
     case 'ADMIN_INSTITUTION':
     case 'EDITOR_INSTITUTION':
-      // PMB + Sectoarele 1-6
-      filtered = institutions.filter(i => 
-        i.type === 'MUNICIPALITY' ||
-        (i.short_name && /^S[1-6]$/i.test(i.short_name))
-      );
+      // Doar MUNICIPALITY (PMB + Sectoare 1-6)
+      filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
       console.log('✅ ADMIN/EDITOR_INSTITUTION → MUNICIPALITY:', filtered.length);
       break;
 
     case 'REGULATOR_VIEWER':
-      // Doar instituții de tip REGULATOR
+      // Doar REGULATOR
       filtered = institutions.filter(i => i.type === 'REGULATOR');
       console.log('✅ REGULATOR_VIEWER → REGULATOR only:', filtered.length);
       break;
@@ -96,7 +93,8 @@ const availableInstitutions = useMemo(() => {
         i.type === 'WASTE_COLLECTOR' ||
         i.type === 'TMB_OPERATOR' ||
         i.type === 'SORTING_OPERATOR' ||
-        i.type === 'LANDFILL'
+        i.type === 'LANDFILL' ||
+        i.type === 'DISPOSAL_CLIENT'
       );
       console.log('✅ OPERATOR_USER → Operators:', filtered.length);
       break;
@@ -107,7 +105,7 @@ const availableInstitutions = useMemo(() => {
   }
 
   return filtered;
-}, [formData.role, institutions, isEditMode, user]);
+}, [formData.role, institutions]);
 
   // Selected institution
   const selectedInstitution = useMemo(() => {
