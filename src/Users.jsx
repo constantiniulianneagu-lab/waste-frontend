@@ -96,7 +96,8 @@ const Users = () => {
     try {
       console.log('🔄 Loading institutions...');
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions?limit=1000`, {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const response = await fetch(`${API_URL}/api/institutions?limit=1000`, {
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}`,
           'Content-Type': 'application/json'
@@ -128,7 +129,8 @@ const Users = () => {
 
   const loadSectors = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sectors`, {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const response = await fetch(`${API_URL}/api/sectors`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}` }
       });
       const data = await response.json();

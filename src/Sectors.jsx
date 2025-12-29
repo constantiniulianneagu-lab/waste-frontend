@@ -38,8 +38,9 @@ const Sectors = () => {
   const loadSectors = async () => {
     setLoading(true);
     try {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/sectors?includeInstitutions=true`,
+        `${API_URL}/api/sectors?includeInstitutions=true`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}` }
         }
@@ -58,8 +59,9 @@ const Sectors = () => {
   const loadInstitutions = async () => {
     setLoadingInstitutions(true);
     try {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/institutions?limit=500`,
+        `${API_URL}/api/institutions?limit=500`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}` }
         }
@@ -90,8 +92,9 @@ const Sectors = () => {
 
   const handleUpdateSector = async (sectorId, updates) => {
     try {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/sectors/${sectorId}`,
+        `${API_URL}/api/sectors/${sectorId}`,
         {
           method: 'PUT',
           headers: {
@@ -117,8 +120,9 @@ const Sectors = () => {
 
   const handleUpdateInstitutions = async (sectorId, institutionIds) => {
     try {
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/sectors/${sectorId}/institutions`,
+        `${API_URL}/api/sectors/${sectorId}/institutions`,
         {
           method: 'PUT',
           headers: {

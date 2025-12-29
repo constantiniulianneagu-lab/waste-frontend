@@ -678,11 +678,10 @@ const Institutions = () => {
         const fd = new FormData();
         fd.append("file", file);
 
-        const token = localStorage.getItem("token");
+        const API_URL = 'https://waste-backend-3u9c.onrender.com';
+        const token = localStorage.getItem("wasteAccessToken");
         const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL || "http://localhost:3000"
-          }/api/contracts/${contractId}/upload`,
+          `${API_URL}/api/contracts/${contractId}/upload`,
           {
             method: "POST",
             headers: {
@@ -714,11 +713,10 @@ const Institutions = () => {
       setDeleting(true);
 
       try {
-        const token = localStorage.getItem("token");
+        const API_URL = 'https://waste-backend-3u9c.onrender.com';
+        const token = localStorage.getItem("wasteAccessToken");
         const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL || "http://localhost:3000"
-          }/api/contracts/${contractId}/file`,
+          `${API_URL}/api/contracts/${contractId}/file`,
           {
             method: "DELETE",
             headers: {
