@@ -1,9 +1,9 @@
 /* ============================================================================
-   SAMD - INTER FONT CONFIGURATION
+   SAMD - MANROPE FONT CONFIGURATION
    ============================================================================ */
 
-/* Import Inter Variable Font - toate greutățile */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+/* Import Manrope Variable Font - toate greutățile */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,7 +18,7 @@
   *,
   *::before,
   *::after {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI',
       'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
       'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -35,7 +35,8 @@
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
     transition: background-color 0.3s ease, color 0.3s ease;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /* Manrope font features for better readability */
+    font-feature-settings: 'ss01', 'ss02', 'ss03', 'ss04';
   }
 
   /* Heading Optimization */
@@ -47,14 +48,17 @@
   h1 {
     @apply text-4xl font-extrabold;
     letter-spacing: -0.03em;
+    font-weight: 800; /* Manrope ExtraBold */
   }
 
   h2 {
     @apply text-3xl font-bold;
+    font-weight: 700; /* Manrope Bold */
   }
 
   h3 {
     @apply text-2xl font-bold;
+    font-weight: 700; /* Manrope Bold */
   }
 
   /* =========================================================================
@@ -103,6 +107,7 @@
     dark:focus:ring-offset-gray-900
     transition-all shadow-lg hover:shadow-xl
     transform hover:scale-105 active:scale-95;
+    font-weight: 600; /* Manrope SemiBold */
   }
 
   .btn-secondary {
@@ -110,12 +115,14 @@
     text-gray-900 dark:text-white font-semibold rounded-xl
     hover:bg-gray-300 dark:hover:bg-gray-600
     transition-all;
+    font-weight: 600; /* Manrope SemiBold */
   }
 
   .btn-ghost {
     @apply px-4 py-2 text-gray-700 dark:text-gray-300 font-medium rounded-lg
     hover:bg-gray-100 dark:hover:bg-gray-800
     transition-colors;
+    font-weight: 500; /* Manrope Medium */
   }
 
   /* Cards */
@@ -142,6 +149,7 @@
     placeholder-gray-400 dark:placeholder-gray-500
     focus:outline-none focus:ring-2 focus:ring-emerald-500
     focus:border-transparent transition-all;
+    font-weight: 500; /* Manrope Medium */
   }
 
   .input-lg {
@@ -151,6 +159,7 @@
   /* Badges */
   .badge {
     @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+    font-weight: 700; /* Manrope Bold */
   }
 
   .badge-emerald {
