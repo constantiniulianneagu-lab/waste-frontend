@@ -124,6 +124,21 @@ const availableInstitutions = useMemo(() => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log('📤 UserSidebar submitting:', {
+      role: formData.role,
+      institutionId: formData.institutionId,
+      institution: selectedInstitution?.name,
+      fullFormData: formData
+    });
+    
+    // Validare: Asigură-te că instituția este selectată
+    if (!formData.institutionId) {
+      console.error('❌ No institution selected!');
+      alert('Vă rugăm să selectați o instituție!');
+      return;
+    }
+    
     onSubmit(formData);
   };
 

@@ -201,14 +201,67 @@ const Users = () => {
 
   const handleSubmit = async (data) => {
     setFormError('');
+    
+    console.log('📤 handleSubmit called with:', {
+      mode: sidebarMode,
+      role: data.role,
+      institutionId: data.institutionId,
+      permissions: data.permissions
+    });
+
+    // Validare instituție
+    if (!data.institutionId) {
+      setFormError('Vă rugăm să selectați o instituție!');
+      console.error('❌ No institution selected!');
+      return;
+    }
 
     try {
       let response;
+      
       if (sidebarMode === 'create') {
-        response = await userService.createUser(data);
+        // Construiește payload pentru create
+        const payload = {
+          email: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || null,
+          position: data.position || null,
+          department: data.department || null,
+          role: data.role,
+          isActive: data.isActive,
+          institutionIds: [data.institutionId] // Backend așteaptă array
+        };
+
+        console.log('🚀 Creating user with payload:', payload);
+        response = await userService.createUser(payload);
+        
       } else if (sidebarMode === 'edit') {
-        response = await userService.updateUser(selectedUser.id, data);
+        // Construiește payload pentru update
+        const payload = {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || null,
+          position: data.position || null,
+          department: data.department || null,
+          role: data.role,
+          isActive: data.isActive,
+          institutionIds: [data.institutionId], // Backend așteaptă array
+          permissions: data.permissions
+        };
+
+        // Include password doar dacă a fost schimbată
+        if (data.password && data.password.trim() !== "") {
+          payload.password = data.password;
+        }
+
+        console.log('✏️ Updating user:', selectedUser.id, 'with payload:', payload);
+        response = await userService.updateUser(selectedUser.id, payload);
       }
+
+      console.log('✅ Server response:', response);
 
       if (response.success) {
         setShowSidebar(false);
@@ -217,6 +270,7 @@ const Users = () => {
         setFormError(response.message || 'Eroare la salvarea utilizatorului.');
       }
     } catch (err) {
+      console.error('❌ Submit error:', err);
       setFormError(err.message || 'Eroare la salvarea utilizatorului.');
     }
   };
@@ -267,7 +321,7 @@ const Users = () => {
     setPage(1);
   }, [filters]);
 
-  // ========== ROLE LABELS ========== (✅ ACTUALIZAT)
+  // ========== ROLE LABELS ==========
   const roleLabels = {
     PLATFORM_ADMIN: { label: "Admin Platformă", color: "red" },
     ADMIN_INSTITUTION: { label: "Admin Instituție", color: "blue" },
@@ -292,53 +346,83 @@ const Users = () => {
     );
   };
 
-  // Access label (pentru coloana "Acces Date") (✅ ACTUALIZAT)
+  // ========== ACCESS LABEL (✅ FIXED) ==========
   const getAccessLabel = (user) => {
+    console.log('🔍 getAccessLabel for:', user.email, 'Role:', user.role, 'Permissions:', user.permissions);
+    
     if (user.role === 'PLATFORM_ADMIN') {
-      return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">🌍 Total</span>;
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+          🌍 Total
+        </span>
+      );
     }
     
     if (user.role === 'ADMIN_INSTITUTION') {
       if (user.institution?.type === 'MUNICIPALITY' && user.institution?.name?.includes('PMB')) {
-        return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">🏙️ Toate sectoarele</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            🏙️ Toate sectoarele
+          </span>
+        );
       }
       // Primărie sector
       if (user.sectors && user.sectors.length > 0) {
         return (
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             🏙️ Sector {user.sectors.map(s => s.sector_number).join(', ')}
           </span>
         );
       }
     }
-
+  
     if (user.role === 'EDITOR_INSTITUTION') {
       const canEdit = user.permissions?.can_edit_data;
       if (user.sectors && user.sectors.length > 0) {
         return (
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             {canEdit ? '📝' : '👁️'} Sector {user.sectors.map(s => s.sector_number).join(', ')}
           </span>
         );
       }
     }
-
+  
     if (user.role === 'REGULATOR_VIEWER') {
       const perm = user.permissions;
+      console.log('📊 REGULATOR permissions:', perm);
+      
       if (perm?.access_type === 'ALL') {
-        return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">👁️ Toate datele</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            👁️ Toate datele
+          </span>
+        );
       }
-      if (perm?.access_type === 'SECTOR') {
+      if (perm?.access_type === 'SECTOR' && perm.sector_id) {
         const sector = sectors.find(s => s.id === perm.sector_id);
-        return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">👁️ Sector {sector?.sector_number}</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            👁️ Sector {sector?.sector_number || '?'}
+          </span>
+        );
       }
-      if (perm?.access_type === 'OPERATOR') {
+      if (perm?.access_type === 'OPERATOR' && perm.operator_institution_id) {
         const operator = institutions.find(i => i.id === perm.operator_institution_id);
-        return <span className="text-xs font-medium text-gray-600 dark:text-gray-400">👁️ {operator?.short_name}</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            👁️ {operator?.short_name || operator?.name || 'Operator'}
+          </span>
+        );
       }
+      // Dacă nu are permissions setate dar e REGULATOR, default la ALL
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+          👁️ View only
+        </span>
+      );
     }
-
-    return <span className="text-xs text-gray-400">-</span>;
+  
+    return <span className="text-xs text-gray-400 dark:text-gray-500">-</span>;
   };
 
   const hasActiveFilters = filters.search || filters.role || filters.institutionId || filters.status;
@@ -363,7 +447,7 @@ const Users = () => {
             />
           </div>
 
-          {/* Role Filter (✅ ACTUALIZAT) */}
+          {/* Role Filter */}
           <select
             value={filters.role}
             onChange={(e) => setFilters({ ...filters, role: e.target.value })}
