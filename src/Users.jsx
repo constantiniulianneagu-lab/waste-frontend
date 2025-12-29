@@ -108,12 +108,8 @@ const Users = () => {
       console.log('📦 API Response:', data);
   
       if (data.success) {
-        // Backend returnează: { success: true, data: { institutions: [...], total: X } }
         const institutionsArray = data.data?.institutions || [];
-        
         console.log('✅ Institutions loaded:', institutionsArray.length);
-        console.log('📋 First 3 institutions:', institutionsArray.slice(0, 3));
-        
         setInstitutions(institutionsArray);
       } else {
         console.error('❌ Failed to load institutions:', data.message);
@@ -206,7 +202,8 @@ const Users = () => {
       mode: sidebarMode,
       role: data.role,
       institutionId: data.institutionId,
-      permissions: data.permissions
+      permissions: data.permissions,
+      fullData: data
     });
 
     // Validare instituție
@@ -220,7 +217,7 @@ const Users = () => {
       let response;
       
       if (sidebarMode === 'create') {
-        // Construiește payload pentru create
+        // ========== CREATE USER ==========
         const payload = {
           email: data.email,
           password: data.password,
@@ -231,14 +228,25 @@ const Users = () => {
           department: data.department || null,
           role: data.role,
           isActive: data.isActive,
-          institutionIds: [data.institutionId] // Backend așteaptă array
+          institutionIds: [data.institutionId]
         };
 
-        console.log('🚀 Creating user with payload:', payload);
-        response = await userService.createUser(payload);
+        console.log('🚀 Creating user with payload:', JSON.stringify(payload, null, 2));
+        
+        try {
+          response = await userService.createUser(payload);
+          console.log('✅ Create response:', response);
+        } catch (createError) {
+          console.error('❌ Create error details:', {
+            error: createError,
+            message: createError.message,
+            stack: createError.stack
+          });
+          throw createError;
+        }
         
       } else if (sidebarMode === 'edit') {
-        // Construiește payload pentru update
+        // ========== UPDATE USER ==========
         const payload = {
           email: data.email,
           firstName: data.firstName,
@@ -248,8 +256,7 @@ const Users = () => {
           department: data.department || null,
           role: data.role,
           isActive: data.isActive,
-          institutionIds: [data.institutionId], // Backend așteaptă array
-          permissions: data.permissions
+          institutionIds: [data.institutionId]
         };
 
         // Include password doar dacă a fost schimbată
@@ -257,20 +264,50 @@ const Users = () => {
           payload.password = data.password;
         }
 
-        console.log('✏️ Updating user:', selectedUser.id, 'with payload:', payload);
-        response = await userService.updateUser(selectedUser.id, payload);
+        console.log('✏️ Updating user ID:', selectedUser.id);
+        console.log('📦 Update payload:', JSON.stringify(payload, null, 2));
+        
+        try {
+          response = await userService.updateUser(selectedUser.id, payload);
+          console.log('✅ Update response:', response);
+        } catch (updateError) {
+          console.error('❌ Update error details:', {
+            error: updateError,
+            message: updateError.message,
+            stack: updateError.stack,
+            userId: selectedUser.id,
+            payload: payload
+          });
+          
+          // Încearcă să vezi dacă e o problemă de format
+          console.error('🔍 Debugging info:', {
+            userIdType: typeof selectedUser.id,
+            userIdValue: selectedUser.id,
+            payloadKeys: Object.keys(payload),
+            institutionIdType: typeof data.institutionId,
+            institutionIdValue: data.institutionId
+          });
+          
+          throw updateError;
+        }
       }
 
-      console.log('✅ Server response:', response);
+      console.log('🎉 Server response:', response);
 
-      if (response.success) {
+      if (response && response.success) {
         setShowSidebar(false);
         loadUsers();
       } else {
-        setFormError(response.message || 'Eroare la salvarea utilizatorului.');
+        const errorMsg = response?.message || 'Eroare la salvarea utilizatorului.';
+        console.error('❌ Operation failed:', errorMsg);
+        setFormError(errorMsg);
       }
     } catch (err) {
-      console.error('❌ Submit error:', err);
+      console.error('💥 Submit error:', {
+        error: err,
+        message: err.message,
+        stack: err.stack
+      });
       setFormError(err.message || 'Eroare la salvarea utilizatorului.');
     }
   };
@@ -346,10 +383,8 @@ const Users = () => {
     );
   };
 
-  // ========== ACCESS LABEL (✅ FIXED) ==========
+  // ========== ACCESS LABEL ==========
   const getAccessLabel = (user) => {
-    console.log('🔍 getAccessLabel for:', user.email, 'Role:', user.role, 'Permissions:', user.permissions);
-    
     if (user.role === 'PLATFORM_ADMIN') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
@@ -366,7 +401,6 @@ const Users = () => {
           </span>
         );
       }
-      // Primărie sector
       if (user.sectors && user.sectors.length > 0) {
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -389,7 +423,6 @@ const Users = () => {
   
     if (user.role === 'REGULATOR_VIEWER') {
       const perm = user.permissions;
-      console.log('📊 REGULATOR permissions:', perm);
       
       if (perm?.access_type === 'ALL') {
         return (
@@ -414,7 +447,6 @@ const Users = () => {
           </span>
         );
       }
-      // Dacă nu are permissions setate dar e REGULATOR, default la ALL
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
           👁️ View only
