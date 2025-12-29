@@ -98,7 +98,7 @@ const Users = () => {
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/institutions?limit=1000`, {
         headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -129,7 +129,7 @@ const Users = () => {
   const loadSectors = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sectors`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}` }
       });
       const data = await response.json();
       if (data.success) {

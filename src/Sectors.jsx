@@ -41,7 +41,7 @@ const Sectors = () => {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/sectors?includeInstitutions=true`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}` }
         }
       );
       const data = await response.json();
@@ -61,7 +61,7 @@ const Sectors = () => {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/institutions?limit=500`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}` }
         }
       );
       const data = await response.json();
@@ -96,7 +96,7 @@ const Sectors = () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}`
           },
           body: JSON.stringify(updates)
         }
@@ -123,7 +123,7 @@ const Sectors = () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('wasteAccessToken')}`
           },
           body: JSON.stringify({ institutionIds })
         }
