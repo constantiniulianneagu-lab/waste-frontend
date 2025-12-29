@@ -1,17 +1,14 @@
 // src/components/Sidebar.jsx
 /**
  * ============================================================================
- * SIDEBAR - 2026 SAMSUNG/APPLE STYLE
+ * SIDEBAR - ROLE-BASED NAVIGATION
  * ============================================================================
  * 
- * Modern glassmorphism sidebar with perfect tooltips
- * 
- * ✅ Samsung One UI 7.0 rounded corners (14-20px)
- * ✅ Apple iOS 18 glassmorphism effects
- * ✅ Perfect tooltip positioning (fixed, z-index 9999)
- * ✅ Premium gradients and micro-interactions
- * ✅ Perfect light/dark mode adaptive colors
- * ✅ Smooth animations (300ms)
+ * ✅ Afișează doar menu items relevante pentru fiecare rol
+ * ✅ PLATFORM_ADMIN: vede tot
+ * ✅ ADMIN_INSTITUTION: Dashboard + Rapoarte + Sectoare (fără Users/Institutions)
+ * ✅ EDITOR_INSTITUTION: Dashboard + Rapoarte + Sectoare (fără Users/Institutions)
+ * ✅ REGULATOR_VIEWER: Dashboard + Rapoarte (doar view)
  * 
  * ============================================================================
  */
@@ -38,60 +35,72 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   if (!user || location.pathname === "/login") return null;
 
   // ========================================================================
-  // MENU ITEMS
+  // ROLE-BASED MENU ITEMS
   // ========================================================================
 
-  const menuItems = [
-    {
-      title: "Depozitare",
-      icon: BarChart3,
-      path: "/dashboard/landfill",
-      gradient: "from-emerald-500 to-teal-600",
-      iconColor: "text-emerald-500 dark:text-emerald-400",
-      hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
-    },
-    {
-      title: "Tratare Mecano-Biologică",
-      icon: Recycle,
-      path: "/dashboard/tmb",
-      gradient: "from-lime-500 to-emerald-600",
-      iconColor: "text-lime-500 dark:text-lime-400",
-      hoverBg: "hover:bg-lime-50 dark:hover:bg-lime-500/10",
-    },
-    {
-      title: "Rapoarte",
-      icon: FileText,
-      path: "/reports",
-      gradient: "from-cyan-500 to-blue-600",
-      iconColor: "text-cyan-500 dark:text-cyan-400",
-      hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
-    },
-    {
-      title: "Utilizatori",
-      icon: Users,
-      path: "/users",
-      gradient: "from-violet-500 to-purple-600",
-      iconColor: "text-violet-500 dark:text-violet-400",
-      hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-500/10",
-    },
-    {
-      title: "Instituții",
-      icon: Building2,
-      path: "/institutions",
-      gradient: "from-amber-500 to-orange-600",
-      iconColor: "text-amber-500 dark:text-amber-400",
-      hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
-    },
-    // ⬇️ ADAUGĂ ASTA:
-  {
-    title: "Sectoare",
-    icon: Layers,
-    path: "/sectors",
-    gradient: "from-blue-500 to-indigo-600",
-    iconColor: "text-blue-500 dark:text-blue-400",
-    hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
-  },
-  ];
+  const getAllMenuItems = () => {
+    const allItems = [
+      {
+        title: "Depozitare",
+        icon: BarChart3,
+        path: "/dashboard/landfill",
+        gradient: "from-emerald-500 to-teal-600",
+        iconColor: "text-emerald-500 dark:text-emerald-400",
+        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+      },
+      {
+        title: "Tratare Mecano-Biologică",
+        icon: Recycle,
+        path: "/dashboard/tmb",
+        gradient: "from-lime-500 to-emerald-600",
+        iconColor: "text-lime-500 dark:text-lime-400",
+        hoverBg: "hover:bg-lime-50 dark:hover:bg-lime-500/10",
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+      },
+      {
+        title: "Rapoarte",
+        icon: FileText,
+        path: "/reports",
+        gradient: "from-cyan-500 to-blue-600",
+        iconColor: "text-cyan-500 dark:text-cyan-400",
+        hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+      },
+      {
+        title: "Sectoare",
+        icon: Layers,
+        path: "/sectors",
+        gradient: "from-blue-500 to-indigo-600",
+        iconColor: "text-blue-500 dark:text-blue-400",
+        hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+      },
+      {
+        title: "Utilizatori",
+        icon: Users,
+        path: "/users",
+        gradient: "from-violet-500 to-purple-600",
+        iconColor: "text-violet-500 dark:text-violet-400",
+        hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-500/10",
+        roles: ["PLATFORM_ADMIN"], // Doar PLATFORM_ADMIN
+      },
+      {
+        title: "Instituții",
+        icon: Building2,
+        path: "/institutions",
+        gradient: "from-amber-500 to-orange-600",
+        iconColor: "text-amber-500 dark:text-amber-400",
+        hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
+        roles: ["PLATFORM_ADMIN"], // Doar PLATFORM_ADMIN
+      },
+    ];
+
+    // Filtrează items pe baza rolului user-ului
+    return allItems.filter(item => item.roles.includes(user?.role));
+  };
+
+  const menuItems = getAllMenuItems();
 
   const isActive = (path) => 
     location.pathname === path || 
