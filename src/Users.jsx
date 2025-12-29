@@ -195,122 +195,134 @@ const Users = () => {
     setShowSidebar(true);
   };
 
-  const handleSubmit = async (data) => {
-    setFormError('');
+  // ⚠️ ATENȚIE: Înlocuiește handleSubmit din Users.jsx cu această versiune ⚠️
+
+const handleSubmit = async (data) => {
+  setFormError('');
+  
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📤 HANDLESUBMIT CALLED');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('Mode:', sidebarMode);
+  console.log('Data received:', JSON.stringify(data, null, 2));
+  
+  // Validare instituție
+  if (!data.institutionId) {
+    setFormError('Vă rugăm să selectați o instituție!');
+    console.error('❌ No institution selected!');
+    return;
+  }
+
+  try {
+    let response;
     
-    console.log('📤 handleSubmit called with:', {
-      mode: sidebarMode,
-      role: data.role,
-      institutionId: data.institutionId,
-      permissions: data.permissions,
-      fullData: data
-    });
+    if (sidebarMode === 'create') {
+      // ========== CREATE USER ==========
+      const payload = {
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone || null,
+        position: data.position || null,
+        department: data.department || null,
+        role: data.role,
+        isActive: data.isActive,
+        institutionIds: [data.institutionId]
+      };
 
-    // Validare instituție
-    if (!data.institutionId) {
-      setFormError('Vă rugăm să selectați o instituție!');
-      console.error('❌ No institution selected!');
-      return;
-    }
-
-    try {
-      let response;
+      console.log('🚀 CREATE USER PAYLOAD:', JSON.stringify(payload, null, 2));
+      response = await userService.createUser(payload);
+      console.log('✅ CREATE RESPONSE:', JSON.stringify(response, null, 2));
       
-      if (sidebarMode === 'create') {
-        // ========== CREATE USER ==========
-        const payload = {
-          email: data.email,
-          password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone || null,
-          position: data.position || null,
-          department: data.department || null,
-          role: data.role,
-          isActive: data.isActive,
-          institutionIds: [data.institutionId]
-        };
-
-        console.log('🚀 Creating user with payload:', JSON.stringify(payload, null, 2));
-        
-        try {
-          response = await userService.createUser(payload);
-          console.log('✅ Create response:', response);
-        } catch (createError) {
-          console.error('❌ Create error details:', {
-            error: createError,
-            message: createError.message,
-            stack: createError.stack
-          });
-          throw createError;
-        }
-        
-      } else if (sidebarMode === 'edit') {
-        // ========== UPDATE USER ==========
-        const payload = {
-          email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone || null,
-          position: data.position || null,
-          department: data.department || null,
-          role: data.role,
-          isActive: data.isActive,
-          institutionIds: [data.institutionId]
-        };
-
-        // Include password doar dacă a fost schimbată
-        if (data.password && data.password.trim() !== "") {
-          payload.password = data.password;
-        }
-
-        console.log('✏️ Updating user ID:', selectedUser.id);
-        console.log('📦 Update payload:', JSON.stringify(payload, null, 2));
-        
-        try {
-          response = await userService.updateUser(selectedUser.id, payload);
-          console.log('✅ Update response:', response);
-        } catch (updateError) {
-          console.error('❌ Update error details:', {
-            error: updateError,
-            message: updateError.message,
-            stack: updateError.stack,
-            userId: selectedUser.id,
-            payload: payload
-          });
-          
-          // Încearcă să vezi dacă e o problemă de format
-          console.error('🔍 Debugging info:', {
-            userIdType: typeof selectedUser.id,
-            userIdValue: selectedUser.id,
-            payloadKeys: Object.keys(payload),
-            institutionIdType: typeof data.institutionId,
-            institutionIdValue: data.institutionId
-          });
-          
-          throw updateError;
-        }
+    } else if (sidebarMode === 'edit') {
+      // ========== UPDATE USER ==========
+      
+      // ⚠️ IMPORTANT: Backend așteaptă exact aceste câmpuri
+      const payload = {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        isActive: data.isActive,
+        institutionIds: [data.institutionId]  // Array cu un singur ID
+      };
+      
+      // Adaugă câmpurile opționale DOAR dacă există
+      if (data.phone && data.phone.trim()) {
+        payload.phone = data.phone;
+      }
+      if (data.position && data.position.trim()) {
+        payload.position = data.position;
+      }
+      if (data.department && data.department.trim()) {
+        payload.department = data.department;
       }
 
-      console.log('🎉 Server response:', response);
-
-      if (response && response.success) {
-        setShowSidebar(false);
-        loadUsers();
-      } else {
-        const errorMsg = response?.message || 'Eroare la salvarea utilizatorului.';
-        console.error('❌ Operation failed:', errorMsg);
-        setFormError(errorMsg);
+      // Include password DOAR dacă a fost schimbată
+      if (data.password && data.password.trim() !== "") {
+        payload.password = data.password;
       }
-    } catch (err) {
-      console.error('💥 Submit error:', {
-        error: err,
-        message: err.message,
-        stack: err.stack
-      });
-      setFormError(err.message || 'Eroare la salvarea utilizatorului.');
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✏️ UPDATE USER');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('User ID:', selectedUser.id);
+      console.log('User ID type:', typeof selectedUser.id);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
+      console.log('Payload keys:', Object.keys(payload));
+      console.log('InstitutionIds value:', payload.institutionIds);
+      console.log('InstitutionIds type:', typeof payload.institutionIds[0]);
+      
+      // Trimite request
+      console.log('📡 Sending PUT request to:', `/api/users/${selectedUser.id}`);
+      
+      try {
+        response = await userService.updateUser(selectedUser.id, payload);
+        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📥 UPDATE RESPONSE RECEIVED');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('Response:', JSON.stringify(response, null, 2));
+        console.log('Success:', response?.success);
+        console.log('Message:', response?.message);
+        
+      } catch (updateError) {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('❌ UPDATE ERROR CAUGHT');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('Error object:', updateError);
+        console.error('Error message:', updateError.message);
+        console.error('Error stack:', updateError.stack);
+        throw updateError;
+      }
     }
-  };
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🎯 FINAL RESPONSE CHECK');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Response exists:', !!response);
+    console.log('Response.success:', response?.success);
+
+    if (response && response.success) {
+      console.log('✅ SUCCESS! Closing sidebar and reloading users...');
+      setShowSidebar(false);
+      loadUsers();
+    } else {
+      const errorMsg = response?.message || 'Eroare la salvarea utilizatorului.';
+      console.error('❌ OPERATION FAILED:', errorMsg);
+      setFormError(errorMsg);
+    }
+  } catch (err) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('💥 CATCH BLOCK - UNEXPECTED ERROR');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
+    setFormError(err.message || 'Eroare la salvarea utilizatorului.');
+  }
+};
 
   const handleDelete = async (userId) => {
     try {
