@@ -65,7 +65,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-cyan-500 to-blue-600",
         iconColor: "text-cyan-500 dark:text-cyan-400",
         hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
       },
       {
         title: "Sectoare",
