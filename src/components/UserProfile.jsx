@@ -74,8 +74,10 @@ const UserProfile = () => {
 
   useEffect(() => {
     loadUserProfile();
-    loadOperators(); // ✅ LOAD OPERATORS
-  }, []);
+    if (currentUser?.role !== 'REGULATOR_VIEWER') {
+      loadOperators();
+    }
+  }, [currentUser?.role]);
 
   const loadUserProfile = async () => {
     setLoading(true);
@@ -523,8 +525,8 @@ const UserProfile = () => {
           )}
         </div>
 
-        {/* ✅ TABEL OPERATORI - NEW WITH EXPAND ROW */}
-        {operators.length > 0 && (
+        {/* {/* ✅ TABEL OPERATORI - NU apare pentru REGULATOR_VIEWER */}
+{currentUser?.role !== 'REGULATOR_VIEWER' && operators.length > 0 && (
           <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
                         rounded-[28px] border border-gray-200 dark:border-gray-700/50 
                         shadow-sm dark:shadow-none overflow-hidden">
