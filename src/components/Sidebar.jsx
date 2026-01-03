@@ -3,13 +3,13 @@
  * ============================================================================
  * SIDEBAR - ROLE-BASED NAVIGATION
  * ============================================================================
- * 
+ *
  * ✅ Afișează doar menu items relevante pentru fiecare rol
  * ✅ PLATFORM_ADMIN: vede tot
- * ✅ ADMIN_INSTITUTION: Dashboard + Rapoarte + Sectoare (fără Users/Institutions)
+ * ✅ ADMIN_INSTITUTION: Dashboard + Rapoarte + Sectoare + Utilizatori (fără Institutions)
  * ✅ EDITOR_INSTITUTION: Dashboard + Rapoarte + Sectoare (fără Users/Institutions)
- * ✅ REGULATOR_VIEWER: Dashboard + Rapoarte (doar view)
- * 
+ * ✅ REGULATOR_VIEWER: Dashboard (doar view) — fără Rapoarte / Users / Institutions / Sectoare
+ *
  * ============================================================================
  */
 
@@ -65,7 +65,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-cyan-500 to-blue-600",
         iconColor: "text-cyan-500 dark:text-cyan-400",
         hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"], // ✅ fără REGULATOR_VIEWER
       },
       {
         title: "Sectoare",
@@ -74,7 +74,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-blue-500 to-indigo-600",
         iconColor: "text-blue-500 dark:text-blue-400",
         hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"], // ✅ fără REGULATOR_VIEWER
       },
       {
         title: "Utilizatori",
@@ -83,7 +83,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-violet-500 to-purple-600",
         iconColor: "text-violet-500 dark:text-violet-400",
         hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-500/10",
-        roles: ["PLATFORM_ADMIN"], // Doar PLATFORM_ADMIN
+        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"], // ✅ IMPORTANT: admin instituție vede Users
       },
       {
         title: "Instituții",
@@ -92,19 +92,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-amber-500 to-orange-600",
         iconColor: "text-amber-500 dark:text-amber-400",
         hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
-        roles: ["PLATFORM_ADMIN"], // Doar PLATFORM_ADMIN
+        roles: ["PLATFORM_ADMIN"], // doar PLATFORM_ADMIN
       },
     ];
 
     // Filtrează items pe baza rolului user-ului
-    return allItems.filter(item => item.roles.includes(user?.role));
+    return allItems.filter((item) => item.roles.includes(user?.role));
   };
 
   const menuItems = getAllMenuItems();
 
-  const isActive = (path) => 
-    location.pathname === path || 
-    location.pathname.startsWith(path + '/');
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <aside
@@ -118,63 +117,72 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         ${isCollapsed ? "w-20" : "w-72"}
       `}
     >
-      {/* HEADER - LOGO - Premium Samsung style */}
-      <div className="h-[89px] flex items-center justify-between px-4 
-                    border-b border-gray-200 dark:border-gray-800">
+      {/* HEADER - LOGO */}
+      <div
+        className="h-[89px] flex items-center justify-between px-4 
+                    border-b border-gray-200 dark:border-gray-800"
+      >
         {!isCollapsed ? (
           <div className="flex items-center gap-3">
-            {/* Logo Icon - Gradient badge */}
             <div className="relative group">
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 
+              <div
+                className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 
                             rounded-[14px] blur-lg opacity-0 group-hover:opacity-30 
-                            transition-opacity duration-500" />
-              
-              {/* Logo container */}
-              <div className="relative w-11 h-11 rounded-[14px] 
+                            transition-opacity duration-500"
+              />
+
+              <div
+                className="relative w-11 h-11 rounded-[14px] 
                             bg-gradient-to-br from-emerald-500 to-teal-600 
                             flex items-center justify-center 
                             shadow-lg
                             group-hover:scale-105
-                            transition-transform duration-300">
+                            transition-transform duration-300"
+              >
                 <span className="text-2xl font-bold text-white">S</span>
               </div>
             </div>
-            
-            {/* Logo Text */}
+
             <div className="flex flex-col min-w-0">
-              <span className="text-lg font-bold 
+              <span
+                className="text-lg font-bold 
                            bg-gradient-to-r from-emerald-600 to-teal-600 
                            dark:from-emerald-400 dark:to-teal-400
                            bg-clip-text text-transparent
-                           leading-tight">
+                           leading-tight"
+              >
                 SAMD
               </span>
-              <span className="text-[10px] text-gray-500 dark:text-gray-400 
-                           font-medium leading-tight tracking-wide whitespace-nowrap">
+              <span
+                className="text-[10px] text-gray-500 dark:text-gray-400 
+                           font-medium leading-tight tracking-wide whitespace-nowrap"
+              >
                 Sistem Avansat de Monitorizare Deșeuri
               </span>
             </div>
           </div>
         ) : (
-          // Collapsed Logo - Center aligned
           <div className="relative group mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 
                           rounded-[14px] blur-lg opacity-0 group-hover:opacity-30 
-                          transition-opacity duration-500" />
-            <div className="relative w-11 h-11 rounded-[14px] 
+                          transition-opacity duration-500"
+            />
+            <div
+              className="relative w-11 h-11 rounded-[14px] 
                           bg-gradient-to-br from-emerald-500 to-teal-600 
                           flex items-center justify-center 
                           shadow-lg
                           group-hover:scale-105
-                          transition-transform duration-300">
+                          transition-transform duration-300"
+            >
               <span className="text-2xl font-bold text-white">S</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* NAVIGATION - OVERFLOW VISIBLE PENTRU TOOLTIPS */}
+      {/* NAVIGATION */}
       <nav className="flex-1 py-4 px-3 overflow-y-auto overflow-x-visible">
         <div className="space-y-1.5">
           {menuItems.map((item) => {
@@ -197,42 +205,29 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   }
                 `}
               >
-                {/* Active indicator bar */}
                 {active && !isCollapsed && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 
-                                w-1 h-8 bg-white rounded-r-full" />
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 
+                                w-1 h-8 bg-white rounded-r-full"
+                  />
                 )}
 
-                {/* Icon container */}
-                <div className={`
-                  flex-shrink-0 
-                  ${!active && 'group-hover:scale-110 transition-transform duration-300'}
-                `}>
-                  <Icon
-                    className={`
-                      w-5 h-5
-                      ${active ? "text-white" : item.iconColor}
-                    `}
-                  />
+                <div className={`flex-shrink-0 ${!active && "group-hover:scale-110 transition-transform duration-300"}`}>
+                  <Icon className={`w-5 h-5 ${active ? "text-white" : item.iconColor}`} />
                 </div>
 
-                {/* Label */}
-                {!isCollapsed && (
-                  <span className="text-sm font-semibold truncate">
-                    {item.title}
-                  </span>
-                )}
+                {!isCollapsed && <span className="text-sm font-semibold truncate">{item.title}</span>}
 
-                {/* Active glow effect */}
                 {active && (
-                  <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} 
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${item.gradient} 
                                  rounded-[14px] opacity-0 group-hover:opacity-20 
-                                 transition-opacity duration-300 -z-10`} />
+                                 transition-opacity duration-300 -z-10`}
+                  />
                 )}
 
-                {/* Tooltip - FIXED POSITION, Z-INDEX 9999 */}
                 {isCollapsed && (
-                  <div 
+                  <div
                     className="fixed left-[calc(80px+0.75rem)] 
                              px-3 py-2 
                              bg-gray-900/95 dark:bg-gray-800/95 backdrop-blur-xl
@@ -244,20 +239,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                              whitespace-nowrap 
                              shadow-2xl
                              border border-gray-700/50"
-                    style={{ 
-                      zIndex: 9999,
-                    }}
+                    style={{ zIndex: 9999 }}
                     onMouseEnter={(e) => {
                       const parentRect = e.currentTarget.parentElement.getBoundingClientRect();
                       e.currentTarget.style.top = `${parentRect.top + parentRect.height / 2 - 20}px`;
                     }}
                   >
                     {item.title}
-                    {/* Tooltip arrow */}
-                    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
+                    <div
+                      className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
                                   w-2 h-2 rotate-45 
                                   bg-gray-900/95 dark:bg-gray-800/95 
-                                  border-l border-b border-gray-700/50" />
+                                  border-l border-b border-gray-700/50"
+                    />
                   </div>
                 )}
               </Link>
@@ -266,11 +260,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
       </nav>
 
-      {/* FOOTER - Logout & Collapse */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 
-                    p-3 space-y-1.5 overflow-visible">
-        
-        {/* Logout Button */}
+      {/* FOOTER */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 p-3 space-y-1.5 overflow-visible">
         <button
           onClick={logout}
           className={`
@@ -286,41 +277,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div className="flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
             <LogOut className="w-5 h-5" />
           </div>
-          {!isCollapsed && (
-            <span className="text-sm font-semibold">Ieșire</span>
-          )}
-
-          {/* Tooltip - FIXED POSITION */}
-          {isCollapsed && (
-            <div 
-              className="fixed left-[calc(80px+0.75rem)] 
-                       px-3 py-2 
-                       bg-gray-900/95 dark:bg-gray-800/95 backdrop-blur-xl
-                       text-white text-xs font-bold 
-                       rounded-[12px] 
-                       opacity-0 group-hover:opacity-100 
-                       pointer-events-none 
-                       transition-opacity duration-300
-                       whitespace-nowrap 
-                       shadow-2xl
-                       border border-gray-700/50"
-              style={{ zIndex: 9999 }}
-              onMouseEnter={(e) => {
-                const parentRect = e.currentTarget.parentElement.getBoundingClientRect();
-                e.currentTarget.style.top = `${parentRect.top + parentRect.height / 2 - 20}px`;
-              }}
-            >
-              Ieșire
-              {/* Tooltip arrow */}
-              <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
-                            w-2 h-2 rotate-45 
-                            bg-gray-900/95 dark:bg-gray-800/95 
-                            border-l border-b border-gray-700/50" />
-            </div>
-          )}
+          {!isCollapsed && <span className="text-sm font-semibold">Ieșire</span>}
         </button>
 
-        {/* Collapse Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={`
@@ -333,44 +292,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           `}
         >
           <div className="flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-            {isCollapsed ? (
-              <ChevronRight className="w-5 h-5" />
-            ) : (
-              <ChevronLeft className="w-5 h-5" />
-            )}
+            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           </div>
-          {!isCollapsed && (
-            <span className="text-sm font-semibold">Restrânge</span>
-          )}
-
-          {/* Tooltip - FIXED POSITION */}
-          {isCollapsed && (
-            <div 
-              className="fixed left-[calc(80px+0.75rem)] 
-                       px-3 py-2 
-                       bg-gray-900/95 dark:bg-gray-800/95 backdrop-blur-xl
-                       text-white text-xs font-bold 
-                       rounded-[12px] 
-                       opacity-0 group-hover:opacity-100 
-                       pointer-events-none 
-                       transition-opacity duration-300
-                       whitespace-nowrap 
-                       shadow-2xl
-                       border border-gray-700/50"
-              style={{ zIndex: 9999 }}
-              onMouseEnter={(e) => {
-                const parentRect = e.currentTarget.parentElement.getBoundingClientRect();
-                e.currentTarget.style.top = `${parentRect.top + parentRect.height / 2 - 20}px`;
-              }}
-            >
-              Extinde
-              {/* Tooltip arrow */}
-              <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 
-                            w-2 h-2 rotate-45 
-                            bg-gray-900/95 dark:bg-gray-800/95 
-                            border-l border-b border-gray-700/50" />
-            </div>
-          )}
+          {!isCollapsed && <span className="text-sm font-semibold">Restrânge</span>}
         </button>
       </div>
     </aside>

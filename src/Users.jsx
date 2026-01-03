@@ -17,6 +17,7 @@ import {
   UserX,
   Shield,
   Building2,
+  Lock,
 } from "lucide-react";
 
 const Users = () => {
@@ -31,7 +32,7 @@ const Users = () => {
 
   // Sidebar
   const [showSidebar, setShowSidebar] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState('create');
+  const [sidebarMode, setSidebarMode] = useState("create");
   const [selectedUser, setSelectedUser] = useState(null);
 
   // Delete confirmation
@@ -54,27 +55,66 @@ const Users = () => {
       can_edit_data: false,
       access_type: null,
       sector_id: null,
-      operator_institution_id: null
-    }
+      operator_institution_id: null,
+    },
   });
 
   // Filters
   const [filters, setFilters] = useState({
-    search: '',
-    role: '',
-    institutionId: '',
-    status: ''
+    search: "",
+    role: "",
+    institutionId: "",
+    status: "",
   });
 
   // Pagination
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  // ========== CURRENT USER INSTITUTION ID ==========
+  const currentInstitutionId = useMemo(() => {
+    if (!currentUser) return null;
+    return (
+      currentUser.institution?.id ??
+      currentUser.institutionId ??
+      currentUser.institution_id ??
+      null
+    );
+  }, [currentUser]);
+
+  const isPlatformAdmin = currentUser?.role === "PLATFORM_ADMIN";
+  const isAdminInstitution = currentUser?.role === "ADMIN_INSTITUTION";
+
+  // ========== PERMISSIONS (UI) ==========
+  const canManageUser = (targetUser) => {
+    if (!currentUser || !targetUser) return false;
+
+    // PLATFORM_ADMIN -> all
+    if (isPlatformAdmin) return true;
+
+    // ADMIN_INSTITUTION -> only EDITOR_INSTITUTION from same institution
+    if (isAdminInstitution) {
+      const targetInstId = targetUser?.institution?.id ?? null;
+      if (!targetInstId || !currentInstitutionId) return false;
+
+      // strict: only editors
+      if (targetUser.role !== "EDITOR_INSTITUTION") return false;
+
+      return Number(targetInstId) === Number(currentInstitutionId);
+    }
+
+    // others -> none
+    return false;
+  };
+
+  const canCreateUser = isPlatformAdmin || isAdminInstitution;
+
   // ========== LOAD DATA ==========
   useEffect(() => {
     loadUsers();
     loadInstitutions();
     loadSectors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUsers = async () => {
@@ -94,29 +134,24 @@ const Users = () => {
   const loadInstitutions = async () => {
     setLoadingInstitutions(true);
     try {
-      console.log('🔄 Loading institutions...');
-      
-      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const API_URL = "https://waste-backend-3u9c.onrender.com";
       const response = await fetch(`${API_URL}/api/institutions?limit=1000`, {
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}`,
-          'Content-Type': 'application/json'
-        }
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("wasteAccessToken")}`,
+          "Content-Type": "application/json",
+        },
       });
-      
+
       const data = await response.json();
-      console.log('📦 API Response:', data);
-  
+
       if (data.success) {
         const institutionsArray = data.data?.institutions || [];
-        console.log('✅ Institutions loaded:', institutionsArray.length);
         setInstitutions(institutionsArray);
       } else {
-        console.error('❌ Failed to load institutions:', data.message);
         setInstitutions([]);
       }
     } catch (err) {
-      console.error('💥 Error loading institutions:', err);
+      console.error("Error loading institutions:", err);
       setInstitutions([]);
     } finally {
       setLoadingInstitutions(false);
@@ -125,14 +160,12 @@ const Users = () => {
 
   const loadSectors = async () => {
     try {
-      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const API_URL = "https://waste-backend-3u9c.onrender.com";
       const response = await fetch(`${API_URL}/api/sectors`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('wasteAccessToken')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("wasteAccessToken")}` },
       });
       const data = await response.json();
-      if (data.success) {
-        setSectors(data.data || []);
-      }
+      if (data.success) setSectors(data.data || []);
     } catch (err) {
       console.error("Error loading sectors:", err);
     }
@@ -140,225 +173,207 @@ const Users = () => {
 
   // ========== HANDLERS ==========
   const handleCreateUser = () => {
+    if (!canCreateUser) return;
+
     setSelectedUser(null);
-    setSidebarMode('create');
+    setSidebarMode("create");
+
+    // Admin instituție: create doar în instituția lui + rol fix editor
+    const presetInstitutionId = isAdminInstitution ? currentInstitutionId : null;
+
     setFormData({
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      phone: '',
-      position: '',
-      department: '',
-      role: 'EDITOR_INSTITUTION',
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      position: "",
+      department: "",
+      role: "EDITOR_INSTITUTION",
       isActive: true,
-      institutionId: null,
+      institutionId: presetInstitutionId,
       permissions: {
         can_edit_data: false,
         access_type: null,
         sector_id: null,
-        operator_institution_id: null
-      }
+        operator_institution_id: null,
+      },
     });
-    setFormError('');
+    setFormError("");
     setShowSidebar(true);
   };
 
   const handleViewUser = (user) => {
     setSelectedUser(user);
-    setSidebarMode('view');
+    setSidebarMode("view");
     setShowSidebar(true);
   };
 
   const handleEditUser = (user) => {
+    if (!canManageUser(user)) {
+      setFormError("Nu aveți permisiunea să editați acest utilizator.");
+      handleViewUser(user);
+      return;
+    }
+
     setSelectedUser(user);
-    setSidebarMode('edit');
+    setSidebarMode("edit");
     setFormData({
       email: user.email,
-      password: '',
+      password: "",
       firstName: user.first_name,
       lastName: user.last_name,
-      phone: user.phone || '',
-      position: user.position || '',
-      department: user.department || '',
-      role: user.role,
+      phone: user.phone || "",
+      position: user.position || "",
+      department: user.department || "",
+      role: user.role, // va fi editor
       isActive: user.is_active,
       institutionId: user.institution?.id || null,
       permissions: user.permissions || {
         can_edit_data: false,
         access_type: null,
         sector_id: null,
-        operator_institution_id: null
-      }
+        operator_institution_id: null,
+      },
     });
-    setFormError('');
+    setFormError("");
     setShowSidebar(true);
   };
 
-  // ⚠️ ATENȚIE: Înlocuiește handleSubmit din Users.jsx cu această versiune ⚠️
+  // ========== SUBMIT ==========
+  const handleSubmit = async (data) => {
+    setFormError("");
 
-const handleSubmit = async (data) => {
-  setFormError('');
-  
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📤 HANDLESUBMIT CALLED');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Mode:', sidebarMode);
-  console.log('Data received:', JSON.stringify(data, null, 2));
-  
-  // Validare instituție
-  if (!data.institutionId) {
-    setFormError('Vă rugăm să selectați o instituție!');
-    console.error('❌ No institution selected!');
-    return;
-  }
+    if (!data.institutionId) {
+      setFormError("Vă rugăm să selectați o instituție!");
+      return;
+    }
 
-  try {
-    let response;
-    
-    if (sidebarMode === 'create') {
-      // ========== CREATE USER ==========
-      const payload = {
-        email: data.email,
-        password: data.password,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone || null,
-        position: data.position || null,
-        department: data.department || null,
-        role: data.role,
-        isActive: data.isActive,
-        institutionIds: [data.institutionId]
-      };
+    try {
+      let response;
 
-      console.log('🚀 CREATE USER PAYLOAD:', JSON.stringify(payload, null, 2));
-      response = await userService.createUser(payload);
-      console.log('✅ CREATE RESPONSE:', JSON.stringify(response, null, 2));
-      
-    } else if (sidebarMode === 'edit') {
-      // ========== UPDATE USER ==========
-      
-      // ⚠️ IMPORTANT: Backend așteaptă exact aceste câmpuri
-      const payload = {
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        isActive: data.isActive,
-        institutionIds: [data.institutionId]  // Array cu un singur ID
-      };
-      
-      // Adaugă câmpurile opționale DOAR dacă există
-      if (data.phone && data.phone.trim()) {
-        payload.phone = data.phone;
-      }
-      if (data.position && data.position.trim()) {
-        payload.position = data.position;
-      }
-      if (data.department && data.department.trim()) {
-        payload.department = data.department;
-      }
+      if (sidebarMode === "create") {
+        // Admin instituție: doar instituția lui + rol editor
+        if (isAdminInstitution) {
+          if (Number(data.institutionId) !== Number(currentInstitutionId)) {
+            setFormError("Adminul de instituție poate crea utilizatori doar în instituția lui.");
+            return;
+          }
+          if (data.role !== "EDITOR_INSTITUTION") {
+            setFormError("Adminul de instituție poate crea doar utilizatori EDITOR_INSTITUTION.");
+            return;
+          }
+        }
 
-      // Include password DOAR dacă a fost schimbată
-      if (data.password && data.password.trim() !== "") {
-        payload.password = data.password;
-      }
+        const payload = {
+          email: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || null,
+          position: data.position || null,
+          department: data.department || null,
+          role: isAdminInstitution ? "EDITOR_INSTITUTION" : data.role,
+          isActive: data.isActive,
+          institutionIds: [data.institutionId],
+        };
 
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('✏️ UPDATE USER');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('User ID:', selectedUser.id);
-      console.log('User ID type:', typeof selectedUser.id);
-      console.log('Payload:', JSON.stringify(payload, null, 2));
-      console.log('Payload keys:', Object.keys(payload));
-      console.log('InstitutionIds value:', payload.institutionIds);
-      console.log('InstitutionIds type:', typeof payload.institutionIds[0]);
-      
-      // Trimite request
-      console.log('📡 Sending PUT request to:', `/api/users/${selectedUser.id}`);
-      
-      try {
+        response = await userService.createUser(payload);
+      } else if (sidebarMode === "edit") {
+        if (!selectedUser) {
+          setFormError("Utilizator invalid.");
+          return;
+        }
+        if (!canManageUser(selectedUser)) {
+          setFormError("Nu aveți permisiunea să editați acest utilizator.");
+          return;
+        }
+
+        // Admin instituție: nu mută instituția + rol rămâne editor
+        if (isAdminInstitution) {
+          if (Number(data.institutionId) !== Number(currentInstitutionId)) {
+            setFormError("Adminul de instituție poate edita utilizatori doar în instituția lui.");
+            return;
+          }
+          if (data.role !== "EDITOR_INSTITUTION") {
+            setFormError("Adminul de instituție poate edita doar utilizatori EDITOR_INSTITUTION.");
+            return;
+          }
+        }
+
+        const payload = {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: isAdminInstitution ? "EDITOR_INSTITUTION" : data.role,
+          isActive: data.isActive,
+          institutionIds: [data.institutionId],
+        };
+
+        if (data.phone && data.phone.trim()) payload.phone = data.phone;
+        if (data.position && data.position.trim()) payload.position = data.position;
+        if (data.department && data.department.trim()) payload.department = data.department;
+
+        if (data.password && data.password.trim() !== "") {
+          payload.password = data.password;
+        }
+
         response = await userService.updateUser(selectedUser.id, payload);
-        
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📥 UPDATE RESPONSE RECEIVED');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Response:', JSON.stringify(response, null, 2));
-        console.log('Success:', response?.success);
-        console.log('Message:', response?.message);
-        
-      } catch (updateError) {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('❌ UPDATE ERROR CAUGHT');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.error('Error object:', updateError);
-        console.error('Error message:', updateError.message);
-        console.error('Error stack:', updateError.stack);
-        throw updateError;
       }
-    }
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎯 FINAL RESPONSE CHECK');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Response exists:', !!response);
-    console.log('Response.success:', response?.success);
-
-    if (response && response.success) {
-      console.log('✅ SUCCESS! Closing sidebar and reloading users...');
-      setShowSidebar(false);
-      loadUsers();
-    } else {
-      const errorMsg = response?.message || 'Eroare la salvarea utilizatorului.';
-      console.error('❌ OPERATION FAILED:', errorMsg);
-      setFormError(errorMsg);
+      if (response && response.success) {
+        setShowSidebar(false);
+        await loadUsers();
+      } else {
+        setFormError(response?.message || "Eroare la salvarea utilizatorului.");
+      }
+    } catch (err) {
+      setFormError(err.message || "Eroare la salvarea utilizatorului.");
     }
-  } catch (err) {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('💥 CATCH BLOCK - UNEXPECTED ERROR');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.error('Error:', err);
-    console.error('Error message:', err.message);
-    console.error('Error stack:', err.stack);
-    setFormError(err.message || 'Eroare la salvarea utilizatorului.');
-  }
-};
+  };
 
   const handleDelete = async (userId) => {
     try {
+      const targetUser = users.find((u) => u.id === userId);
+
+      if (!canManageUser(targetUser)) {
+        alert("Nu aveți permisiunea să ștergeți acest utilizator.");
+        return;
+      }
+
       const response = await userService.deleteUser(userId);
       if (response.success) {
         setDeleteConfirm(null);
         loadUsers();
       } else {
-        alert(response.message || 'Eroare la ștergere.');
+        alert(response.message || "Eroare la ștergere.");
       }
     } catch (err) {
-      alert(err.message || 'Eroare la ștergere.');
+      alert(err.message || "Eroare la ștergere.");
     }
   };
 
   const clearFilters = () => {
     setFilters({
-      search: '',
-      role: '',
-      institutionId: '',
-      status: ''
+      search: "",
+      role: "",
+      institutionId: "",
+      status: "",
     });
     setPage(1);
   };
 
   // ========== COMPUTED ==========
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
+    return users.filter((user) => {
       if (filters.search) {
-        const searchable = `${user.first_name || ''} ${user.last_name || ''} ${user.email || ''}`.toLowerCase();
+        const searchable = `${user.first_name || ""} ${user.last_name || ""} ${user.email || ""}`.toLowerCase();
         if (!searchable.includes(filters.search.toLowerCase())) return false;
       }
       if (filters.role && user.role !== filters.role) return false;
       if (filters.institutionId && user.institution?.id !== parseInt(filters.institutionId)) return false;
-      if (filters.status === 'active' && !user.is_active) return false;
-      if (filters.status === 'inactive' && user.is_active) return false;
+      if (filters.status === "active" && !user.is_active) return false;
+      if (filters.status === "inactive" && user.is_active) return false;
       return true;
     });
   }, [users, filters]);
@@ -375,7 +390,7 @@ const handleSubmit = async (data) => {
     PLATFORM_ADMIN: { label: "Admin Platformă", color: "red" },
     ADMIN_INSTITUTION: { label: "Admin Instituție", color: "blue" },
     EDITOR_INSTITUTION: { label: "Editor Instituție", color: "emerald" },
-    REGULATOR_VIEWER: { label: "Regulator", color: "purple" }
+    REGULATOR_VIEWER: { label: "Regulator", color: "purple" },
   };
 
   const getRoleBadge = (role) => {
@@ -384,9 +399,9 @@ const handleSubmit = async (data) => {
       red: "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/20",
       blue: "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/20",
       emerald: "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-      purple: "bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/20"
+      purple: "bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/20",
     };
-    
+
     return (
       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold border ${colors[r.color]}`}>
         <Shield className="w-3 h-3" />
@@ -395,77 +410,15 @@ const handleSubmit = async (data) => {
     );
   };
 
-  // ========== ACCESS LABEL ==========
+  // ========== ACCESS LABEL (păstrat ca la tine) ==========
   const getAccessLabel = (user) => {
-    if (user.role === 'PLATFORM_ADMIN') {
+    if (user.role === "PLATFORM_ADMIN") {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
           🌍 Total
         </span>
       );
     }
-    
-    if (user.role === 'ADMIN_INSTITUTION') {
-      if (user.institution?.type === 'MUNICIPALITY' && user.institution?.name?.includes('PMB')) {
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            🏙️ Toate sectoarele
-          </span>
-        );
-      }
-      if (user.sectors && user.sectors.length > 0) {
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            🏙️ Sector {user.sectors.map(s => s.sector_number).join(', ')}
-          </span>
-        );
-      }
-    }
-  
-    if (user.role === 'EDITOR_INSTITUTION') {
-      const canEdit = user.permissions?.can_edit_data;
-      if (user.sectors && user.sectors.length > 0) {
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            {canEdit ? '📝' : '👁️'} Sector {user.sectors.map(s => s.sector_number).join(', ')}
-          </span>
-        );
-      }
-    }
-  
-    if (user.role === 'REGULATOR_VIEWER') {
-      const perm = user.permissions;
-      
-      if (perm?.access_type === 'ALL') {
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            👁️ Toate datele
-          </span>
-        );
-      }
-      if (perm?.access_type === 'SECTOR' && perm.sector_id) {
-        const sector = sectors.find(s => s.id === perm.sector_id);
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            👁️ Sector {sector?.sector_number || '?'}
-          </span>
-        );
-      }
-      if (perm?.access_type === 'OPERATOR' && perm.operator_institution_id) {
-        const operator = institutions.find(i => i.id === perm.operator_institution_id);
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            👁️ {operator?.short_name || operator?.name || 'Operator'}
-          </span>
-        );
-      }
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-          👁️ View only
-        </span>
-      );
-    }
-  
     return <span className="text-xs text-gray-400 dark:text-gray-500">-</span>;
   };
 
@@ -512,8 +465,10 @@ const handleSubmit = async (data) => {
             disabled={loadingInstitutions}
           >
             <option value="">Toate instituțiile</option>
-            {institutions.map(inst => (
-              <option key={inst.id} value={inst.id}>{inst.name}</option>
+            {institutions.map((inst) => (
+              <option key={inst.id} value={inst.id}>
+                {inst.name}
+              </option>
             ))}
           </select>
 
@@ -540,18 +495,21 @@ const handleSubmit = async (data) => {
           )}
 
           {/* Create Button */}
-          <button
-            onClick={handleCreateUser}
-            className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Utilizator Nou
-          </button>
+          {canCreateUser && (
+            <button
+              onClick={handleCreateUser}
+              className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Utilizator Nou
+            </button>
+          )}
         </div>
 
         {/* Results Count */}
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {filteredUsers.length} utilizator{filteredUsers.length !== 1 ? 'i' : ''} găsi{filteredUsers.length !== 1 ? 'ți' : 't'}
+          {filteredUsers.length} utilizator{filteredUsers.length !== 1 ? "i" : ""} găsi
+          {filteredUsers.length !== 1 ? "ți" : "t"}
           {hasActiveFilters && ` (filtrat din ${users.length})`}
         </div>
       </div>
@@ -568,7 +526,7 @@ const handleSubmit = async (data) => {
             <div className="p-12 text-center">
               <UsersIcon className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <p className="text-gray-600 dark:text-gray-400 mb-2">
-                {hasActiveFilters ? 'Niciun utilizator găsit' : 'Nu există utilizatori'}
+                {hasActiveFilters ? "Niciun utilizator găsit" : "Nu există utilizatori"}
               </p>
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm">
@@ -589,52 +547,85 @@ const handleSubmit = async (data) => {
                     <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Acțiuni</th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {paginatedUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onClick={() => handleViewUser(user)}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
-                            {user.first_name?.[0]}{user.last_name?.[0]}
+                  {paginatedUsers.map((user) => {
+                    const canManage = canManageUser(user);
+
+                    return (
+                      <tr
+                        key={user.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                        onClick={() => handleViewUser(user)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
+                              {user.first_name?.[0]}{user.last_name?.[0]}
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">{user.first_name} {user.last_name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-white">{user.first_name} {user.last_name}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {user.institution ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
+                                {user.institution.short_name || user.institution.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getAccessLabel(user)}</td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${user.is_active ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-gray-500/10 text-gray-600 dark:text-gray-400"}`}>
+                            {user.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
+                            {user.is_active ? "Activ" : "Inactiv"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {canManage ? (
+                              <>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleEditUser(user); }}
+                                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
+                                  title="Editează"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDeleteConfirm(user); }}
+                                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
+                                  title="Șterge"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                                title="Adminul de instituție poate gestiona doar utilizatori EDITOR_INSTITUTION din instituția lui"
+                              >
+                                <Lock className="w-3 h-3" />
+                                Restricționat
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {user.institution ? (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
-                              {user.institution.short_name || user.institution.name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{getAccessLabel(user)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${user.is_active ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-gray-500/10 text-gray-600 dark:text-gray-400'}`}>
-                          {user.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
-                          {user.is_active ? 'Activ' : 'Inactiv'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={(e) => { e.stopPropagation(); handleEditUser(user); }} className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors" title="Editează">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(user); }} className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors" title="Șterge">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -648,10 +639,18 @@ const handleSubmit = async (data) => {
               Pagina {page} din {totalPages}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 border border-gray-200 dark:border-gray-700 rounded-[10px] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-2 border border-gray-200 dark:border-gray-700 rounded-[10px] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 border border-gray-200 dark:border-gray-700 rounded-[10px] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-2 border border-gray-200 dark:border-gray-700 rounded-[10px] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -664,6 +663,7 @@ const handleSubmit = async (data) => {
         <UserSidebar
           mode={sidebarMode}
           user={selectedUser}
+          currentUser={currentUser}
           formData={formData}
           institutions={institutions}
           sectors={sectors}
@@ -684,10 +684,16 @@ const handleSubmit = async (data) => {
               Sigur vrei să ștergi utilizatorul <strong>{deleteConfirm.first_name} {deleteConfirm.last_name}</strong>?
             </p>
             <div className="flex gap-3">
-              <button onClick={() => handleDelete(deleteConfirm.id)} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-[14px] transition-all">
+              <button
+                onClick={() => handleDelete(deleteConfirm.id)}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-[14px] transition-all"
+              >
                 Șterge
               </button>
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-[14px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-[14px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              >
                 Anulează
               </button>
             </div>

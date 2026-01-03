@@ -1,14 +1,7 @@
 // src/App.jsx
 /**
  * ============================================================================
- * APP - WITH RESPONSIVE SIDEBAR & SHARED STATE
- * ============================================================================
- * 
- * ✅ State collapse partajat între Sidebar și toate paginile
- * ✅ Content resize automat: ml-72 (expanded) sau ml-20 (collapsed)
- * ✅ Smooth transitions 300ms
- * ✅ Rută profil utilizator adăugată
- * 
+ * APP - WITH RESPONSIVE SIDEBAR & SHARED STATE + ROLE GUARDS
  * ============================================================================
  */
 
@@ -19,15 +12,15 @@ import { useAuth } from "./AuthContext";
 import Sidebar from "./components/Sidebar";
 import WasteLogin from "./WasteLogin";
 import DashboardLandfill from "./components/dashboard/DashboardLandfill";
-import DashboardTmb from './components/dashboard/DashboardTmb';
+import DashboardTmb from "./components/dashboard/DashboardTmb";
 import Users from "./Users";
 import Institutions from "./Institutions";
-import ReportsMain from './components/reports/ReportsMain';
-import ReportTMB from './components/reports/ReportTMB';
-import UserProfile from './components/UserProfile'; // ✅ ADĂUGAT
-import Sectors from './Sectors';
+import ReportsMain from "./components/reports/ReportsMain";
+import ReportTMB from "./components/reports/ReportTMB";
+import UserProfile from "./components/UserProfile";
+import Sectors from "./Sectors";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -43,42 +36,40 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+    if (!allowedRoles.includes(user.role)) {
+      // fallback “safe”: du-l în dashboard
+      return <Navigate to="/dashboard/landfill" replace />;
+    }
+  }
+
+  return children;
 };
 
 function App() {
   const { user } = useAuth();
   const location = useLocation();
 
-  // ========================================================================
-  // SIDEBAR COLLAPSE STATE - PARTAJAT CU SIDEBAR
-  // ========================================================================
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   const showSidebar = user && location.pathname !== "/login";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* SIDEBAR - cu state partajat */}
       {showSidebar && (
-        <Sidebar 
-          isCollapsed={isCollapsed} 
-          setIsCollapsed={setIsCollapsed} 
-        />
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       )}
 
-      {/* MAIN CONTENT - RESIZE AUTOMAT */}
-      <div 
+      <div
         className={`
           transition-all duration-300 ease-in-out
           ${showSidebar ? (isCollapsed ? "ml-20" : "ml-72") : "ml-0"}
         `}
       >
         <Routes>
-          {/* Public route */}
           <Route path="/login" element={<WasteLogin />} />
 
-          {/* Redirect root */}
           <Route
             path="/"
             element={
@@ -88,11 +79,11 @@ function App() {
             }
           />
 
-          {/* Dashboard Routes */}
+          {/* DASHBOARDS - toți (inclusiv regulator) */}
           <Route
             path="/dashboard/landfill"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"]}>
                 <DashboardLandfill />
               </ProtectedRoute>
             }
@@ -101,17 +92,17 @@ function App() {
           <Route
             path="/dashboard/tmb"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"]}>
                 <DashboardTmb />
               </ProtectedRoute>
             }
           />
 
-          {/* Reports Routes */}
+          {/* REPORTS - fără REGULATOR_VIEWER */}
           <Route
             path="/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
                 <ReportsMain />
               </ProtectedRoute>
             }
@@ -120,41 +111,43 @@ function App() {
           <Route
             path="/reports/tmb"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
                 <ReportTMB />
               </ProtectedRoute>
             }
           />
 
-          {/* Management Routes */}
+          {/* USERS - PLATFORM_ADMIN + ADMIN_INSTITUTION */}
           <Route
             path="/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION"]}>
                 <Users />
               </ProtectedRoute>
             }
           />
 
+          {/* INSTITUTIONS - doar PLATFORM_ADMIN */}
           <Route
             path="/institutions"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN"]}>
                 <Institutions />
               </ProtectedRoute>
             }
           />
 
+          {/* SECTORS - fără REGULATOR_VIEWER */}
           <Route
-           path="/sectors" 
-           element={
-            <ProtectedRoute>
-            <Sectors />
-            </ProtectedRoute>
-           }
+            path="/sectors"
+            element={
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+                <Sectors />
+              </ProtectedRoute>
+            }
           />
 
-          {/* ✅ USER PROFILE ROUTE - NOU */}
+          {/* PROFILE - toți */}
           <Route
             path="/profile"
             element={
@@ -164,11 +157,7 @@ function App() {
             }
           />
 
-          {/* Fallback */}
-          <Route
-            path="*"
-            element={<Navigate to="/dashboard/landfill" replace />}
-          />
+          <Route path="*" element={<Navigate to="/dashboard/landfill" replace />} />
         </Routes>
       </div>
     </div>

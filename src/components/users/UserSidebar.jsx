@@ -1,700 +1,383 @@
 // src/components/users/UserSidebar.jsx
-import { X, Eye, EyeOff, Save, User, Mail, Shield, Building2, Calendar, Phone, Briefcase, Users as UsersIcon, Edit2 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from "react";
+import { X, Save, Eye, Edit2, Plus } from "lucide-react";
 
 const UserSidebar = ({
-  mode = 'create',
-  user = null,
+  mode, // 'create' | 'edit' | 'view'
+  user,
+  currentUser,
   formData,
-  institutions = [],
-  sectors = [],
+  institutions,
+  sectors, // (nu forțăm aici sectoare, păstrăm pentru viitor)
   onClose,
   onSubmit,
   onFormChange,
-  formError = ''
+  formError,
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
+  const isView = mode === "view";
+  const isEdit = mode === "edit";
+  const isCreate = mode === "create";
 
-  const isViewMode = mode === 'view';
-  const isEditMode = mode === 'edit';
-  const isCreateMode = mode === 'create';
+  const isPlatformAdmin = currentUser?.role === "PLATFORM_ADMIN";
+  const isAdminInstitution = currentUser?.role === "ADMIN_INSTITUTION";
 
-  // ========== ROLE LABELS ========== (✅ ACTUALIZAT)
-  const roleLabels = {
-    PLATFORM_ADMIN: 'Admin Platformă',
-    ADMIN_INSTITUTION: 'Admin Instituție',
-    EDITOR_INSTITUTION: 'Editor Instituție',
-    REGULATOR_VIEWER: 'Regulator'
-  };
-
-  // ========== ROLE BADGE ========== (✅ ACTUALIZAT)
-  const getRoleBadge = (role) => {
-    const styles = {
-      PLATFORM_ADMIN: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-      ADMIN_INSTITUTION: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-      EDITOR_INSTITUTION: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-      REGULATOR_VIEWER: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
-    };
-
+  const currentInstitutionId = useMemo(() => {
+    if (!currentUser) return null;
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold border ${styles[role] || styles.EDITOR_INSTITUTION}`}>
-        <Shield className="w-3 h-3" />
-        {roleLabels[role] || role}
-      </span>
+      currentUser.institution?.id ??
+      currentUser.institutionId ??
+      currentUser.institution_id ??
+      null
     );
-  };
+  }, [currentUser]);
 
-  const formatDate = (date) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('ro-RO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // Admin instituție: are voie doar pe editori din instituția lui (create/edit)
+  const canSubmit = useMemo(() => {
+    if (isView) return false;
+    if (isPlatformAdmin) return true;
 
-  // ========== FILTER INSTITUTIONS ========== (✅ FIX FINAL)
-const availableInstitutions = useMemo(() => {
-  console.log('🔍 Filter institutions - role:', formData.role);
-  console.log('📋 Total institutions:', institutions.length);
-  
-  if (!formData.role) {
-    console.log('⚠️ No role selected, returning empty');
-    return [];
-  }
+    if (isAdminInstitution) {
+      // create: ok doar dacă instituția e a lui și rolul e editor
+      if (isCreate) {
+        return (
+          Number(formData?.institutionId) === Number(currentInstitutionId) &&
+          formData?.role === "EDITOR_INSTITUTION"
+        );
+      }
 
-  let filtered = [];
-
-  switch (formData.role) {
-    case 'PLATFORM_ADMIN':
-      // Doar ASSOCIATION (ADIGDMB)
-      filtered = institutions.filter(i => i.type === 'ASSOCIATION');
-      console.log('✅ PLATFORM_ADMIN → ASSOCIATION only:', filtered.length);
-      break;
-
-    case 'ADMIN_INSTITUTION':
-    case 'EDITOR_INSTITUTION':
-      // Doar MUNICIPALITY (PMB + Sectoare 1-6)
-      filtered = institutions.filter(i => i.type === 'MUNICIPALITY');
-      console.log('✅ ADMIN/EDITOR_INSTITUTION → MUNICIPALITY:', filtered.length);
-      break;
-
-    case 'REGULATOR_VIEWER':
-      // Doar REGULATOR
-      filtered = institutions.filter(i => i.type === 'REGULATOR');
-      console.log('✅ REGULATOR_VIEWER → REGULATOR only:', filtered.length);
-      break;
-
-    case 'OPERATOR_USER':
-      // Doar operatorii
-      filtered = institutions.filter(i => 
-        i.type === 'WASTE_COLLECTOR' ||
-        i.type === 'TMB_OPERATOR' ||
-        i.type === 'SORTING_OPERATOR' ||
-        i.type === 'LANDFILL' ||
-        i.type === 'DISPOSAL_CLIENT'
-      );
-      console.log('✅ OPERATOR_USER → Operators:', filtered.length);
-      break;
-
-    default:
-      console.log('⚠️ Unknown role, returning empty');
-      filtered = [];
-  }
-
-  return filtered;
-}, [formData.role, institutions]);
-
-  // Selected institution
-  const selectedInstitution = useMemo(() => {
-    return institutions.find(i => i.id === formData.institutionId);
-  }, [formData.institutionId, institutions]);
-
-  // Operator institutions pentru REGULATOR_VIEWER
-  const operatorInstitutions = useMemo(() => {
-    return institutions.filter(i => 
-      i.type === 'WASTE_COLLECTOR' || 
-      i.type === 'TMB_OPERATOR' || 
-      i.type === 'SORTING_OPERATOR' ||
-      i.type === 'LANDFILL'
-    );
-  }, [institutions]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    console.log('📤 UserSidebar submitting:', {
-      role: formData.role,
-      institutionId: formData.institutionId,
-      institution: selectedInstitution?.name,
-      fullFormData: formData
-    });
-    
-    // Validare: Asigură-te că instituția este selectată
-    if (!formData.institutionId) {
-      console.error('❌ No institution selected!');
-      alert('Vă rugăm să selectați o instituție!');
-      return;
-    }
-    
-    onSubmit(formData);
-  };
-
-  // ========== HANDLE ROLE CHANGE ========== (✅ ACTUALIZAT)
-  const handleRoleChange = (newRole) => {
-    console.log('🔄 Role change:', formData.role, '→', newRole);
-    
-    const newFormData = { ...formData, role: newRole };
-
-    // Reset institution când schimbi rolul
-    newFormData.institutionId = null;
-
-    // Reset permissions
-    newFormData.permissions = {
-      can_edit_data: false,
-      access_type: null,
-      sector_id: null,
-      operator_institution_id: null
-    };
-
-    // Auto-select ADIGDMB pentru PLATFORM_ADMIN
-    if (newRole === 'PLATFORM_ADMIN') {
-      const adigdmb = institutions.find(i => i.type === 'ASSOCIATION');
-      if (adigdmb) {
-        console.log('✅ Auto-select ADIGDMB:', adigdmb.name);
-        newFormData.institutionId = adigdmb.id;
-      } else {
-        console.log('⚠️ ADIGDMB not found in institutions!');
+      // edit: doar dacă userul target e editor și e din instituția lui
+      if (isEdit) {
+        const targetInst = user?.institution?.id ?? null;
+        const okTarget =
+          user?.role === "EDITOR_INSTITUTION" &&
+          Number(targetInst) === Number(currentInstitutionId);
+        const okForm =
+          Number(formData?.institutionId) === Number(currentInstitutionId) &&
+          formData?.role === "EDITOR_INSTITUTION";
+        return okTarget && okForm;
       }
     }
 
-    console.log('📤 New form data:', newFormData);
-    onFormChange(newFormData);
+    return false;
+  }, [
+    isView,
+    isPlatformAdmin,
+    isAdminInstitution,
+    isCreate,
+    isEdit,
+    formData?.institutionId,
+    formData?.role,
+    currentInstitutionId,
+    user,
+  ]);
+
+  const title = useMemo(() => {
+    if (isCreate) return "Utilizator Nou";
+    if (isEdit) return "Editare Utilizator";
+    return "Detalii Utilizator";
+  }, [isCreate, isEdit]);
+
+  const subtitle = useMemo(() => {
+    if (isCreate) return "Completează datele utilizatorului";
+    if (isEdit) return "Actualizează datele utilizatorului";
+    return "Vizualizare profil utilizator";
+  }, [isCreate, isEdit]);
+
+  const icon = useMemo(() => {
+    if (isCreate) return <Plus className="w-5 h-5" />;
+    if (isEdit) return <Edit2 className="w-5 h-5" />;
+    return <Eye className="w-5 h-5" />;
+  }, [isCreate, isEdit]);
+
+  // Admin instituție: lock rol și instituție
+  const roleDisabled = isView || isAdminInstitution;
+  const institutionDisabled = isView || isAdminInstitution;
+
+  // Admin instituție: rol forțat editor
+  const allowedRoleOptions = useMemo(() => {
+    if (isAdminInstitution) return [{ value: "EDITOR_INSTITUTION", label: "Editor Instituție" }];
+    return [
+      { value: "PLATFORM_ADMIN", label: "Admin Platformă" },
+      { value: "ADMIN_INSTITUTION", label: "Admin Instituție" },
+      { value: "EDITOR_INSTITUTION", label: "Editor Instituție" },
+      { value: "REGULATOR_VIEWER", label: "Regulator" },
+    ];
+  }, [isAdminInstitution]);
+
+  // Admin instituție: instituție forțată
+  const availableInstitutions = useMemo(() => {
+    if (!isAdminInstitution) return institutions || [];
+    return (institutions || []).filter((i) => Number(i.id) === Number(currentInstitutionId));
+  }, [institutions, isAdminInstitution, currentInstitutionId]);
+
+  const [localError, setLocalError] = useState("");
+
+  const setField = (patch) => {
+    onFormChange({ ...formData, ...patch });
+  };
+
+  const handleSubmit = () => {
+    setLocalError("");
+
+    // validări minime
+    if (!formData.email?.trim()) return setLocalError("Email este obligatoriu.");
+    if (!formData.firstName?.trim()) return setLocalError("Prenumele este obligatoriu.");
+    if (!formData.lastName?.trim()) return setLocalError("Numele este obligatoriu.");
+    if (!formData.institutionId) return setLocalError("Selectează instituția.");
+
+    if (isCreate && !formData.password?.trim()) {
+      return setLocalError("Parola este obligatorie la crearea utilizatorului.");
+    }
+
+    // Admin instituție: hard rules
+    if (isAdminInstitution) {
+      if (Number(formData.institutionId) !== Number(currentInstitutionId)) {
+        return setLocalError("Adminul de instituție poate lucra doar în instituția lui.");
+      }
+      if (formData.role !== "EDITOR_INSTITUTION") {
+        return setLocalError("Adminul de instituție poate crea/edita doar EDITOR_INSTITUTION.");
+      }
+    }
+
+    onSubmit(formData);
   };
 
   return (
-    <>
+    <div className="fixed inset-0 z-50">
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-[700px] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 z-50 flex flex-col">
+      {/* Panel */}
+      <div className="absolute right-0 top-0 h-full w-full max-w-[520px] bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-white dark:bg-gray-800 rounded-[12px] shadow-sm">
-              <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              {icon}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {isViewMode && 'Detalii Utilizator'}
-                {isEditMode && 'Editare Utilizator'}
-                {isCreateMode && 'Utilizator Nou'}
-              </h2>
-              {user && <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>}
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-[10px] transition-all">
-            <X className="w-5 h-5" />
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-[12px] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Închide"
+          >
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {isViewMode ? (
-            // ========== VIEW MODE ==========
-            <div className="space-y-6">
-              {/* Info Card */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[16px] p-5 border border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Informații Generale</h3>
-                <dl className="space-y-3">
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nume Complet</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white">{user?.first_name} {user?.last_name}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-gray-400" />
-                      {user?.email}
-                    </dd>
-                  </div>
-                  {user?.phone && (
-                    <div>
-                      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Telefon</dt>
-                      <dd className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-gray-400" />
-                        {user.phone}
-                      </dd>
-                    </div>
-                  )}
-                  {user?.position && (
-                    <div>
-                      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Poziție</dt>
-                      <dd className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-gray-400" />
-                        {user.position}
-                      </dd>
-                    </div>
-                  )}
-                  {user?.department && (
-                    <div>
-                      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Departament</dt>
-                      <dd className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        <UsersIcon className="w-3.5 h-3.5 text-gray-400" />
-                        {user.department}
-                      </dd>
-                    </div>
-                  )}
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Rol</dt>
-                    <dd>{getRoleBadge(user?.role)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</dt>
-                    <dd>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${user?.is_active ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-gray-500/10 text-gray-600 dark:text-gray-400'}`}>
-                        {user?.is_active ? 'Activ' : 'Inactiv'}
-                      </span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Creat la</dt>
-                    <dd className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                      {formatDate(user?.created_at)}
-                    </dd>
-                  </div>
-                  {user?.updated_at && user.updated_at !== user.created_at && (
-                    <div>
-                      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ultima modificare</dt>
-                      <dd className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                        {formatDate(user?.updated_at)}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          {(formError || localError) && (
+            <div className="p-4 rounded-[16px] bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 text-sm font-medium">
+              {localError || formError}
+            </div>
+          )}
 
-              {/* Institution */}
-              {user?.institution && (
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[16px] p-5 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Instituție</h3>
-                  <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900/50 rounded-[12px] border border-gray-200 dark:border-gray-700">
-                    <Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-900 dark:text-white">{user.institution.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{user.institution.type}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+          {/* Info badge for ADMIN_INSTITUTION */}
+          {isAdminInstitution && (
+            <div className="p-4 rounded-[16px] bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-200 text-sm">
+              Admin Instituție: poți crea/edita doar utilizatori <b>EDITOR_INSTITUTION</b> din instituția ta.
+            </div>
+          )}
 
-              {/* Sectors */}
-              {user?.sectors && user.sectors.length > 0 && (
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[16px] p-5 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Sectoare Asociate</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {user.sectors.map(sector => (
-                      <span key={sector.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-[8px] text-xs font-bold border border-blue-500/20">
-                        🏙️ Sector {sector.sector_number}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {/* Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Prenume
+              </label>
+              <input
+                value={formData.firstName || ""}
+                disabled={isView}
+                onChange={(e) => setField({ firstName: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+              />
+            </div>
 
-              {/* Permissions Info */}
-              {user?.permissions && (
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[16px] p-5 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Permisiuni</h3>
-                  <div className="space-y-2 text-sm">
-                    {user.permissions.can_edit_data && (
-                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                        ✅ Poate edita/adăuga/șterge date
-                      </div>
-                    )}
-                    {user.permissions.access_type === 'ALL' && (
-                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                        🌍 Acces la toate datele
-                      </div>
-                    )}
-                    {user.permissions.access_type === 'SECTOR' && (
-                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                        🏙️ Acces limitat la un sector
-                      </div>
-                    )}
-                    {user.permissions.access_type === 'OPERATOR' && (
-                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                        🚛 Acces limitat la un operator
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Nume
+              </label>
+              <input
+                value={formData.lastName || ""}
+                disabled={isView}
+                onChange={(e) => setField({ lastName: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Email
+            </label>
+            <input
+              value={formData.email || ""}
+              disabled={isView}
+              onChange={(e) => setField({ email: e.target.value })}
+              className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+            />
+          </div>
+
+          {/* Password */}
+          {!isView && (
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Parolă {isCreate ? "(obligatoriu)" : "(opțional)"}
+              </label>
+              <input
+                type="password"
+                value={formData.password || ""}
+                onChange={(e) => setField({ password: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                placeholder={isCreate ? "Setează parola" : "Lasă gol dacă nu schimbi parola"}
+              />
+            </div>
+          )}
+
+          {/* Phone / Position / Department */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Telefon
+              </label>
+              <input
+                value={formData.phone || ""}
+                disabled={isView}
+                onChange={(e) => setField({ phone: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Funcție
+              </label>
+              <input
+                value={formData.position || ""}
+                disabled={isView}
+                onChange={(e) => setField({ position: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Departament
+            </label>
+            <input
+              value={formData.department || ""}
+              disabled={isView}
+              onChange={(e) => setField({ department: e.target.value })}
+              className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60"
+            />
+          </div>
+
+          {/* Role + Institution */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Rol
+              </label>
+              <select
+                value={formData.role || "EDITOR_INSTITUTION"}
+                disabled={roleDisabled}
+                onChange={(e) => setField({ role: e.target.value })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60 cursor-pointer"
+              >
+                {allowedRoleOptions.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              {isAdminInstitution && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Admin Instituție poate seta doar <b>EDITOR_INSTITUTION</b>.
+                </p>
               )}
             </div>
-          ) : (
-            // ========== EDIT/CREATE MODE ==========
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {formError && (
-                <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-[14px]">
-                  <p className="text-sm text-red-600 dark:text-red-400 font-medium">{formError}</p>
-                </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                Instituție
+              </label>
+              <select
+                value={formData.institutionId || ""}
+                disabled={institutionDisabled}
+                onChange={(e) => setField({ institutionId: e.target.value ? Number(e.target.value) : null })}
+                className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-60 cursor-pointer"
+              >
+                <option value="">Selectează</option>
+                {availableInstitutions.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </option>
+                ))}
+              </select>
+              {isAdminInstitution && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Instituția este fixă (instituția ta).
+                </p>
               )}
+            </div>
+          </div>
 
-              {/* Name Fields */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Prenume *</label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => onFormChange({ ...formData, firstName: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Nume *</label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => onFormChange({ ...formData, lastName: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                    required
-                  />
-                </div>
+          {/* Active */}
+          <div className="flex items-center justify-between p-4 rounded-[16px] border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
+            <div>
+              <div className="text-sm font-bold text-gray-900 dark:text-white">Status utilizator</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Activează/dezactivează contul</div>
+            </div>
+
+            <label className={`inline-flex items-center cursor-pointer ${isView ? "opacity-60 pointer-events-none" : ""}`}>
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={!!formData.isActive}
+                onChange={(e) => setField({ isActive: e.target.checked })}
+              />
+              <div className="relative w-12 h-7 bg-gray-300 dark:bg-gray-700 peer-checked:bg-emerald-600 rounded-full transition-colors">
+                <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
               </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Email *</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                  required
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
-                  Parolă {isEditMode && '(lasă gol pentru a păstra)'}
-                  {isCreateMode && ' *'}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => onFormChange({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2.5 pr-12 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                    required={isCreateMode}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-[10px] hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Optional Fields */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Telefon</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => onFormChange({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                    placeholder="07XX XXX XXX"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Poziție</label>
-                  <input
-                    type="text"
-                    value={formData.position}
-                    onChange={(e) => onFormChange({ ...formData, position: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                    placeholder="Director, Manager..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Departament</label>
-                <input
-                  type="text"
-                  value={formData.department}
-                  onChange={(e) => onFormChange({ ...formData, department: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                  placeholder="Operațiuni, Management..."
-                />
-              </div>
-
-              {/* Role */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Rol *</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => handleRoleChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-                  required
-                >
-                  <option value="PLATFORM_ADMIN">Admin Platformă</option>
-                  <option value="ADMIN_INSTITUTION">Admin Instituție</option>
-                  <option value="EDITOR_INSTITUTION">Editor Instituție</option>
-                  <option value="REGULATOR_VIEWER">Regulator</option>
-                </select>
-              </div>
-
-              {/* Institution */}
-<div>
-  <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
-    Instituție * 
-    <span className="ml-2 text-xs font-normal text-gray-500">
-      ({availableInstitutions.length} disponibile)
-    </span>
-  </label>
-  
-  {availableInstitutions.length === 0 ? (
-    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-[14px]">
-      <p className="text-sm text-yellow-800 dark:text-yellow-200">
-        {formData.role === 'PLATFORM_ADMIN' && 'Nu există ADIGDMB în sistem. Adaugă instituția ADIGDMB mai întâi.'}
-        {formData.role === 'ADMIN_INSTITUTION' && 'Nu există municipii. Adaugă PMB sau Sectoarele mai întâi.'}
-        {formData.role === 'EDITOR_INSTITUTION' && 'Nu există municipii. Adaugă PMB sau Sectoarele mai întâi.'}
-        {formData.role === 'REGULATOR_VIEWER' && 'Nu există instituții REGULATOR. Adaugă Garda Mediu sau alte instituții de reglementare.'}
-        {formData.role === 'OPERATOR_USER' && 'Nu există operatori. Adaugă operatori de colectare, TMB, sortare sau depozitare.'}
-        {!formData.role && 'Selectează un rol mai întâi.'}
-      </p>
-    </div>
-  ) : (
-    <select
-      value={formData.institutionId || ''}
-      onChange={(e) => {
-        const newId = e.target.value ? parseInt(e.target.value) : null;
-        console.log('📝 Institution selected:', newId);
-        onFormChange({ ...formData, institutionId: newId });
-      }}
-      className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-      required
-      disabled={formData.role === 'PLATFORM_ADMIN' && availableInstitutions.length === 1}
-    >
-      <option value="">Selectează instituția</option>
-      {availableInstitutions.map(inst => (
-        <option key={inst.id} value={inst.id}>
-          {inst.short_name ? `${inst.short_name} - ${inst.name}` : inst.name}
-        </option>
-      ))}
-    </select>
-  )}
-  
-  {/* Helper text bazat pe rol */}
-  {formData.role && availableInstitutions.length > 0 && (
-    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-      {formData.role === 'PLATFORM_ADMIN' && '💡 Administrator de platformă - asociat cu ADIGDMB'}
-      {formData.role === 'ADMIN_INSTITUTION' && '💡 Administrator instituție - selectează PMB sau un Sector'}
-      {formData.role === 'EDITOR_INSTITUTION' && '💡 Editor instituție - selectează PMB sau un Sector'}
-      {formData.role === 'REGULATOR_VIEWER' && '💡 Regulator - selectează instituția de reglementare'}
-      {formData.role === 'OPERATOR_USER' && '💡 Operator - selectează operatorul de salubritate'}
-    </p>
-  )}
-</div>
-
-              {/* Sectors Display */}
-              {selectedInstitution?.sectors && selectedInstitution.sectors.length > 0 && (
-                <div className="p-4 bg-blue-50/50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-[14px]">
-                  <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-2">
-                    📊 Sectoare Asociate (automat)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedInstitution.sectors.map(sector => (
-                      <span key={sector.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-[8px] text-xs font-bold border border-blue-500/20">
-                        Sector {sector.sector_number}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Permissions for ADMIN_INSTITUTION */}
-              {formData.role === 'ADMIN_INSTITUTION' && (
-                <div className="p-4 bg-amber-50/50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-[14px]">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="can_edit_data"
-                      checked={formData.permissions.can_edit_data}
-                      onChange={(e) => onFormChange({
-                        ...formData,
-                        permissions: { ...formData.permissions, can_edit_data: e.target.checked }
-                      })}
-                      className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500 focus:ring-2"
-                    />
-                    <label htmlFor="can_edit_data" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Permite editare/adăugare/ștergere date
-                    </label>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                    ℹ️ Doar PLATFORM_ADMIN poate activa acest permis. Editorii creați vor moșteni permisiunea.
-                  </p>
-                </div>
-              )}
-
-              {/* Permissions for REGULATOR_VIEWER */}
-              {formData.role === 'REGULATOR_VIEWER' && (
-                <div className="space-y-3 p-4 bg-purple-50/50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-[14px]">
-                  <label className="block text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
-                    Tip Acces Date *
-                  </label>
-
-                  {/* All Data */}
-                  <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-[12px] cursor-pointer hover:bg-white dark:hover:bg-gray-800/50 transition-colors">
-                    <input
-                      type="radio"
-                      name="access_type"
-                      checked={formData.permissions.access_type === 'ALL'}
-                      onChange={() => onFormChange({
-                        ...formData,
-                        permissions: { ...formData.permissions, access_type: 'ALL', sector_id: null, operator_institution_id: null }
-                      })}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <div>
-                      <div className="font-medium text-sm text-gray-900 dark:text-white">Toate datele</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Acces complet la toate sectoarele și operatorii</div>
-                    </div>
-                  </label>
-
-                  {/* Sector */}
-                  <label className="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-[12px] cursor-pointer hover:bg-white dark:hover:bg-gray-800/50 transition-colors">
-                    <input
-                      type="radio"
-                      name="access_type"
-                      checked={formData.permissions.access_type === 'SECTOR'}
-                      onChange={() => onFormChange({
-                        ...formData,
-                        permissions: { ...formData.permissions, access_type: 'SECTOR', operator_institution_id: null }
-                      })}
-                      className="w-4 h-4 text-purple-600 mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-900 dark:text-white mb-2">Un sector specific</div>
-                      {formData.permissions.access_type === 'SECTOR' && (
-                        <select
-                          value={formData.permissions.sector_id || ''}
-                          onChange={(e) => onFormChange({
-                            ...formData,
-                            permissions: { ...formData.permissions, sector_id: e.target.value }
-                          })}
-                          className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-[10px] bg-white dark:bg-gray-900 text-sm"
-                          required
-                        >
-                          <option value="">Selectează sector</option>
-                          {sectors.map(sector => (
-                            <option key={sector.id} value={sector.id}>Sector {sector.sector_number}</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  </label>
-
-                  {/* Operator */}
-                  <label className="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-[12px] cursor-pointer hover:bg-white dark:hover:bg-gray-800/50 transition-colors">
-                    <input
-                      type="radio"
-                      name="access_type"
-                      checked={formData.permissions.access_type === 'OPERATOR'}
-                      onChange={() => onFormChange({
-                        ...formData,
-                        permissions: { ...formData.permissions, access_type: 'OPERATOR', sector_id: null }
-                      })}
-                      className="w-4 h-4 text-purple-600 mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-900 dark:text-white mb-2">Un operator specific</div>
-                      {formData.permissions.access_type === 'OPERATOR' && (
-                        <select
-                          value={formData.permissions.operator_institution_id || ''}
-                          onChange={(e) => onFormChange({
-                            ...formData,
-                            permissions: { ...formData.permissions, operator_institution_id: parseInt(e.target.value) }
-                          })}
-                          className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-[10px] bg-white dark:bg-gray-900 text-sm"
-                          required
-                        >
-                          <option value="">Selectează operator</option>
-                          {operatorInstitutions.map(op => (
-                            <option key={op.id} value={op.id}>{op.name}</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  </label>
-                </div>
-              )}
-
-              {/* Active Status */}
-              <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-[14px] border border-gray-200 dark:border-gray-700">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => onFormChange({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500 focus:ring-2"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Cont activ
-                </label>
-              </div>
-            </form>
-          )}
+            </label>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-          <div className="flex gap-3">
-            {isViewMode ? (
-              <>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-[14px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-98"
-                >
-                  Închide
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  className="flex-1 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  {isEditMode ? 'Salvează' : 'Creează'}
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-[14px] hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-98"
-                >
-                  Anulează
-                </button>
-              </>
-            )}
-          </div>
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-[14px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            Închide
+          </button>
+
+          {!isView && (
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={`px-5 py-2.5 rounded-[14px] font-bold flex items-center gap-2 transition-all ${
+                canSubmit
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20"
+                  : "bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+              }`}
+              title={!canSubmit ? "Nu ai permisiunea pentru această acțiune" : "Salvează"}
+            >
+              <Save className="w-4 h-4" />
+              Salvează
+            </button>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
