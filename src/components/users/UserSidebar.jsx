@@ -1,6 +1,7 @@
 // src/components/users/UserSidebar.jsx
 import { X, Eye, EyeOff, Save, User, Mail, Shield, Building2, Phone, Briefcase, Users as UsersIcon } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
+import { INSTITUTION_TYPES } from '../../constants/institutionTypes';
 
 const UserSidebar = ({
   mode = 'create',
@@ -73,6 +74,61 @@ const UserSidebar = ({
   const selectedInstitution = useMemo(() => {
     return institutions.find(i => Number(i.id) === Number(formData.institutionId));
   }, [formData.institutionId, institutions]);
+  // ============================================================================
+  // FILTER INSTITUTIONS BY TARGET USER ROLE (per requirements)
+  // ============================================================================
+  const filteredInstitutions = useMemo(() => {
+    const role = formData?.role;
+
+    // Platform Admin MUST be ADIGIDMB only (id = 100) - per your rule
+    if (role === 'PLATFORM_ADMIN') {
+      return institutions.filter(
+        (i) => Number(i.id) === 100 || i.type === INSTITUTION_TYPES.ASSOCIATION
+      );
+    }
+
+    // Institution Admin can be only PMB / Sector City Halls => MUNICIPALITY
+    if (role === 'ADMIN_INSTITUTION') {
+      return institutions.filter((i) => i.type === INSTITUTION_TYPES.MUNICIPALITY);
+    }
+
+    // Regulator users should be linked only to REGULATOR-type institutions
+    if (role === 'REGULATOR_VIEWER') {
+      return institutions.filter((i) => i.type === INSTITUTION_TYPES.REGULATOR);
+    }
+
+    // Editor can be linked to any institution (but if current user is institution admin it's already locked)
+    return institutions;
+  }, [institutions, formData?.role]);
+
+  // Keep institutionId valid whenever role changes (so it "sticks" correctly)
+  useEffect(() => {
+    const role = formData?.role;
+
+    // PLATFORM_ADMIN => force ADIGIDMB (100) if available
+    if (role === 'PLATFORM_ADMIN') {
+      const has100 = filteredInstitutions.some((i) => Number(i.id) === 100);
+      if (has100 && Number(formData.institutionId) !== 100) {
+        onFormChange({ ...formData, institutionId: 100 });
+      }
+      return;
+    }
+
+    // If currently selected institution is not in filtered list, reset it
+    const stillValid = filteredInstitutions.some(
+      (i) => Number(i.id) === Number(formData.institutionId)
+    );
+
+    if (!stillValid) {
+      // If there is exactly one valid institution, auto select it
+      if (filteredInstitutions.length === 1) {
+        onFormChange({ ...formData, institutionId: Number(filteredInstitutions[0].id) });
+      } else {
+        onFormChange({ ...formData, institutionId: null });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData?.role, filteredInstitutions.length]);
 
   // Role dropdown options:
   const roleOptions = useMemo(() => {
@@ -284,10 +340,10 @@ const UserSidebar = ({
                   value={formData.institutionId || ''}
                   onChange={(e) => onFormChange({ ...formData, institutionId: Number(e.target.value) || null })}
                   className="mt-1 w-full px-4 py-2.5 rounded-[14px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                  disabled={isInstitutionAdmin} // ✅ lock
-                >
+                  disabled={isInstitutionAdmin || formData.role === 'PLATFORM_ADMIN'}
+                  >
                   <option value="">Selectează instituția</option>
-                  {institutions.map((inst) => (
+                  {filteredInstitutions.map((inst) => (
                     <option key={inst.id} value={inst.id}>
                       {inst.short_name || inst.name}
                     </option>
