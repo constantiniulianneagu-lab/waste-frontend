@@ -17,11 +17,30 @@ import {
   UserX,
   Shield,
   Building2,
-  Lock,
 } from "lucide-react";
 
 const Users = () => {
   const { user: currentUser } = useAuth();
+
+  const isPlatformAdmin = currentUser?.role === "PLATFORM_ADMIN";
+  const isInstitutionAdmin = currentUser?.role === "ADMIN_INSTITUTION";
+  const canAccessUsers = isPlatformAdmin || isInstitutionAdmin;
+
+  // hard guard (in case someone types /users manually)
+  if (!canAccessUsers) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[18px] p-6">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acces restricționat</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Nu ai permisiuni pentru pagina „Utilizatori”.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const myInstitutionId = currentUser?.institution?.id || null;
 
   // State
   const [users, setUsers] = useState([]);
@@ -50,7 +69,7 @@ const Users = () => {
     department: "",
     role: "EDITOR_INSTITUTION",
     isActive: true,
-    institutionId: null,
+    institutionId: isInstitutionAdmin ? myInstitutionId : null,
     permissions: {
       can_edit_data: false,
       access_type: null,
@@ -70,44 +89,6 @@ const Users = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const pageSize = 10;
-
-  // ========== CURRENT USER INSTITUTION ID ==========
-  const currentInstitutionId = useMemo(() => {
-    if (!currentUser) return null;
-    return (
-      currentUser.institution?.id ??
-      currentUser.institutionId ??
-      currentUser.institution_id ??
-      null
-    );
-  }, [currentUser]);
-
-  const isPlatformAdmin = currentUser?.role === "PLATFORM_ADMIN";
-  const isAdminInstitution = currentUser?.role === "ADMIN_INSTITUTION";
-
-  // ========== PERMISSIONS (UI) ==========
-  const canManageUser = (targetUser) => {
-    if (!currentUser || !targetUser) return false;
-
-    // PLATFORM_ADMIN -> all
-    if (isPlatformAdmin) return true;
-
-    // ADMIN_INSTITUTION -> only EDITOR_INSTITUTION from same institution
-    if (isAdminInstitution) {
-      const targetInstId = targetUser?.institution?.id ?? null;
-      if (!targetInstId || !currentInstitutionId) return false;
-
-      // strict: only editors
-      if (targetUser.role !== "EDITOR_INSTITUTION") return false;
-
-      return Number(targetInstId) === Number(currentInstitutionId);
-    }
-
-    // others -> none
-    return false;
-  };
-
-  const canCreateUser = isPlatformAdmin || isAdminInstitution;
 
   // ========== LOAD DATA ==========
   useEffect(() => {
@@ -143,10 +124,8 @@ const Users = () => {
       });
 
       const data = await response.json();
-
       if (data.success) {
-        const institutionsArray = data.data?.institutions || [];
-        setInstitutions(institutionsArray);
+        setInstitutions(data.data?.institutions || []);
       } else {
         setInstitutions([]);
       }
@@ -171,15 +150,21 @@ const Users = () => {
     }
   };
 
+  // ========== PERMISSIONS (FRONT) ==========
+  const canManageTargetUser = (target) => {
+    if (isPlatformAdmin) return true;
+    if (!isInstitutionAdmin) return false;
+
+    // institution admin: only editor institution, same institution
+    const sameInstitution = Number(target?.institution?.id) === Number(myInstitutionId);
+    const isEditor = target?.role === "EDITOR_INSTITUTION";
+    return sameInstitution && isEditor;
+  };
+
   // ========== HANDLERS ==========
   const handleCreateUser = () => {
-    if (!canCreateUser) return;
-
     setSelectedUser(null);
     setSidebarMode("create");
-
-    // Admin instituție: create doar în instituția lui + rol fix editor
-    const presetInstitutionId = isAdminInstitution ? currentInstitutionId : null;
 
     setFormData({
       email: "",
@@ -189,9 +174,9 @@ const Users = () => {
       phone: "",
       position: "",
       department: "",
-      role: "EDITOR_INSTITUTION",
+      role: "EDITOR_INSTITUTION", // ✅ forced for ADMIN_INSTITUTION
       isActive: true,
-      institutionId: presetInstitutionId,
+      institutionId: isInstitutionAdmin ? myInstitutionId : null,
       permissions: {
         can_edit_data: false,
         access_type: null,
@@ -199,6 +184,7 @@ const Users = () => {
         operator_institution_id: null,
       },
     });
+
     setFormError("");
     setShowSidebar(true);
   };
@@ -210,14 +196,12 @@ const Users = () => {
   };
 
   const handleEditUser = (user) => {
-    if (!canManageUser(user)) {
-      setFormError("Nu aveți permisiunea să editați acest utilizator.");
-      handleViewUser(user);
-      return;
-    }
+    // hard guard (UI)
+    if (!canManageTargetUser(user)) return;
 
     setSelectedUser(user);
     setSidebarMode("edit");
+
     setFormData({
       email: user.email,
       password: "",
@@ -226,25 +210,33 @@ const Users = () => {
       phone: user.phone || "",
       position: user.position || "",
       department: user.department || "",
-      role: user.role, // va fi editor
+      role: user.role,
       isActive: user.is_active,
-      institutionId: user.institution?.id || null,
-      permissions: user.permissions || {
-        can_edit_data: false,
-        access_type: null,
-        sector_id: null,
-        operator_institution_id: null,
-      },
+      institutionId: isInstitutionAdmin ? myInstitutionId : user.institution?.id || null,
+      permissions:
+        user.permissions || {
+          can_edit_data: false,
+          access_type: null,
+          sector_id: null,
+          operator_institution_id: null,
+        },
     });
+
     setFormError("");
     setShowSidebar(true);
   };
 
-  // ========== SUBMIT ==========
   const handleSubmit = async (data) => {
     setFormError("");
 
-    if (!data.institutionId) {
+    // ADMIN_INSTITUTION: force constraints before sending
+    const normalized = { ...data };
+    if (isInstitutionAdmin) {
+      normalized.role = "EDITOR_INSTITUTION";
+      normalized.institutionId = myInstitutionId;
+    }
+
+    if (!normalized.institutionId) {
       setFormError("Vă rugăm să selectați o instituție!");
       return;
     }
@@ -253,77 +245,47 @@ const Users = () => {
       let response;
 
       if (sidebarMode === "create") {
-        // Admin instituție: doar instituția lui + rol editor
-        if (isAdminInstitution) {
-          if (Number(data.institutionId) !== Number(currentInstitutionId)) {
-            setFormError("Adminul de instituție poate crea utilizatori doar în instituția lui.");
-            return;
-          }
-          if (data.role !== "EDITOR_INSTITUTION") {
-            setFormError("Adminul de instituție poate crea doar utilizatori EDITOR_INSTITUTION.");
-            return;
-          }
-        }
-
         const payload = {
-          email: data.email,
-          password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone || null,
-          position: data.position || null,
-          department: data.department || null,
-          role: isAdminInstitution ? "EDITOR_INSTITUTION" : data.role,
-          isActive: data.isActive,
-          institutionIds: [data.institutionId],
+          email: normalized.email,
+          password: normalized.password,
+          firstName: normalized.firstName,
+          lastName: normalized.lastName,
+          phone: normalized.phone || null,
+          position: normalized.position || null,
+          department: normalized.department || null,
+          role: normalized.role,
+          isActive: normalized.isActive,
+          institutionIds: [normalized.institutionId],
         };
 
         response = await userService.createUser(payload);
       } else if (sidebarMode === "edit") {
-        if (!selectedUser) {
-          setFormError("Utilizator invalid.");
+        // UI guard: ADMIN_INSTITUTION can edit only allowed targets
+        if (isInstitutionAdmin && !canManageTargetUser(selectedUser)) {
+          setFormError("Nu ai voie să editezi acest utilizator.");
           return;
-        }
-        if (!canManageUser(selectedUser)) {
-          setFormError("Nu aveți permisiunea să editați acest utilizator.");
-          return;
-        }
-
-        // Admin instituție: nu mută instituția + rol rămâne editor
-        if (isAdminInstitution) {
-          if (Number(data.institutionId) !== Number(currentInstitutionId)) {
-            setFormError("Adminul de instituție poate edita utilizatori doar în instituția lui.");
-            return;
-          }
-          if (data.role !== "EDITOR_INSTITUTION") {
-            setFormError("Adminul de instituție poate edita doar utilizatori EDITOR_INSTITUTION.");
-            return;
-          }
         }
 
         const payload = {
-          email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          role: isAdminInstitution ? "EDITOR_INSTITUTION" : data.role,
-          isActive: data.isActive,
-          institutionIds: [data.institutionId],
+          email: normalized.email,
+          firstName: normalized.firstName,
+          lastName: normalized.lastName,
+          role: normalized.role,
+          isActive: normalized.isActive,
+          institutionIds: [normalized.institutionId],
         };
 
-        if (data.phone && data.phone.trim()) payload.phone = data.phone;
-        if (data.position && data.position.trim()) payload.position = data.position;
-        if (data.department && data.department.trim()) payload.department = data.department;
-
-        if (data.password && data.password.trim() !== "") {
-          payload.password = data.password;
-        }
+        if (normalized.phone && normalized.phone.trim()) payload.phone = normalized.phone;
+        if (normalized.position && normalized.position.trim()) payload.position = normalized.position;
+        if (normalized.department && normalized.department.trim()) payload.department = normalized.department;
+        if (normalized.password && normalized.password.trim()) payload.password = normalized.password;
 
         response = await userService.updateUser(selectedUser.id, payload);
       }
 
       if (response && response.success) {
         setShowSidebar(false);
-        await loadUsers();
+        loadUsers();
       } else {
         setFormError(response?.message || "Eroare la salvarea utilizatorului.");
       }
@@ -333,14 +295,13 @@ const Users = () => {
   };
 
   const handleDelete = async (userId) => {
+    // UI guard
+    const target = users.find((u) => u.id === userId);
+    if (!isPlatformAdmin && isInstitutionAdmin && !canManageTargetUser(target)) {
+      return alert("Nu ai voie să ștergi acest utilizator.");
+    }
+
     try {
-      const targetUser = users.find((u) => u.id === userId);
-
-      if (!canManageUser(targetUser)) {
-        alert("Nu aveți permisiunea să ștergeți acest utilizator.");
-        return;
-      }
-
       const response = await userService.deleteUser(userId);
       if (response.success) {
         setDeleteConfirm(null);
@@ -354,12 +315,7 @@ const Users = () => {
   };
 
   const clearFilters = () => {
-    setFilters({
-      search: "",
-      role: "",
-      institutionId: "",
-      status: "",
-    });
+    setFilters({ search: "", role: "", institutionId: "", status: "" });
     setPage(1);
   };
 
@@ -371,7 +327,12 @@ const Users = () => {
         if (!searchable.includes(filters.search.toLowerCase())) return false;
       }
       if (filters.role && user.role !== filters.role) return false;
-      if (filters.institutionId && user.institution?.id !== parseInt(filters.institutionId)) return false;
+
+      // institution filter in UI:
+      // - PLATFORM_ADMIN can filter freely
+      // - ADMIN_INSTITUTION: backend already scoped, but keep logic safe
+      if (filters.institutionId && user.institution?.id !== parseInt(filters.institutionId, 10)) return false;
+
       if (filters.status === "active" && !user.is_active) return false;
       if (filters.status === "inactive" && user.is_active) return false;
       return true;
@@ -381,9 +342,7 @@ const Users = () => {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const paginatedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filters]);
+  useEffect(() => setPage(1), [filters]);
 
   // ========== ROLE LABELS ==========
   const roleLabels = {
@@ -410,18 +369,6 @@ const Users = () => {
     );
   };
 
-  // ========== ACCESS LABEL (păstrat ca la tine) ==========
-  const getAccessLabel = (user) => {
-    if (user.role === "PLATFORM_ADMIN") {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-          🌍 Total
-        </span>
-      );
-    }
-    return <span className="text-xs text-gray-400 dark:text-gray-500">-</span>;
-  };
-
   const hasActiveFilters = filters.search || filters.role || filters.institutionId || filters.status;
 
   // ========== RENDER ==========
@@ -429,10 +376,8 @@ const Users = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-8">
       <DashboardHeader title="Gestionare Utilizatori" />
 
-      {/* Filters + Actions */}
       <div className="px-6 py-4 space-y-4">
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Search */}
           <div className="relative flex-1 min-w-[250px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -444,7 +389,6 @@ const Users = () => {
             />
           </div>
 
-          {/* Role Filter */}
           <select
             value={filters.role}
             onChange={(e) => setFilters({ ...filters, role: e.target.value })}
@@ -457,22 +401,26 @@ const Users = () => {
             <option value="REGULATOR_VIEWER">Regulator</option>
           </select>
 
-          {/* Institution Filter */}
-          <select
-            value={filters.institutionId}
-            onChange={(e) => setFilters({ ...filters, institutionId: e.target.value })}
-            className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
-            disabled={loadingInstitutions}
-          >
-            <option value="">Toate instituțiile</option>
-            {institutions.map((inst) => (
-              <option key={inst.id} value={inst.id}>
-                {inst.name}
-              </option>
-            ))}
-          </select>
+          {/* Institution filter:
+              - PLATFORM_ADMIN: can use it
+              - ADMIN_INSTITUTION: hide it (they are already scoped)
+           */}
+          {isPlatformAdmin && (
+            <select
+              value={filters.institutionId}
+              onChange={(e) => setFilters({ ...filters, institutionId: e.target.value })}
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
+              disabled={loadingInstitutions}
+            >
+              <option value="">Toate instituțiile</option>
+              {institutions.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+          )}
 
-          {/* Status Filter */}
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -483,7 +431,6 @@ const Users = () => {
             <option value="inactive">Inactiv</option>
           </select>
 
-          {/* Clear Filters */}
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
@@ -494,19 +441,15 @@ const Users = () => {
             </button>
           )}
 
-          {/* Create Button */}
-          {canCreateUser && (
-            <button
-              onClick={handleCreateUser}
-              className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Utilizator Nou
-            </button>
-          )}
+          <button
+            onClick={handleCreateUser}
+            className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Utilizator Nou
+          </button>
         </div>
 
-        {/* Results Count */}
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {filteredUsers.length} utilizator{filteredUsers.length !== 1 ? "i" : ""} găsi
           {filteredUsers.length !== 1 ? "ți" : "t"}
@@ -514,12 +457,11 @@ const Users = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="px-6">
         <div className="bg-white dark:bg-gray-800 rounded-[20px] shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           {loading ? (
             <div className="p-12 text-center">
-              <div className="inline-block w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="inline-block w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
               <p className="mt-4 text-gray-600 dark:text-gray-400">Se încarcă...</p>
             </div>
           ) : paginatedUsers.length === 0 ? (
@@ -539,43 +481,55 @@ const Users = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Utilizator</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Instituție</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Rol</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Acces Date</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Acțiuni</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Utilizator
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Instituție
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Rol
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Acțiuni
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {paginatedUsers.map((user) => {
-                    const canManage = canManageUser(user);
+                  {paginatedUsers.map((u) => {
+                    const canManageThis = canManageTargetUser(u);
 
                     return (
                       <tr
-                        key={user.id}
+                        key={u.id}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                        onClick={() => handleViewUser(user)}
+                        onClick={() => handleViewUser(u)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
-                              {user.first_name?.[0]}{user.last_name?.[0]}
+                              {u.first_name?.[0]}
+                              {u.last_name?.[0]}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900 dark:text-white">{user.first_name} {user.last_name}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {u.first_name} {u.last_name}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{u.email}</div>
                             </div>
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
-                          {user.institution ? (
+                          {u.institution ? (
                             <div className="flex items-center gap-2">
                               <Building2 className="w-4 h-4 text-gray-400" />
                               <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
-                                {user.institution.short_name || user.institution.name}
+                                {u.institution.short_name || u.institution.name}
                               </span>
                             </div>
                           ) : (
@@ -583,43 +537,47 @@ const Users = () => {
                           )}
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{getAccessLabel(user)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(u.role)}</td>
 
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${user.is_active ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-gray-500/10 text-gray-600 dark:text-gray-400"}`}>
-                            {user.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
-                            {user.is_active ? "Activ" : "Inactiv"}
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${
+                              u.is_active
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-gray-500/10 text-gray-600 dark:text-gray-400"
+                            }`}
+                          >
+                            {u.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
+                            {u.is_active ? "Activ" : "Inactiv"}
                           </span>
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {canManage ? (
+                            {(isPlatformAdmin || canManageThis) && (
                               <>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleEditUser(user); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditUser(u);
+                                  }}
                                   className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
                                   title="Editează"
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
+
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setDeleteConfirm(user); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirm(u);
+                                  }}
                                   className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
                                   title="Șterge"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </>
-                            ) : (
-                              <span
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
-                                title="Adminul de instituție poate gestiona doar utilizatori EDITOR_INSTITUTION din instituția lui"
-                              >
-                                <Lock className="w-3 h-3" />
-                                Restricționat
-                              </span>
                             )}
                           </div>
                         </td>
@@ -632,7 +590,6 @@ const Users = () => {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -658,15 +615,14 @@ const Users = () => {
         )}
       </div>
 
-      {/* Sidebar */}
       {showSidebar && (
         <UserSidebar
           mode={sidebarMode}
           user={selectedUser}
-          currentUser={currentUser}
           formData={formData}
           institutions={institutions}
           sectors={sectors}
+          currentUser={currentUser}     // ✅ important
           onClose={() => setShowSidebar(false)}
           onSubmit={handleSubmit}
           onFormChange={setFormData}
@@ -674,7 +630,6 @@ const Users = () => {
         />
       )}
 
-      {/* Delete Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
