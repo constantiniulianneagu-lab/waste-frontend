@@ -1,5 +1,5 @@
 // src/Users.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import { useAuth } from "./AuthContext";
 import { userService } from "./userService";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
@@ -31,7 +31,9 @@ const Users = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[18px] p-6">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acces restricționat</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Acces restricționat
+          </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Nu ai permisiuni pentru pagina „Utilizatori”.
           </p>
@@ -48,6 +50,9 @@ const Users = () => {
   const [sectors, setSectors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingInstitutions, setLoadingInstitutions] = useState(true);
+
+  // Expand row (details under a user)
+  const [expandedUserId, setExpandedUserId] = useState(null);
 
   // Sidebar
   const [showSidebar, setShowSidebar] = useState(false);
@@ -471,7 +476,10 @@ const Users = () => {
                 {hasActiveFilters ? "Niciun utilizator găsit" : "Nu există utilizatori"}
               </p>
               {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm">
+                <button
+                  onClick={clearFilters}
+                  className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm"
+                >
                   Resetează filtrele
                 </button>
               )}
@@ -493,6 +501,12 @@ const Users = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
+
+                    {/* NEW */}
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Detalii
+                    </th>
+
                     <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Acțiuni
                     </th>
@@ -502,86 +516,129 @@ const Users = () => {
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {paginatedUsers.map((u) => {
                     const canManageThis = canManageTargetUser(u);
+                    const isExpanded = expandedUserId === u.id;
 
                     return (
-                      <tr
-                        key={u.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                        onClick={() => handleViewUser(u)}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
-                              {u.first_name?.[0]}
-                              {u.last_name?.[0]}
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {u.first_name} {u.last_name}
+                      <Fragment key={u.id}>
+                        <tr
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                          onClick={() => handleViewUser(u)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
+                                {u.first_name?.[0]}
+                                {u.last_name?.[0]}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{u.email}</div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {u.first_name} {u.last_name}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">{u.email}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="px-6 py-4">
-                          {u.institution ? (
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
-                                {u.institution.short_name || u.institution.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">-</span>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(u.role)}</td>
-
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${
-                              u.is_active
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : "bg-gray-500/10 text-gray-600 dark:text-gray-400"
-                            }`}
-                          >
-                            {u.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
-                            {u.is_active ? "Activ" : "Inactiv"}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {(isPlatformAdmin || canManageThis) && (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditUser(u);
-                                  }}
-                                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
-                                  title="Editează"
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteConfirm(u);
-                                  }}
-                                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
-                                  title="Șterge"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </>
+                          <td className="px-6 py-4">
+                            {u.institution ? (
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
+                                  {u.institution.short_name || u.institution.name}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
                             )}
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(u.role)}</td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] text-xs font-bold ${
+                                u.is_active
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  : "bg-gray-500/10 text-gray-600 dark:text-gray-400"
+                              }`}
+                            >
+                              {u.is_active ? <UserCheck className="w-3 h-3" /> : <UserX className="w-3 h-3" />}
+                              {u.is_active ? "Activ" : "Inactiv"}
+                            </span>
+                          </td>
+
+                          {/* NEW: details toggle */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedUserId((prev) => (prev === u.id ? null : u.id));
+                              }}
+                              className="inline-flex items-center px-3 py-1.5 rounded-[12px] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+                              title="Arată detalii"
+                            >
+                              {isExpanded ? "▲" : "▼"}
+                            </button>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {(isPlatformAdmin || canManageThis) && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditUser(u);
+                                    }}
+                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
+                                    title="Editează"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteConfirm(u);
+                                    }}
+                                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
+                                    title="Șterge"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="bg-gray-50/60 dark:bg-gray-800/30">
+                            {/* colSpan = total number of columns (Utilizator, Instituție, Rol, Status, Detalii, Acțiuni) = 6 */}
+                            <td colSpan={6} className="px-6 py-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <div className="text-xs font-bold text-gray-500 dark:text-gray-400">Telefon</div>
+                                  <div className="text-gray-800 dark:text-gray-200">{u.phone || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-gray-500 dark:text-gray-400">Funcție</div>
+                                  <div className="text-gray-800 dark:text-gray-200">{u.position || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-gray-500 dark:text-gray-400">Departament</div>
+                                  <div className="text-gray-800 dark:text-gray-200">{u.department || "—"}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-bold text-gray-500 dark:text-gray-400">ID Utilizator</div>
+                                  <div className="text-gray-800 dark:text-gray-200">{u.id}</div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -622,7 +679,7 @@ const Users = () => {
           formData={formData}
           institutions={institutions}
           sectors={sectors}
-          currentUser={currentUser}     // ✅ important
+          currentUser={currentUser} // ✅ important
           onClose={() => setShowSidebar(false)}
           onSubmit={handleSubmit}
           onFormChange={setFormData}
@@ -636,7 +693,11 @@ const Users = () => {
           <div className="relative bg-white dark:bg-gray-800 rounded-[20px] p-6 max-w-md w-full shadow-2xl">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Confirmare Ștergere</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Sigur vrei să ștergi utilizatorul <strong>{deleteConfirm.first_name} {deleteConfirm.last_name}</strong>?
+              Sigur vrei să ștergi utilizatorul{" "}
+              <strong>
+                {deleteConfirm.first_name} {deleteConfirm.last_name}
+              </strong>
+              ?
             </p>
             <div className="flex gap-3">
               <button
