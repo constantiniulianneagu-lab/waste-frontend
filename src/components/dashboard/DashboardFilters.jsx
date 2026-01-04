@@ -1,13 +1,12 @@
 // src/components/dashboard/DashboardFilters.jsx
 /**
  * ============================================================================
- * DASHBOARD FILTERS - CLEAN VERSION
+ * DASHBOARD FILTERS - FIXED VERSION
  * ============================================================================
  * 
- * ✅ Available years din API (doar funcționalitate)
- * ✅ Auto-update date când schimbi anul
- * ✅ Design consistent cu cardurile existente
- * ✅ FĂRĂ info footer
+ * ✅ FIXES:
+ * - Auto-apply filters when year changes (no need to click "Aplică")
+ * - Improved UX for year selection
  * 
  * ============================================================================
  */
@@ -44,7 +43,7 @@ const DashboardFilters = ({
   const yearOptions = getYearOptions();
 
   // ========================================================================
-  // HANDLE YEAR CHANGE - AUTO-UPDATE DATES
+  // ✅ FIX #3: HANDLE YEAR CHANGE - AUTO-APPLY
   // ========================================================================
 
   const handleYearChange = (selectedYear) => {
@@ -63,12 +62,17 @@ const DashboardFilters = ({
 
     console.log(`📅 Year changed to ${yearInt}:`, { startDate, endDate });
 
-    setLocalFilters({
+    const newFilters = {
       ...localFilters,
       year: yearInt,
       from: startDate,
       to: endDate,
-    });
+    };
+    
+    setLocalFilters(newFilters);
+    
+    // ✅ AUTO-APPLY: Aplică filtrele imediat (fără să aștepte click pe "Aplică")
+    onFilterChange(newFilters);
   };
 
   // ========================================================================

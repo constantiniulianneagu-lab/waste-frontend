@@ -1,7 +1,12 @@
 // src/components/dashboard/DashboardLandfill.jsx
 /**
  * ============================================================================
- * DASHBOARD DEPOZITARE - FINAL WITH MODERN SUMMARY CARDS
+ * DASHBOARD DEPOZITARE - FIXED VERSION
+ * ============================================================================
+ * 
+ * ✅ FIXES:
+ * - Uses all_sectors from API for dropdown (not just sectors with data)
+ * 
  * ============================================================================
  */
 
@@ -136,7 +141,8 @@ const DashboardLandfill = () => {
     );
   }
 
-  const sectors = data?.per_sector || [];
+  // ✅ FIX #2: Use all_sectors for dropdown (not per_sector)
+  const sectors = data?.all_sectors || data?.per_sector || [];
   const availableYears = data?.available_years || [new Date().getFullYear()];
 
   return (
@@ -171,75 +177,28 @@ const DashboardLandfill = () => {
           </div>
         ) : (
           <>
-            {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <SummaryCard
-                title="TOTAL DEȘEURI"
-                value={data.summary.total_tons_formatted || "0"}
-                subtitle="tone depozitate"
-                gradient="from-emerald-500 to-teal-600"
-                icon="📈"
-              />
-              <SummaryCard
-                title="TOTAL TICHETE"
-                value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
-                subtitle="înregistrări"
-                gradient="from-cyan-500 to-blue-600"
-                icon="🧾"
-              />
-              <SummaryCard
-                title="MEDIE PER TICHET"
-                value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
-                subtitle="tone / tichet"
-                gradient="from-lime-500 to-emerald-600"
-                icon="⚖️"
-              />
-              <SummaryCard
-                title="PERIOADA"
-                value={data.summary.date_range?.days || 0}
-                subtitle="zile analizate"
-                gradient="from-green-500 to-emerald-600"
-                icon="📅"
-              />
-            </div>
-
-            {/* WASTE CATEGORY CARDS */}
-            <WasteCategoryCards
-              categories={data?.waste_categories || []}
-              loading={loading}
+            <WasteCategoryCards 
+              categories={data.waste_categories || []}
+              summary={data.summary}
+              monthlyStats={data.monthly_stats}
             />
 
-            {/* CHART + SECTOR TABLE */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <MonthlyEvolutionChart
-                  data={data?.monthly_evolution || []}
-                  stats={data?.monthly_stats || {}}
-                  loading={loading}
-                />
-              </div>
+            <MonthlyEvolutionChart 
+              data={data.monthly_evolution || []}
+              title="Evoluție lunară"
+            />
 
-              <div className="lg:col-span-1">
-                <SectorStatsTable
-                  data={data?.per_sector || []}
-                  loading={loading}
-                />
-              </div>
-            </div>
+            <SectorStatsTable 
+              sectors={data.per_sector || []}
+            />
 
-            {/* TOP OPERATORS + RECENT TICKETS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* TOP OPERATORS - MODERN COMPONENT */}
               <TopOperatorsTable 
-                data={data?.top_operators || []}
-                loading={loading}
+                operators={data.top_operators || []}
               />
 
-              {/* RECENT TICKETS - MODERN COMPONENT */}
               <RecentTicketsTable 
-                data={data?.recent_tickets || []}
-                loading={loading}
+                tickets={data.recent_tickets || []}
               />
             </div>
           </>
@@ -248,80 +207,5 @@ const DashboardLandfill = () => {
     </div>
   );
 };
-
-/**
- * ============================================================================
- * SUMMARY CARD - 2026 SAMSUNG/APPLE STYLE
- * ============================================================================
- * Modern premium card with glassmorphism, gradients, and perfect light/dark mode
- */
-const SummaryCard = ({ title, value, subtitle, gradient, icon }) => (
-  <div className="group relative">
-    {/* Card Container - Samsung One UI rounded style */}
-    <div className="relative h-full
-                  bg-white dark:bg-gray-800/50 backdrop-blur-xl
-                  border border-gray-200 dark:border-gray-700/50
-                  rounded-[24px] p-6
-                  shadow-sm dark:shadow-none
-                  hover:shadow-lg dark:hover:shadow-xl
-                  hover:border-gray-300 dark:hover:border-gray-600
-                  hover:-translate-y-1
-                  transition-all duration-300 ease-out
-                  overflow-hidden">
-      
-      {/* Accent line - left edge with gradient */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
-                    bg-gradient-to-b ${gradient}
-                    group-hover:w-1.5 transition-all duration-300`} />
-      
-      {/* Subtle gradient overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} 
-                    opacity-[0.02] dark:opacity-[0.04] 
-                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
-                    transition-opacity duration-500`} />
-
-      {/* Content wrapper */}
-      <div className="relative z-10 flex items-start justify-between gap-4">
-        
-        {/* Text content */}
-        <div className="flex-1 min-w-0">
-          {/* Title - uppercase label */}
-          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 
-                      uppercase tracking-widest mb-3">
-            {title}
-          </p>
-          
-          {/* Value - large gradient number */}
-          <p className={`text-3xl sm:text-4xl font-bold 
-                       bg-gradient-to-r ${gradient} 
-                       bg-clip-text text-transparent 
-                       mb-2 leading-tight`}>
-            {value}
-          </p>
-          
-          {/* Subtitle - description */}
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {subtitle}
-          </p>
-        </div>
-
-        {/* Icon badge - Samsung soft circles */}
-        <div className={`flex-shrink-0 w-14 h-14 rounded-[18px]
-                      bg-gradient-to-br ${gradient}
-                      flex items-center justify-center
-                      shadow-lg
-                      group-hover:scale-110 group-hover:rotate-3
-                      transition-all duration-300`}>
-          <span className="text-2xl">{icon}</span>
-        </div>
-      </div>
-
-      {/* Status indicator dot */}
-      <div className={`absolute top-4 left-4 w-1.5 h-1.5 rounded-full
-                    bg-gradient-to-br ${gradient}
-                    opacity-40 dark:opacity-60 animate-pulse`} />
-    </div>
-  </div>
-);
 
 export default DashboardLandfill;
