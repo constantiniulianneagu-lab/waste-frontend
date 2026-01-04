@@ -56,7 +56,7 @@ const ReportsLandfill = () => {
   const [pagination, setPagination] = useState(null);
   const [availableYears, setAvailableYears] = useState([]);
   const [sectors, setSectors] = useState([]);
-  const [wasteCo desDepozitate, setWasteCodesDepozitate] = useState([]);
+  const [wasteCodesDepozitate, setWasteCodesDepozitate] = useState([]);
   
   // Auxiliary data
   const [wasteCodes, setWasteCodes] = useState([]);
