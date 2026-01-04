@@ -121,8 +121,9 @@ const ReportsLandfill = () => {
   }, []);
 
   useEffect(() => {
+    console.log('⚡ Filters changed, fetching reports:', filters);
     fetchReports();
-  }, [filters.page, filters.per_page]);
+  }, [filters]);  // ← IMPORTANT: [filters] nu [filters.page, filters.per_page]
 
   const fetchAuxiliaryData = async () => {
     try {
