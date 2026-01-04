@@ -56,6 +56,7 @@ const ReportsLandfill = () => {
   const [pagination, setPagination] = useState(null);
   const [availableYears, setAvailableYears] = useState([]);
   const [sectors, setSectors] = useState([]);
+  const [wasteCo desDepozitate, setWasteCodesDepozitate] = useState([]);
   
   // Auxiliary data
   const [wasteCodes, setWasteCodes] = useState([]);
@@ -121,9 +122,8 @@ const ReportsLandfill = () => {
   }, []);
 
   useEffect(() => {
-    console.log('⚡ Filters changed, fetching reports:', filters);
     fetchReports();
-  }, [filters]);  // ← IMPORTANT: [filters] nu [filters.page, filters.per_page]
+  }, [filters.page, filters.per_page]);
 
   const fetchAuxiliaryData = async () => {
     try {
@@ -186,6 +186,9 @@ const ReportsLandfill = () => {
         
         const allSectors = response.data.all_sectors || [];
         setSectors(allSectors);
+        
+        // ✅ Waste codes depozitate pentru Card 3
+        setWasteCodesDepozitate(response.data.waste_codes || []);
 
       } else {
         setError(response.message || 'Eroare la încărcarea datelor');
@@ -401,7 +404,7 @@ const ReportsLandfill = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold">Furnizori (colectori)</h3>
+              <h3 className="text-sm font-semibold">Furnizori (operatori salubrizare)</h3>
             </div>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
@@ -434,29 +437,39 @@ const ReportsLandfill = () => {
           </div>
         </div>
 
-        {/* Card 3: Operatori depozitare */}
+        {/* Card 3: Coduri deșeuri depozitate */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 flex-shrink-0">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold">Operatori depozitare</h3>
+              <h3 className="text-sm font-semibold">Coduri deșeuri depozitate</h3>
             </div>
           </div>
           <div className="p-4 overflow-y-auto flex-1">
             <div className="space-y-3">
-              {summaryData?.operators?.map((item, idx) => (
+              {wasteCodesDepozitate.map((item, idx) => (
                 <div key={idx} className="border-l-3 border-orange-500 pl-3">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                      {item.name}
-                    </p>
-                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400 whitespace-nowrap">
-                      {formatNumberRO(item.total)} t
-                    </span>
+                  <div className="flex justify-between items-start gap-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                        {item.code}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="text-right whitespace-nowrap">
+                      <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                        {formatNumberRO(item.total_tons)} t
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {item.percent}%
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -502,6 +515,7 @@ const ReportsLandfill = () => {
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tip Contract</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Sector</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
@@ -526,6 +540,9 @@ const ReportsLandfill = () => {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                         {ticket.waste_code}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                      {ticket.contract_type || 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.sector_name}
@@ -557,8 +574,8 @@ const ReportsLandfill = () => {
                   {/* Expanded Row */}
                   {expandedRows.has(ticket.id) && (
                     <tr className="bg-gray-50 dark:bg-gray-800/30">
-                      <td colSpan="8" className="px-4 py-4">
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+                      <td colSpan="9" className="px-4 py-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-sm">
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
@@ -566,43 +583,55 @@ const ReportsLandfill = () => {
                             </p>
                           </div>
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator:</span>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator depozitar:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
                               {ticket.operator_name || 'N/A'}
                             </p>
                           </div>
                           <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.ticket_time || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Generator:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {ticket.generator_type || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone brut:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {formatNumberRO(ticket.gross_weight_tons || ticket.net_weight_tons)} t
+                              {formatNumberRO((ticket.gross_weight_kg || 0) / 1000)} t
                             </p>
                           </div>
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone tară:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {formatNumberRO(ticket.tare_weight_tons || 0)} t
+                              {formatNumberRO((ticket.tare_weight_kg || 0) / 1000)} t
                             </p>
                           </div>
-                          <div className="text-left flex gap-2">
-                            <button
-                              onClick={() => handleEdit(ticket)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
-                                       hover:from-emerald-600 hover:to-emerald-700 text-white rounded 
-                                       transition-all duration-200 shadow-md flex items-center gap-1"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              Editează
-                            </button>
-                            <button
-                              onClick={() => handleDelete(ticket.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
-                                       hover:from-red-600 hover:to-red-700 text-white rounded 
-                                       transition-all duration-200 shadow-md flex items-center gap-1"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              Șterge
-                            </button>
-                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => handleEdit(ticket)}
+                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
+                                     hover:from-emerald-600 hover:to-emerald-700 text-white rounded 
+                                     transition-all duration-200 shadow-md flex items-center gap-1"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Editează
+                          </button>
+                          <button
+                            onClick={() => handleDelete(ticket.id)}
+                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
+                                     hover:from-red-600 hover:to-red-700 text-white rounded 
+                                     transition-all duration-200 shadow-md flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Șterge
+                          </button>
                         </div>
                       </td>
                     </tr>
