@@ -204,7 +204,7 @@ const ReportTMB = () => {
         };
 
         setSummaryData(summary);
-        setTickets(response.data.tickets);
+        setTickets(response.data.items || response.data.tickets || []);
         setPagination({
           page: response.data.pagination.current_page,
           per_page: response.data.pagination.per_page,
