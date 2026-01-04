@@ -1,56 +1,53 @@
 // src/components/reports/ReportsFilters.jsx
 /**
  * ============================================================================
- * REPORTS FILTERS - 2026 SAMSUNG/APPLE STYLE (CLEAN)
+ * REPORTS FILTERS - UNIFICAT CU DASHBOARD
  * ============================================================================
- *
- * ✅ Available years din API (doar funcționalitate, fără afișare)
+ * 
+ * ✅ Ani din API (available_years)
+ * ✅ Sectoare din API (all_sectors)
  * ✅ Auto-update date când schimbi anul
- * ✅ Samsung One UI 7.0 rounded corners (14px)
- * ✅ Perfect light/dark mode
- * ✅ FĂRĂ info footer
- *
+ * ✅ Design consistent cu Dashboard
+ * ✅ București + Sector 1-6
+ * 
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
 import { Check, Calendar, MapPin, RotateCcw } from "lucide-react";
-import { getTodayDate } from "../../utils/dashboardUtils.js";
+
+const getTodayDate = () => new Date().toISOString().split('T')[0];
+const getYearStart = (year) => `${year || new Date().getFullYear()}-01-01`;
 
 const ReportsFilters = ({
   filters,
-  setFilters,
-  sectors = [],          // din getAuxiliaryData: { id, name, sector_number }
+  onFilterChange,
+  sectors = [],
   availableYears = [],
-  onApply,
-  onReset,
+  loading,
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
 
-  // Sincronizăm cu parent
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
 
   // ========================================================================
-  // ANI DISPONIBILI (cu fallback)
+  // ANI DISPONIBILI
   // ========================================================================
 
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
-
     if (availableYears && availableYears.length > 0) {
-      // copie ca să nu modificăm props in-place
-      return [...availableYears].sort((a, b) => b - a);
+      return availableYears.sort((a, b) => b - a);
     }
-
     return [currentYear, currentYear - 1, currentYear - 2];
   };
 
   const yearOptions = getYearOptions();
 
   // ========================================================================
-  // HANDLE YEAR CHANGE - AUTO-UPDATE DATES
+  // ✅ HANDLE YEAR CHANGE - AUTO-APPLY
   // ========================================================================
 
   const handleYearChange = (selectedYear) => {
@@ -69,37 +66,17 @@ const ReportsFilters = ({
 
     console.log(`📅 Year changed to ${yearInt}:`, { startDate, endDate });
 
-    setLocalFilters((prev) => ({
-      ...prev,
+    const newFilters = {
+      ...localFilters,
       year: yearInt,
       from: startDate,
       to: endDate,
-    }));
-  };
-
-  // ========================================================================
-  // HANDLE SECTOR CHANGE
-  //  - sector_id în filtre = UUID (sector.id)
-  // ========================================================================
-
-  const handleSectorChange = (e) => {
-    const value = e.target.value; // "" sau UUID
-
-    if (value === "") {
-      console.log("🌐 Locație: București (fără sector_id)");
-      setLocalFilters((prev) => ({
-        ...prev,
-        sector_id: "",
-      }));
-      return;
-    }
-
-    console.log("✅ Sector UUID selected:", value);
-
-    setLocalFilters((prev) => ({
-      ...prev,
-      sector_id: value, // UUID string
-    }));
+    };
+    
+    setLocalFilters(newFilters);
+    
+    // ✅ AUTO-APPLY: Aplică filtrele imediat
+    onFilterChange(newFilters);
   };
 
   // ========================================================================
@@ -107,13 +84,18 @@ const ReportsFilters = ({
   // ========================================================================
 
   const handleApply = () => {
-    console.log("📤 Applying filters:", localFilters);
-    if (setFilters) {
-      setFilters(localFilters);        // propagăm la parent
+    const cleanFilters = {
+      year: localFilters.year,
+      from: localFilters.from,
+      to: localFilters.to,
+    };
+
+    if (localFilters.sector_id && localFilters.sector_id >= 1 && localFilters.sector_id <= 6) {
+      cleanFilters.sector_id = localFilters.sector_id;
     }
-    if (onApply) {
-      onApply(localFilters);           // declanșăm fetch cu filtrele noi
-    }
+
+    console.log('🔄 Applying filters:', cleanFilters);
+    onFilterChange(cleanFilters);
   };
 
   // ========================================================================
@@ -121,25 +103,52 @@ const ReportsFilters = ({
   // ========================================================================
 
   const handleReset = () => {
-    if (onReset) {
-      onReset();
-    }
-    // parent resetează `filters`, iar useEffect actualizează `localFilters`
+    const currentYear = new Date().getFullYear();
+    const defaultFilters = {
+      year: currentYear,
+      from: getYearStart(currentYear),
+      to: getTodayDate(),
+      sector_id: null,
+      page: 1,
+      per_page: 10,
+    };
+    setLocalFilters(defaultFilters);
+    onFilterChange(defaultFilters);
   };
 
   // ========================================================================
-  // SECTOARE ORDONATE (după sector_number, 1–6)
+  // HANDLE SECTOR CHANGE
   // ========================================================================
 
-  const sortedSectors = [...sectors]
-    .filter((sector) => {
-      return (
-        sector.sector_number &&
-        sector.sector_number >= 1 &&
-        sector.sector_number <= 6
-      );
-    })
-    .sort((a, b) => a.sector_number - b.sector_number);
+  const handleSectorChange = (e) => {
+    const value = e.target.value;
+
+    if (value === "" || value === "all") {
+      setLocalFilters({
+        ...localFilters,
+        sector_id: null,
+      });
+      return;
+    }
+
+    const sectorId = parseInt(value, 10);
+
+    if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
+      console.log('✅ Valid sector selected:', sectorId);
+      setLocalFilters({
+        ...localFilters,
+        sector_id: sectorId,
+      });
+    } else {
+      console.warn('⚠️ Invalid sector value:', value);
+    }
+  };
+
+  // ========================================================================
+  // SECTOARE ORDONATE
+  // ========================================================================
+
+  const sortedSectors = [...sectors].sort((a, b) => a.sector_number - b.sector_number);
 
   // ========================================================================
   // RENDER
@@ -147,7 +156,10 @@ const ReportsFilters = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      
+      {/* GRID 6 COLOANE */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+        
         {/* 1. ANUL */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -155,13 +167,10 @@ const ReportsFilters = ({
             Anul
           </label>
           <select
-            value={
-              localFilters.year !== undefined && localFilters.year !== null
-                ? String(localFilters.year)
-                : ""
-            }
+            value={localFilters.year}
             onChange={(e) => handleYearChange(e.target.value)}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
+            disabled={loading}
           >
             {yearOptions.map((year) => (
               <option key={year} value={year}>
@@ -178,11 +187,13 @@ const ReportsFilters = ({
           </label>
           <input
             type="date"
-            value={localFilters.from || ""}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, from: e.target.value }))
-            }
+            value={localFilters.from}
+            onChange={(e) => {
+              console.log('📅 Date from changed:', e.target.value);
+              setLocalFilters({ ...localFilters, from: e.target.value });
+            }}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
+            disabled={loading}
           />
         </div>
 
@@ -193,11 +204,13 @@ const ReportsFilters = ({
           </label>
           <input
             type="date"
-            value={localFilters.to || ""}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, to: e.target.value }))
-            }
+            value={localFilters.to}
+            onChange={(e) => {
+              console.log('📅 Date to changed:', e.target.value);
+              setLocalFilters({ ...localFilters, to: e.target.value });
+            }}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
+            disabled={loading}
           />
         </div>
 
@@ -208,17 +221,15 @@ const ReportsFilters = ({
             Locație
           </label>
           <select
-            value={localFilters.sector_id || ""}  // "" sau UUID
+            value={localFilters.sector_id || ""}
             onChange={handleSectorChange}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
+            disabled={loading}
           >
             <option value="">București</option>
             {sortedSectors.map((sector) => (
-              <option
-                key={sector.id}
-                value={sector.id} // 👈 UUID spre backend
-              >
-                {sector.name || `Sector ${sector.sector_number}`}
+              <option key={sector.sector_id} value={sector.sector_number}>
+                Sector {sector.sector_number}
               </option>
             ))}
           </select>
@@ -229,7 +240,8 @@ const ReportsFilters = ({
           <button
             type="button"
             onClick={handleApply}
-            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+            disabled={loading}
+            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Check className="w-4 h-4" />
             Aplică
@@ -241,7 +253,8 @@ const ReportsFilters = ({
           <button
             type="button"
             onClick={handleReset}
-            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl transition-all"
+            disabled={loading}
+            className="w-full h-[42px] inline-flex items-center justify-center gap-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4" />
             Resetează

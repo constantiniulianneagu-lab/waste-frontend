@@ -1,51 +1,63 @@
+// src/components/reports/ReportsLandfill.jsx
 /**
  * ============================================================================
- * REPORTS LANDFILL COMPONENT - VERSIUNE ACTUALIZATĂ (FIX CRASH YEAR)
+ * REPORTS LANDFILL - VERSIUNE COMPLETĂ 2026
  * ============================================================================
- * - Fix: summaryData?.period?.year (nu summaryData?.period.year)
- * - Safe map: (summaryData?.suppliers || []).map(...)
- * - Safe map: (summaryData?.waste_codes || []).map(...)
- * - Fetch on all relevant filter changes
- * - No double-fetch on Apply (useEffect handles it)
+ * 
+ * ✅ Design modern consistent cu Dashboard
+ * ✅ Filtrare identică Dashboard (ani + sectoare din API)
+ * ✅ 3 Summary Cards cu statistici
+ * ✅ Export functional (Excel, PDF, CSV)
+ * ✅ Edit/Delete personalizat
+ * ✅ Sidebar specializat Depozitare
+ * ✅ Pagination 10/20/50/100
+ * ✅ Format RO pentru numere
+ * 
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
+import { AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
+
 import ReportsFilters from './ReportsFilters';
 import ReportsSidebar from './ReportsSidebar';
 import ExportDropdown from './ExportDropdown';
-import {
-  getLandfillReports,
+
+import { 
+  getLandfillReports, 
   getAuxiliaryData,
-  deleteLandfillTicket
+  deleteLandfillTicket 
 } from '../../services/reportsService';
 
+import { handleExport } from '../../services/exportService';
+
 const ReportsLandfill = () => {
-  // State
+  // ========================================================================
+  // STATE
+  // ========================================================================
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [exporting, setExporting] = useState(false);
+  
   // Filters
-  const [filters, setFilters] = useState(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    return {
-      year,
-      from: `${year}-01-01`,
-      to: now.toISOString().split('T')[0],
-      sector_id: '',
-      page: 1,
-      per_page: 10
-    };
+  const currentYear = new Date().getFullYear();
+  const [filters, setFilters] = useState({
+    year: currentYear,
+    from: `${currentYear}-01-01`,
+    to: new Date().toISOString().split('T')[0],
+    sector_id: null,
+    page: 1,
+    per_page: 10,
   });
 
   // Data
   const [summaryData, setSummaryData] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [pagination, setPagination] = useState(null);
-
-  // Auxiliary data
+  const [availableYears, setAvailableYears] = useState([]);
   const [sectors, setSectors] = useState([]);
+  
+  // Auxiliary data
   const [wasteCodes, setWasteCodes] = useState([]);
   const [operators, setOperators] = useState([]);
 
@@ -64,10 +76,40 @@ const ReportsLandfill = () => {
   const formatNumberRO = (number) => {
     if (!number && number !== 0) return '0,00';
     const num = typeof number === 'string' ? parseFloat(number) : number;
-    const formatted = Number.isFinite(num) ? num.toFixed(2) : '0.00';
+    const formatted = num.toFixed(2);
     const [intPart, decPart] = formatted.split('.');
     const intWithDots = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `${intWithDots},${decPart}`;
+  };
+
+  // ========================================================================
+  // GROUPING PENTRU CARDS
+  // ========================================================================
+
+  const groupRowsByNameWithCodes = (rows = []) => {
+    const map = new Map();
+    rows.forEach((row) => {
+      const name = row?.name || row?.supplier_name || 'N/A';
+      const code = row?.code || row?.waste_code || null;
+      const qtyRaw = row?.total_tons ?? row?.total ?? 0;
+      const qty = Number(qtyRaw) || 0;
+
+      if (!map.has(name)) {
+        map.set(name, { name, total: 0, codes: [] });
+      }
+
+      const entry = map.get(name);
+      entry.total += qty;
+
+      if (code) {
+        entry.codes.push({ code, quantity: qty });
+      }
+    });
+
+    return Array.from(map.values()).map((e) => ({
+      ...e,
+      codes: (e.codes || []).sort((a, b) => (b.quantity || 0) - (a.quantity || 0)),
+    }));
   };
 
   // ========================================================================
@@ -76,26 +118,21 @@ const ReportsLandfill = () => {
 
   useEffect(() => {
     fetchAuxiliaryData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // IMPORTANT: fetch whenever any relevant filter changes
   useEffect(() => {
     fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.year, filters.from, filters.to, filters.sector_id, filters.page, filters.per_page]);
+  }, [filters.page, filters.per_page]);
 
   const fetchAuxiliaryData = async () => {
     try {
       const response = await getAuxiliaryData();
-      if (response?.success) {
-        setSectors(response.data?.sectors || []);
-        setWasteCodes(response.data?.waste_codes || []);
-        setOperators(response.data?.operators || []);
+      if (response.success && response.data) {
+        setWasteCodes(response.data.waste_codes || []);
+        setOperators(response.data.operators || []);
       }
     } catch (err) {
-      console.error('❌ getAuxiliaryData error:', err);
-      // nu blocăm pagina doar pentru auxiliare
+      console.error('Error fetching auxiliary data:', err);
     }
   };
 
@@ -104,24 +141,57 @@ const ReportsLandfill = () => {
       setLoading(true);
       setError(null);
 
+      console.log('📊 Fetching Landfill reports with filters:', filters);
+      
       const response = await getLandfillReports(filters);
+      
+      console.log('✅ Raw response from API:', response);
 
-      if (response?.success) {
-        setSummaryData(response.data?.summary || null);
-        setTickets(response.data?.tickets || []);
-        setPagination(response.data?.pagination || null);
+      if (response.success && response.data) {
+        // ✅ FIX: Backend returnează 'items' nu 'tickets'
+        const ticketsList = response.data.items || response.data.tickets || [];
+        setTickets(Array.isArray(ticketsList) ? ticketsList : []);
+
+        // ✅ FIX: Pagination structure
+        const paginationData = response.data.pagination || {};
+        setPagination({
+          page: Number(paginationData.page || paginationData.current_page || 1),
+          per_page: Number(paginationData.limit || paginationData.per_page || 10),
+          total_pages: Number(paginationData.totalPages || paginationData.total_pages || 1),
+          total_count: Number(paginationData.total || paginationData.total_records || 0),
+        });
+
+        // ✅ Summary data
+        const summary = {
+          total_quantity: response.data.summary?.total_tons || 0,
+          total_tickets: response.data.summary?.total_tickets || ticketsList.length,
+          period: {
+            year: filters.year,
+            date_from: new Date(filters.from).toLocaleDateString('ro-RO'),
+            date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
+            sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București'
+          },
+          suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
+          operators: (response.data.operators || []).map(operator => ({
+            name: operator.name,
+            total: operator.total_tons
+          })),
+        };
+
+        setSummaryData(summary);
+
+        // ✅ Available years și sectors din API
+        setAvailableYears(response.data.available_years || [currentYear]);
+        
+        const allSectors = response.data.all_sectors || [];
+        setSectors(allSectors);
+
       } else {
-        setSummaryData(null);
-        setTickets([]);
-        setPagination(null);
-        setError(response?.message || 'Eroare la încărcarea datelor');
+        setError(response.message || 'Eroare la încărcarea datelor');
       }
     } catch (err) {
-      console.error('❌ getLandfillReports error:', err);
-      setSummaryData(null);
-      setTickets([]);
-      setPagination(null);
-      setError(err?.message || 'Eroare la încărcarea datelor');
+      console.error('❌ Fetch reports error:', err);
+      setError(err.message || 'Eroare la încărcarea datelor');
     } finally {
       setLoading(false);
     }
@@ -131,30 +201,35 @@ const ReportsLandfill = () => {
   // HANDLERS
   // ========================================================================
 
-  const handleApplyFilters = () => {
-    // Doar reset page la 1; useEffect va face fetch
-    setFilters((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handleResetFilters = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    setFilters({
-      year,
-      from: `${year}-01-01`,
-      to: now.toISOString().split('T')[0],
-      sector_id: '',
-      page: 1,
-      per_page: 10
-    });
+  const handleFilterChange = (newFilters) => {
+    console.log('🔄 Filter change requested:', newFilters);
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (newPage) => {
-    setFilters((prev) => ({ ...prev, page: newPage }));
+    setFilters(prev => ({ ...prev, page: newPage }));
   };
 
   const handlePerPageChange = (newPerPage) => {
-    setFilters((prev) => ({ ...prev, per_page: newPerPage, page: 1 }));
+    setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }));
+  };
+
+  const toggleExpandRow = (ticketId) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ticketId)) {
+        newSet.delete(ticketId);
+      } else {
+        newSet.add(ticketId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddNew = () => {
+    setSelectedTicket(null);
+    setSidebarMode('create');
+    setSidebarOpen(true);
   };
 
   const handleEdit = (ticket) => {
@@ -164,25 +239,21 @@ const ReportsLandfill = () => {
   };
 
   const handleDelete = async (ticketId) => {
-    if (!window.confirm('Sigur vrei să ștergi această înregistrare?')) return;
+    if (!window.confirm('Sigur vrei să ștergi această înregistrare?')) {
+      return;
+    }
 
     try {
       const response = await deleteLandfillTicket(ticketId);
-      if (response?.success) {
+      if (response.success) {
         alert('Înregistrare ștearsă cu succes!');
         fetchReports();
       } else {
-        alert('Eroare la ștergere: ' + (response?.message || 'necunoscută'));
+        alert('Eroare la ștergere: ' + response.message);
       }
     } catch (err) {
-      alert('Eroare la ștergere: ' + (err?.message || 'necunoscută'));
+      alert('Eroare la ștergere: ' + err.message);
     }
-  };
-
-  const handleAddNew = () => {
-    setSelectedTicket(null);
-    setSidebarMode('create');
-    setSidebarOpen(true);
   };
 
   const handleSidebarClose = () => {
@@ -196,31 +267,46 @@ const ReportsLandfill = () => {
     fetchReports();
   };
 
-  const toggleExpandRow = (ticketId) => {
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) newSet.delete(ticketId);
-      else newSet.add(ticketId);
-      return newSet;
-    });
+  const handleExportData = async (format) => {
+    try {
+      setExporting(true);
+      console.log(`🚀 Exporting as ${format}...`);
+
+      const result = await handleExport(format, tickets, summaryData, filters, 'landfill');
+
+      if (result.success) {
+        alert(`Export ${format.toUpperCase()} realizat cu succes!`);
+      } else {
+        alert(`Eroare la export: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`Eroare la export: ${error.message}`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   // ========================================================================
-  // RENDER
+  // RENDER - LOADING
   // ========================================================================
 
   if (loading && !summaryData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Se încarcă rapoartele...
           </p>
         </div>
       </div>
     );
   }
+
+  // ========================================================================
+  // RENDER - ERROR
+  // ========================================================================
 
   if (error) {
     return (
@@ -232,7 +318,7 @@ const ReportsLandfill = () => {
           <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
           <button
             onClick={fetchReports}
-            className="px-4 py-2 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700
+            className="px-4 py-2 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
                      text-white rounded-lg transition-all duration-200 shadow-md"
           >
             Încearcă din nou
@@ -242,29 +328,32 @@ const ReportsLandfill = () => {
     );
   }
 
-  const suppliers = summaryData?.suppliers || [];
-  const wasteCodesSummary = summaryData?.waste_codes || [];
+  // ========================================================================
+  // RENDER - MAIN
+  // ========================================================================
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
+      
+      {/* FILTERS */}
       <ReportsFilters
         filters={filters}
-        setFilters={setFilters}
+        onFilterChange={handleFilterChange}
         sectors={sectors}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
+        availableYears={availableYears}
+        loading={loading}
       />
 
-      {/* Summary Cards */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
         {/* Card 1: Perioada analizată */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div className="min-w-0">
@@ -272,149 +361,132 @@ const ReportsLandfill = () => {
               </div>
             </div>
           </div>
-
           <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
             <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
               <span className="text-gray-600 dark:text-gray-400">Total:</span>
-              <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {formatNumberRO(summaryData?.total_quantity || 0)} t
               </span>
             </div>
-
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">An:</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {summaryData?.period?.year ?? filters.year}
-              </span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.year}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Data început:</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {summaryData?.period?.date_from ?? filters.from}
-              </span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.date_from}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Data sfârșit:</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {summaryData?.period?.date_to ?? filters.to}
-              </span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.date_to}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Locație:</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {summaryData?.period?.sector ?? 'București'}
-              </span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.sector}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Total tichete:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Furnizori */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-4 flex-shrink-0">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold">Furnizori (operatori)</h3>
+              <h3 className="text-sm font-semibold">Furnizori (colectori)</h3>
             </div>
           </div>
-
           <div className="p-4 overflow-y-auto flex-1">
             <div className="space-y-3">
-              {suppliers.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400">Nu există furnizori pentru perioada selectată.</div>
-              ) : (
-                suppliers.map((supplier, idx) => (
-                  <div key={idx} className="border-l-3 border-cyan-500 pl-3">
-                    <div className="flex justify-between items-start gap-2 mb-1">
-                      <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                        {supplier?.name}
-                      </p>
-                      <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap">
-                        {formatNumberRO(supplier?.total || 0)} t
-                      </span>
-                    </div>
+              {summaryData?.suppliers?.map((item, idx) => (
+                <div key={idx} className="border-l-3 border-cyan-500 pl-3">
+                  <div className="flex justify-between items-start gap-2 mb-1">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
+                      {item.name}
+                    </p>
+                    <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap">
+                      {formatNumberRO(item.total)} t
+                    </span>
+                  </div>
+                  {item.codes && item.codes.length > 0 && (
                     <div className="space-y-1">
-                      {(supplier?.codes || []).map((code, codeIdx) => (
+                      {item.codes.map((code, codeIdx) => (
                         <div key={codeIdx} className="flex justify-between text-xs gap-2">
-                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code?.code}</span>
+                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code.code}</span>
                           <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                            {formatNumberRO(code?.quantity || 0)} t
+                            {formatNumberRO(code.quantity)} t
                           </span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                ))
-              )}
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Card 3: Tipuri deșeuri */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 flex-shrink-0">
+        {/* Card 3: Operatori depozitare */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 flex-shrink-0">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold">Tipuri deșeuri depozitate</h3>
+              <h3 className="text-sm font-semibold">Operatori depozitare</h3>
             </div>
           </div>
-
           <div className="p-4 overflow-y-auto flex-1">
-            <div className="space-y-2">
-              {wasteCodesSummary.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400">Nu există coduri deșeu pentru perioada selectată.</div>
-              ) : (
-                wasteCodesSummary.map((code, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-3 p-2 bg-gray-50 dark:bg-gray-800/50 rounded">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white">{code?.code}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{code?.description}</p>
-                    </div>
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {formatNumberRO(code?.quantity || 0)} t
+            <div className="space-y-3">
+              {summaryData?.operators?.map((item, idx) => (
+                <div key={idx} className="border-l-3 border-orange-500 pl-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
+                      {item.name}
+                    </p>
+                    <span className="text-sm font-bold text-orange-600 dark:text-orange-400 whitespace-nowrap">
+                      {formatNumberRO(item.total)} t
                     </span>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700">
+      {/* TABLE SECTION */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        
         {/* Table Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Înregistrări detaliate ({pagination?.total_count || 0})
+              Tichete Depozitare ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
               <button
                 onClick={handleAddNew}
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-indigo-500 to-indigo-600
-                         hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-blue-500 to-blue-600 
+                         hover:from-blue-600 hover:to-blue-700 text-white rounded-lg 
                          transition-all duration-200 shadow-md flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Adaugă înregistrare
+                <Plus className="w-4 h-4" />
+                Adaugă tichet
               </button>
-
-              <ExportDropdown
-                filters={filters}
-                summaryData={summaryData}
+              <ExportDropdown 
+                onExport={handleExportData}
+                disabled={tickets.length === 0}
+                loading={exporting}
               />
             </div>
           </div>
@@ -423,68 +495,56 @@ const ReportsLandfill = () => {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Tichet Cântar</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[80px]">Ora</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[150px]">Generator</th>
+                <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Sector</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
                 <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Contract</th>
                 <th className="px-4 py-3 text-center w-20"></th>
               </tr>
             </thead>
-
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {(tickets || []).map((ticket) => (
+              {tickets.map((ticket) => (
                 <React.Fragment key={ticket.id}>
+                  {/* Main Row */}
                   <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                       {ticket.ticket_number}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.ticket_date ? new Date(ticket.ticket_date).toLocaleDateString('ro-RO') : '-'}
+                      {new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.ticket_time || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.supplier_name || '-'}
+                      {ticket.supplier_name}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        {ticket.waste_code || '-'}
+                        {ticket.waste_code}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.sector_name || '-'}
+                      {ticket.sector_name}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.generator || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {ticket.vehicle_number || '-'}
+                      {ticket.vehicle_number}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                      {formatNumberRO(ticket.net_weight_tons || 0)} t
-                    </td>
-                    <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                      {ticket.contract || '-'}
+                      {formatNumberRO(ticket.net_weight_tons)} t
                     </td>
                     <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
                         onClick={() => toggleExpandRow(ticket.id)}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                        title={expandedRows.has(ticket.id) ? 'Ascunde detalii' : 'Arată detalii'}
+                        title={expandedRows.has(ticket.id) ? "Ascunde detalii" : "Arată detalii"}
                       >
-                        <svg
+                        <svg 
                           className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
+                          fill="none" 
+                          stroke="currentColor" 
                           viewBox="0 0 24 24"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -493,60 +553,52 @@ const ReportsLandfill = () => {
                     </td>
                   </tr>
 
+                  {/* Expanded Row */}
                   {expandedRows.has(ticket.id) && (
                     <tr className="bg-gray-50 dark:bg-gray-800/30">
-                      <td colSpan="11" className="px-4 py-4">
+                      <td colSpan="8" className="px-4 py-4">
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Descriere deșeu:</span>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.waste_description || '-'}
+                              {ticket.waste_code} - {ticket.waste_description}
                             </p>
                           </div>
-
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operație:</span>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.operation || '-'}
+                              {ticket.operator_name || 'N/A'}
                             </p>
                           </div>
-
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone brut:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {formatNumberRO(ticket.gross_weight_tons || 0)} t
+                              {formatNumberRO(ticket.gross_weight_tons || ticket.net_weight_tons)} t
                             </p>
                           </div>
-
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Tone tară:</span>
                             <p className="font-medium text-gray-900 dark:text-white">
                               {formatNumberRO(ticket.tare_weight_tons || 0)} t
                             </p>
                           </div>
-
                           <div className="text-left flex gap-2">
                             <button
                               onClick={() => handleEdit(ticket)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-indigo-500 to-indigo-600
-                                       hover:from-indigo-600 hover:to-indigo-700 text-white rounded
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
+                                       hover:from-emerald-600 hover:to-emerald-700 text-white rounded 
                                        transition-all duration-200 shadow-md flex items-center gap-1"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
+                              <Edit2 className="w-3.5 h-3.5" />
                               Editează
                             </button>
-
                             <button
                               onClick={() => handleDelete(ticket.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600
-                                       hover:from-red-600 hover:to-red-700 text-white rounded
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
+                                       hover:from-red-600 hover:to-red-700 text-white rounded 
                                        transition-all duration-200 shadow-md flex items-center gap-1"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <Trash2 className="w-3.5 h-3.5" />
                               Șterge
                             </button>
                           </div>
@@ -570,9 +622,9 @@ const ReportsLandfill = () => {
                 </p>
                 <select
                   value={filters.per_page}
-                  onChange={(e) => handlePerPageChange(parseInt(e.target.value, 10))}
-                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 
+                           rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
@@ -580,13 +632,12 @@ const ReportsLandfill = () => {
                   <option value="100">100 / pagină</option>
                 </select>
               </div>
-
               <div className="flex gap-2">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Anterior
@@ -594,8 +645,8 @@ const ReportsLandfill = () => {
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page === pagination.total_pages}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg
-                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Următorul
@@ -606,7 +657,7 @@ const ReportsLandfill = () => {
         )}
       </div>
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <ReportsSidebar
         isOpen={sidebarOpen}
         mode={sidebarMode}

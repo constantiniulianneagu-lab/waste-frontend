@@ -1,154 +1,133 @@
+// src/components/reports/ExportDropdown.jsx
 /**
  * ============================================================================
- * EXPORT DROPDOWN COMPONENT - VERSIUNE ACTUALIZATĂ
+ * EXPORT DROPDOWN COMPONENT
  * ============================================================================
- * - Exportă TOATE înregistrările filtrate (nu doar pagina curentă)
- * - Warning dacă > 10.000 înregistrări
+ * 
+ * Dropdown modern pentru export în:
+ * - Excel (.xlsx)
+ * - PDF (.pdf)
+ * - CSV (.csv)
+ * 
  * ============================================================================
  */
 
-import React, { useState } from 'react';
-import { exportToExcel, exportToCSV, exportToPDF } from '../../utils/exportUtils';
-import { exportLandfillReports } from '../../services/reportsService';
+import { useState, useRef, useEffect } from 'react';
+import { Download, FileSpreadsheet, FileText, File } from 'lucide-react';
 
-const ExportDropdown = ({ filters, summaryData }) => {
+const ExportDropdown = ({ onExport, disabled = false, loading = false }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const handleExport = async (format) => {
-    try {
-      setIsExporting(true);
-      setIsOpen(false);
-
-      console.log('📥 Fetching ALL filtered data for export...');
-
-      // Fetch ALL filtered data from backend
-      const response = await exportLandfillReports(filters);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Eroare la export');
+  // Close dropdown când dai click în afară
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
       }
+    };
 
-      const allTickets = response.data.tickets;
-      const totalCount = response.data.total_count;
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-      console.log(`📊 Found ${totalCount} records for export`);
-
-      // Warning dacă > 10.000 înregistrări
-      if (totalCount > 10000) {
-        const confirmed = window.confirm(
-          `⚠️ ATENȚIE!\n\n` +
-          `Vei exporta ${totalCount.toLocaleString('ro-RO')} înregistrări.\n\n` +
-          `Procesarea poate dura câteva minute și fișierul va fi mare.\n\n` +
-          `Dorești să continui?`
-        );
-        
-        if (!confirmed) {
-          setIsExporting(false);
-          return;
-        }
-      }
-
-      // Export bazat pe format
-      if (format === 'excel') {
-        exportToExcel(allTickets, summaryData);
-      } else if (format === 'csv') {
-        exportToCSV(allTickets, summaryData);
-      } else if (format === 'pdf') {
-        exportToPDF(allTickets, summaryData);
-      }
-
-      console.log('✅ Export completed successfully');
-    } catch (error) {
-      console.error('❌ Export error:', error);
-      alert('Eroare la export: ' + error.message);
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExportClick = (format) => {
+    setIsOpen(false);
+    onExport(format);
   };
 
+  const exportOptions = [
+    {
+      format: 'excel',
+      label: 'Export Excel',
+      description: 'Fișier .xlsx',
+      icon: FileSpreadsheet,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgHover: 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
+    },
+    {
+      format: 'pdf',
+      label: 'Export PDF',
+      description: 'Document .pdf',
+      icon: FileText,
+      color: 'text-red-600 dark:text-red-400',
+      bgHover: 'hover:bg-red-50 dark:hover:bg-red-900/20',
+    },
+    {
+      format: 'csv',
+      label: 'Export CSV',
+      description: 'Fișier .csv',
+      icon: File,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgHover: 'hover:bg-blue-50 dark:hover:bg-blue-900/20',
+    },
+  ];
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
+      {/* Buton principal */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        disabled={isExporting}
+        disabled={disabled || loading}
         className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
                  hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
-                 transition-all duration-200 shadow-md flex items-center gap-2 disabled:opacity-50"
+                 transition-all duration-200 shadow-md flex items-center gap-2
+                 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isExporting ? (
-          <>
-            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Exportare...
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Export date
-          </>
-        )}
+        <Download className="w-4 h-4" />
+        {loading ? 'Se exportă...' : 'Export date'}
+        <svg
+          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
-      {isOpen && !isExporting && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#242b3d] rounded-lg shadow-lg 
-                        border border-gray-200 dark:border-gray-700 z-20 overflow-hidden">
-            <button
-              onClick={() => handleExport('excel')}
-              className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 
-                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-3"
-            >
-              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <div>
-                <p className="font-medium">Excel (.xlsx)</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Format complet</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleExport('csv')}
-              className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 
-                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 
-                       border-t border-gray-200 dark:border-gray-700"
-            >
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <div>
-                <p className="font-medium">CSV</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Format universal</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleExport('pdf')}
-              className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 
-                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 
-                       border-t border-gray-200 dark:border-gray-700"
-            >
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              <div>
-                <p className="font-medium">PDF</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Document portabil</p>
-              </div>
-            </button>
+      {/* Dropdown menu */}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg 
+                      border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Selectează format
+            </p>
           </div>
-        </>
+
+          {/* Options */}
+          <div className="py-2">
+            {exportOptions.map((option) => {
+              const Icon = option.icon;
+              return (
+                <button
+                  key={option.format}
+                  onClick={() => handleExportClick(option.format)}
+                  className={`w-full px-4 py-3 flex items-start gap-3 transition-colors ${option.bgHover}`}
+                >
+                  <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${option.color}`} />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {option.label}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {option.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer info */}
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              💡 Se va descărca automat
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
