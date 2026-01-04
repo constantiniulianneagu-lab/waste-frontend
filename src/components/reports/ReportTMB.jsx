@@ -205,11 +205,12 @@ const ReportTMB = () => {
 
         setSummaryData(summary);
         setTickets(response.data.items || response.data.tickets || []);
+        const paginationData = response.data.pagination || {};
         setPagination({
-          page: response.data.pagination.current_page,
-          per_page: response.data.pagination.per_page,
-          total_pages: response.data.pagination.total_pages,
-          total_count: response.data.pagination.total_records
+          page: Number(paginationData.page || paginationData.current_page || 1),
+          per_page: Number(paginationData.limit || paginationData.per_page || 10),
+          total_pages: Number(paginationData.totalPages || paginationData.total_pages || 1),
+          total_count: Number(paginationData.total || paginationData.total_records || 0)
         });
       } else {
         setError(response.message || 'Eroare la încărcarea datelor');
