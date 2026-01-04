@@ -123,7 +123,7 @@ const ReportsLandfill = () => {
 
   useEffect(() => {
     fetchReports();
-  }, [filters.page, filters.per_page]);
+  }, [filters]);  
 
   const fetchAuxiliaryData = async () => {
     try {
