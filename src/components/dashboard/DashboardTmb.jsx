@@ -218,14 +218,15 @@ const DashboardTmb = () => {
   // ANI - ARRAY DE 2 ANI (CA LA DEPOZITARE)
   // ========================================================================
 
-  const availableYears = Array.from({ length: 2 }, (_, i) => currentYear - i);
-  console.log("📅 Available years (2 years):", availableYears);
+  // ✅ FIX: Folosește available_years și all_sectors din API
+  const availableYears = data?.available_years || Array.from({ length: 2 }, (_, i) => currentYear - i);
+  console.log("📅 Available years from API:", availableYears);
 
   // ========================================================================
-  // SECTOARE - HARDCODED BUCUREȘTI + SECTOR 1-6
+  // SECTOARE - DIN API (nu mai hardcoded)
   // ========================================================================
 
-  const sectors = [
+  const sectors = data?.all_sectors || [
     { sector_id: 1, sector_number: 1, sector_name: "Sector 1" },
     { sector_id: 2, sector_number: 2, sector_name: "Sector 2" },
     { sector_id: 3, sector_number: 3, sector_name: "Sector 3" },
@@ -234,7 +235,7 @@ const DashboardTmb = () => {
     { sector_id: 6, sector_number: 6, sector_name: "Sector 6" },
   ];
 
-  console.log("🗺️ Hardcoded sectors 1-6:", sectors);
+  console.log("🗺️ Sectors from API:", sectors);
 
   // ========================================================================
   // PREPARE DATA PENTRU GRAFICE
