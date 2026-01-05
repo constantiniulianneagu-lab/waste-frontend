@@ -88,15 +88,13 @@ const ReportsFilters = ({
       year: localFilters.year,
       from: localFilters.from,
       to: localFilters.to,
+      sector_id: localFilters.sector_id || null, // ✅ păstrează UUID-ul
     };
-
-    if (localFilters.sector_id && localFilters.sector_id >= 1 && localFilters.sector_id <= 6) {
-      cleanFilters.sector_id = localFilters.sector_id;
-    }
-
+  
     console.log('🔄 Applying filters:', cleanFilters);
     onFilterChange(cleanFilters);
   };
+  
 
   // ========================================================================
   // HANDLE RESET
@@ -122,21 +120,15 @@ const ReportsFilters = ({
 
   const handleSectorChange = (e) => {
     const value = e.target.value;
-  
-    if (value === "" || value === "all") {
-      setLocalFilters({
-        ...localFilters,
-        sector_id: null,
-      });
-      return;
-    }
-  
-    // ✅ CORECT: Trimite UUID-ul sectorului
-    setLocalFilters({
+    const newFilters = {
       ...localFilters,
-      sector_id: value,  // ← Trimite UUID direct (nu parseInt!)
-    });
+      sector_id: value === "" ? null : value, // UUID sau null
+    };
+  
+    setLocalFilters(newFilters);
+    onFilterChange(newFilters); // ✅ auto-apply
   };
+  
 
   // ========================================================================
   // SECTOARE ORDONATE
