@@ -405,7 +405,7 @@ const ReportsSidebar = ({
                 className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
                          rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                          transition-colors"
-                placeholder="ex: Taxi"
+                placeholder="ex: Taxă"
               />
             </div>
 
