@@ -222,7 +222,7 @@ const ReportsFilters = ({
           >
             <option value="">București</option>
             {sortedSectors.map((sector) => (
-              <option key={sector.sector_id} value={sector.sector_number}>
+              <option key={sector.sector_id} value={sector.sector_id}>
                 Sector {sector.sector_number}
               </option>
             ))}
