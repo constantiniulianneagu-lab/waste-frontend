@@ -257,7 +257,7 @@ const ReportsSidebar = ({
             {/* Supplier (Furnizor) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Furnizor (Operator) <span className="text-red-500">*</span>
+                Furnizor (Operator salubrizare) <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.supplier_id}
