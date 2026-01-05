@@ -122,7 +122,7 @@ const ReportsFilters = ({
 
   const handleSectorChange = (e) => {
     const value = e.target.value;
-
+  
     if (value === "" || value === "all") {
       setLocalFilters({
         ...localFilters,
@@ -130,18 +130,12 @@ const ReportsFilters = ({
       });
       return;
     }
-
-    const sectorId = parseInt(value, 10);
-
-    if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
-      console.log('✅ Valid sector selected:', sectorId);
-      setLocalFilters({
-        ...localFilters,
-        sector_id: sectorId,
-      });
-    } else {
-      console.warn('⚠️ Invalid sector value:', value);
-    }
+  
+    // ✅ CORECT: Trimite UUID-ul sectorului
+    setLocalFilters({
+      ...localFilters,
+      sector_id: value,  // ← Trimite UUID direct (nu parseInt!)
+    });
   };
 
   // ========================================================================
