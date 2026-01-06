@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle, Factory, Trash2, Package, TrendingUp, Activity } from "lucide-react";
+import { AlertCircle, Factory, Trash2, Package, Activity } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
 
@@ -78,6 +78,23 @@ const DashboardTmb = () => {
   };
 
   // ========================================================================
+  // SECTOR COLOR THEMES (badge stânga tabel) - aceeași idee ca la Depozitare
+  // ========================================================================
+  const sectorColorThemes = {
+    1: { badge: "bg-gradient-to-br from-blue-500 to-indigo-600" },
+    2: { badge: "bg-gradient-to-br from-emerald-500 to-teal-600" },
+    3: { badge: "bg-gradient-to-br from-yellow-500 to-orange-600" },
+    4: { badge: "bg-gradient-to-br from-red-500 to-rose-600" },
+    5: { badge: "bg-gradient-to-br from-purple-500 to-pink-600" },
+    6: { badge: "bg-gradient-to-br from-cyan-500 to-blue-600" },
+  };
+
+  const getSectorBadgeClass = (sectorNum) => {
+    const n = Number(sectorNum);
+    return (sectorColorThemes[n] || sectorColorThemes[1]).badge;
+  };
+
+  // ========================================================================
   // FETCH DATA
   // ========================================================================
 
@@ -85,9 +102,9 @@ const DashboardTmb = () => {
     try {
       setLoading(true);
       setError(null);
-  
+
       console.log("📊 Fetching TMB dashboard data with filters:", filterParams);
-      
+
       // Adaptare filtre pentru API TMB
       const tmbFilters = {
         year: filterParams.year?.toString(),
@@ -99,17 +116,17 @@ const DashboardTmb = () => {
       if (filterParams.sector_id && filterParams.sector_id >= 1 && filterParams.sector_id <= 6) {
         tmbFilters.sector_id = filterParams.sector_id.toString();
       }
-      
+
       console.log("🔄 TMB Filters sent to API:", tmbFilters);
-      
+
       const res = await getTmbStats(tmbFilters);
-      
+
       console.log("✅ Raw response from TMB API:", res);
-  
+
       if (!res) {
         throw new Error("Empty response from API");
       }
-  
+
       if (typeof res === "object" && "success" in res) {
         if (!res.success) {
           throw new Error(res.message || "API responded with success=false");
@@ -130,6 +147,7 @@ const DashboardTmb = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ========================================================================
@@ -154,7 +172,7 @@ const DashboardTmb = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader 
+        <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratare Mecano-Biologică"
@@ -178,7 +196,7 @@ const DashboardTmb = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader 
+        <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratare Mecano-Biologică"
@@ -218,7 +236,6 @@ const DashboardTmb = () => {
   // ANI - ARRAY DE 2 ANI (CA LA DEPOZITARE)
   // ========================================================================
 
-  // ✅ FIX: Folosește available_years și all_sectors din API
   const availableYears = data?.available_years || Array.from({ length: 2 }, (_, i) => currentYear - i);
   console.log("📅 Available years from API:", availableYears);
 
@@ -252,8 +269,6 @@ const DashboardTmb = () => {
     tratate: parseFloat(item.tmb_tons) || 0,
     depozitate: parseFloat(item.landfill_tons) || 0
   })) || [];
-
-
 
   // ========================================================================
   // RENDER CHART WITH MODERN TOOLTIP
@@ -314,12 +329,12 @@ const DashboardTmb = () => {
         <AreaChart {...commonProps}>
           <defs>
             <linearGradient id="colorTratate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
             </linearGradient>
             <linearGradient id="colorDepozitate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05}/>
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
@@ -340,16 +355,15 @@ const DashboardTmb = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      
-      <DashboardHeader 
+
+      <DashboardHeader
         notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
         title="Dashboard Tratare Mecano-Biologică"
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
-        
-        {/* FILTERS - CU ANI HARDCODED ȘI SECTOARE HARDCODED */}
+
         <DashboardFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -372,13 +386,11 @@ const DashboardTmb = () => {
           </div>
         ) : (
           <>
-            {/* LINIA 1: CARDS + GRAFIC - MODERN CARDS */}
+            {/* LINIA 1: CARDS + GRAFIC */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              
+
               {/* LEFT COLUMN - 3 MODERN CARDS */}
               <div className="space-y-4">
-                
-                {/* CARD 1 - TOTAL COLECTATE */}
                 <StatCard
                   icon={<Trash2 className="w-5 h-5" />}
                   iconGradient="from-emerald-500 to-teal-600"
@@ -389,7 +401,6 @@ const DashboardTmb = () => {
                   percentageColor="text-emerald-600 dark:text-emerald-400"
                 />
 
-                {/* CARD 2 - DEPOZITATE */}
                 <StatCard
                   icon={<Package className="w-5 h-5" />}
                   iconGradient="from-red-500 to-rose-600"
@@ -400,7 +411,6 @@ const DashboardTmb = () => {
                   percentageColor="text-red-600 dark:text-red-400"
                 />
 
-                {/* CARD 3 - TMB */}
                 <StatCard
                   icon={<Factory className="w-5 h-5" />}
                   iconGradient="from-cyan-500 to-blue-600"
@@ -418,39 +428,35 @@ const DashboardTmb = () => {
                   <h3 className="text-base font-bold text-gray-900 dark:text-white">
                     Evoluția cantităților de deșeuri
                   </h3>
-                  
-                  {/* CHART TYPE SWITCHER - Samsung pills */}
+
                   <div className="flex gap-2">
                     {[
                       { type: 'bar', label: 'Bare' },
                       { type: 'line', label: 'Linii' },
                       { type: 'area', label: 'Arie' }
                     ].map(({ type, label }) => (
-                      <button 
+                      <button
                         key={type}
                         onClick={() => setChartType(type)}
-                        className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ${
-                          chartType === type 
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg scale-105' 
-                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                        }`}
+                        className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ${chartType === type
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg scale-105'
+                          : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}
                       >
                         {label}
                       </button>
                     ))}
                   </div>
                 </div>
-                
+
                 <ResponsiveContainer width="100%" height={400}>
                   {renderChart()}
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* OUTPUT CARDS - 4 MODERN CARDS */}
+            {/* OUTPUT CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              
-              {/* CARD 1 - RECICLABILE */}
               <OutputCard
                 label="Reciclabile"
                 badgeColor="bg-emerald-500"
@@ -462,7 +468,6 @@ const DashboardTmb = () => {
                 gradient="from-emerald-500 to-teal-600"
               />
 
-              {/* CARD 2 - VALORIFICARE */}
               <OutputCard
                 label="Valorificare energetică"
                 badgeColor="bg-red-500"
@@ -474,7 +479,6 @@ const DashboardTmb = () => {
                 gradient="from-red-500 to-rose-600"
               />
 
-              {/* CARD 3 - DEPOZITAT */}
               <OutputCard
                 label="Depozitat"
                 badgeColor="bg-purple-500"
@@ -486,26 +490,22 @@ const DashboardTmb = () => {
                 gradient="from-purple-500 to-violet-600"
               />
 
-              {/* CARD 4 - STOC/DIFERENȚĂ */}
               <div className="group relative">
                 <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
                               rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
                               hover:border-amber-300 dark:hover:border-amber-500/50
                               hover:-translate-y-1 hover:shadow-xl
                               transition-all duration-300 overflow-hidden">
-                  
-                  {/* Accent line */}
+
                   <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
                                 bg-gradient-to-b from-amber-500 to-orange-600
                                 group-hover:w-1.5 transition-all duration-300" />
-                  
-                  {/* Gradient overlay */}
+
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600
                                 opacity-[0.02] dark:opacity-[0.04]
                                 group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
                                 transition-opacity duration-500" />
-                  
-                  {/* Content */}
+
                   <div className="relative z-10">
                     <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-4">
                       Stoc/Diferență
@@ -524,7 +524,7 @@ const DashboardTmb = () => {
 
             {/* BOTTOM ROW - CHART + TABLE */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
+
               {/* SECTOR DISTRIBUTION CHART */}
               <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
                             border border-gray-200 dark:border-gray-700/50 p-6 
@@ -557,45 +557,59 @@ const DashboardTmb = () => {
                   <table className="w-full text-sm">
                     <thead className="border-b border-gray-200 dark:border-gray-700">
                       <tr className="text-left text-xs text-gray-600 dark:text-gray-400">
-                        <th className="pb-3 font-bold uppercase tracking-wider">#</th>
+                        <th className="pb-3 font-bold uppercase tracking-wider">Sector</th>
                         <th className="pb-3 font-bold uppercase tracking-wider">Operator</th>
                         <th className="pb-3 font-bold uppercase tracking-wider text-right">TMB</th>
                         <th className="pb-3 font-bold uppercase tracking-wider text-right">Depozitat</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {data.operators && data.operators.slice(0, 6).map((op, idx) => (
-                        <tr key={idx} className="group hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-all">
-                          <td className="py-4">
-                            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-purple-500 to-pink-500 
+                      {data.operators && data.operators.slice(0, 6).map((op, idx) => {
+                        const sectorNum = Array.isArray(op.sector_numbers) && op.sector_numbers.length
+                          ? op.sector_numbers[0]
+                          : null;
+
+                        const badgeClass = getSectorBadgeClass(sectorNum || 1);
+                        const tooltip = Array.isArray(op.sector_numbers) && op.sector_numbers.length
+                          ? `Sectoare: ${op.sector_numbers.join(", ")}`
+                          : '';
+
+                        return (
+                          <tr key={idx} className="group hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-all">
+                            <td className="py-4">
+                              <div
+                                className={`w-8 h-8 rounded-[12px] ${badgeClass}
                                           flex items-center justify-center text-white text-xs font-bold
-                                          shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all">
-                              {idx + 1}
-                            </div>
-                          </td>
-                          <td className="py-4">
-                            <span className="text-gray-900 dark:text-white font-medium">
-                              {op.name}
-                            </span>
-                          </td>
-                          <td className="py-4 text-right">
-                            <div className="text-emerald-600 dark:text-emerald-400 font-bold">
-                              {formatNumberRO(op.tmb_total_tons)} t
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {op.tmb_percent}%
-                            </div>
-                          </td>
-                          <td className="py-4 text-right">
-                            <div className="text-red-600 dark:text-red-400 font-bold">
-                              {formatNumberRO(op.landfill_total_tons)} t
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {op.landfill_percent}%
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                          shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all`}
+                                title={tooltip}
+                              >
+                                {sectorNum ?? "-"}
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className="text-gray-900 dark:text-white font-medium">
+                                {op.name}
+                              </span>
+                            </td>
+                            <td className="py-4 text-right">
+                              <div className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                {formatNumberRO(op.tmb_total_tons)} t
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {op.tmb_percent}%
+                              </div>
+                            </td>
+                            <td className="py-4 text-right">
+                              <div className="text-red-600 dark:text-red-400 font-bold">
+                                {formatNumberRO(op.landfill_total_tons)} t
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {op.landfill_percent}%
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -620,21 +634,17 @@ const StatCard = ({ icon, iconGradient, label, value, subtitle, percentage, perc
                   hover:border-gray-300 dark:hover:border-gray-600
                   hover:-translate-y-1 hover:shadow-xl
                   transition-all duration-300 overflow-hidden">
-      
-      {/* Accent line */}
+
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
                     bg-gradient-to-b ${iconGradient}
                     group-hover:w-1.5 transition-all duration-300`} />
-      
-      {/* Gradient overlay */}
+
       <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient}
                     opacity-[0.02] dark:opacity-[0.04]
                     group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
                     transition-opacity duration-500`} />
-      
-      {/* Content */}
+
       <div className="relative z-10">
-        {/* Icon + Label */}
         <div className="flex items-center gap-3 mb-3">
           <div className={`w-10 h-10 rounded-[14px] bg-gradient-to-br ${iconGradient}
                         flex items-center justify-center text-white shadow-lg
@@ -645,25 +655,21 @@ const StatCard = ({ icon, iconGradient, label, value, subtitle, percentage, perc
             {label}
           </p>
         </div>
-        
-        {/* Value */}
+
         <p className={`text-2xl font-bold bg-gradient-to-r ${iconGradient} 
                     bg-clip-text text-transparent mb-1`}>
           {value}
         </p>
-        
-        {/* Subtitle */}
+
         <p className="text-[10px] text-gray-500 dark:text-gray-500 mb-2">
           {subtitle}
         </p>
-        
-        {/* Percentage */}
+
         <p className={`text-xs font-bold ${percentageColor}`}>
           {percentage}
         </p>
       </div>
 
-      {/* Pulse dot indicator */}
       <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full
                     bg-gradient-to-br ${iconGradient}
                     opacity-40 dark:opacity-60 animate-pulse`} />
@@ -683,21 +689,17 @@ const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acce
                   hover:border-gray-300 dark:hover:border-gray-600
                   hover:-translate-y-1 hover:shadow-xl
                   transition-all duration-300 overflow-hidden">
-      
-      {/* Accent line */}
+
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
                     bg-gradient-to-b ${gradient}
                     group-hover:w-1.5 transition-all duration-300`} />
-      
-      {/* Gradient overlay */}
+
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient}
                     opacity-[0.02] dark:opacity-[0.04]
                     group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
                     transition-opacity duration-500`} />
-      
-      {/* Content */}
+
       <div className="relative z-10">
-        {/* Header with badge */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
             {label}
@@ -707,19 +709,16 @@ const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acce
             Raport
           </span>
         </div>
-        
-        {/* Main value */}
+
         <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} 
                     bg-clip-text text-transparent mb-2`}>
           {value} tone
         </p>
-        
-        {/* Percentage */}
+
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           {percentage}
         </p>
-        
-        {/* Details */}
+
         <div className="space-y-2 text-xs mb-4">
           <div className="flex justify-between items-center">
             <span className="text-gray-600 dark:text-gray-400">Trimisă:</span>
@@ -730,8 +729,7 @@ const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acce
             <span className="font-bold text-gray-900 dark:text-white">{accepted} t</span>
           </div>
         </div>
-        
-        {/* Progress bar */}
+
         <div>
           <ProgressBar value={parseFloat(acceptanceRate)} gradient={gradient} />
           <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
