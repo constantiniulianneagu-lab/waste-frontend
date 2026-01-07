@@ -275,8 +275,7 @@ const UserProfile = () => {
       PLATFORM_ADMIN: "Administrator Platformă",
       ADMIN_INSTITUTION: "Administrator Instituție",
       EDITOR_INSTITUTION: "Editor Instituție",
-      REGULATOR_VIEWER: "Vizualizator",
-      OPERATOR_USER: "Operator",
+      REGULATOR_VIEWER: "Autoritate publică",
     };
     return roleMap[role] || role;
   };

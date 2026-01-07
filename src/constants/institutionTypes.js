@@ -51,7 +51,7 @@ export const INSTITUTION_TYPE_LABELS_RO = {
   [INSTITUTION_TYPES.DISPOSAL_CLIENT]: 'Client Depozit',
   [INSTITUTION_TYPES.RECYCLING_CLIENT]: 'Client Reciclare',
   [INSTITUTION_TYPES.RECOVERY_CLIENT]: 'Client Valorificare',
-  [INSTITUTION_TYPES.REGULATOR]: 'Regulator'
+  [INSTITUTION_TYPES.REGULATOR]: 'Autoritate publică'
 };
 
 // ============================================================================

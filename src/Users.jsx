@@ -351,10 +351,10 @@ const Users = () => {
 
   // ========== ROLE LABELS ==========
   const roleLabels = {
-    PLATFORM_ADMIN: { label: "Admin Platformă", color: "red" },
-    ADMIN_INSTITUTION: { label: "Admin Instituție", color: "blue" },
+    PLATFORM_ADMIN: { label: "Administrator Platformă", color: "red" },
+    ADMIN_INSTITUTION: { label: "Administrator Instituție", color: "blue" },
     EDITOR_INSTITUTION: { label: "Editor Instituție", color: "emerald" },
-    REGULATOR_VIEWER: { label: "Regulator", color: "purple" },
+    REGULATOR_VIEWER: { label: "Autoritate publică", color: "purple" },
   };
 
   const getRoleBadge = (role) => {
@@ -400,10 +400,10 @@ const Users = () => {
             className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-[14px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
           >
             <option value="">Toate rolurile</option>
-            <option value="PLATFORM_ADMIN">Admin Platformă</option>
-            <option value="ADMIN_INSTITUTION">Admin Instituție</option>
+            <option value="PLATFORM_ADMIN">Administrator Platformă</option>
+            <option value="ADMIN_INSTITUTION">Administrator Instituție</option>
             <option value="EDITOR_INSTITUTION">Editor Instituție</option>
-            <option value="REGULATOR_VIEWER">Regulator</option>
+            <option value="REGULATOR_VIEWER">Autoritate publică</option>
           </select>
 
           {/* Institution filter:

@@ -2058,7 +2058,7 @@ const Institutions = () => {
     <option value="LANDFILL">Depozit</option>
     <option value="RECYCLING_CLIENT">Client Reciclare</option>
     <option value="RECOVERY_CLIENT">Client Valorificare</option>
-    <option value="REGULATOR">Regulator (Garda Mediu, Ministere)</option>
+    <option value="REGULATOR">Autoritate publică (Garda Mediu, Ministere)</option>
   </select>
   {errors.type && (
     <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">

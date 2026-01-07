@@ -49,10 +49,10 @@ const UserSidebar = ({
   }, [isInstitutionAdmin, myInstitutionId]);
 
   const roleLabels = {
-    PLATFORM_ADMIN: 'Admin Platformă',
-    ADMIN_INSTITUTION: 'Admin Instituție',
+    PLATFORM_ADMIN: 'Administrator Platformă',
+    ADMIN_INSTITUTION: 'Administrator Instituție',
     EDITOR_INSTITUTION: 'Editor Instituție',
-    REGULATOR_VIEWER: 'Regulator'
+    REGULATOR_VIEWER: 'Autoritate publică'
   };
 
   const getRoleBadge = (role) => {
@@ -134,10 +134,10 @@ const UserSidebar = ({
   const roleOptions = useMemo(() => {
     if (isPlatformAdmin) {
       return [
-        { value: 'PLATFORM_ADMIN', label: 'Admin Platformă' },
-        { value: 'ADMIN_INSTITUTION', label: 'Admin Instituție' },
+        { value: 'PLATFORM_ADMIN', label: 'Administrator Platformă' },
+        { value: 'ADMIN_INSTITUTION', label: 'Administrator Instituție' },
         { value: 'EDITOR_INSTITUTION', label: 'Editor Instituție' },
-        { value: 'REGULATOR_VIEWER', label: 'Regulator' },
+        { value: 'REGULATOR_VIEWER', label: 'Autoritate publică' },
       ];
     }
 

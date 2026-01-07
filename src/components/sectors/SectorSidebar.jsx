@@ -76,7 +76,7 @@ const SectorSidebar = ({
     { type: 'TMB_OPERATOR', label: 'TMB', icon: '♻️', color: 'lime' },
     { type: 'SORTING_OPERATOR', label: 'Sortare', icon: '📦', color: 'cyan' },
     { type: 'LANDFILL', label: 'Depozit', icon: '🏗️', color: 'amber' },
-    { type: 'REGULATOR', label: 'Regulator', icon: '⚖️', color: 'purple' },
+    { type: 'REGULATOR', label: 'Autoritate publică', icon: '⚖️', color: 'purple' },
   ];
 
   return (

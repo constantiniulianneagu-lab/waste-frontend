@@ -59,7 +59,7 @@ const DashboardHeader = ({
       PLATFORM_ADMIN: "Administrator Platformă",
       ADMIN_INSTITUTION: "Administrator Instituție",
       EDITOR_INSTITUTION: "Editor Instituție",
-      REGULATOR_VIEWER: "Vizualizator",
+      REGULATOR_VIEWER: "Autoritate publică",
     };
     return roleMap[role] || role || "Utilizator";
   };
