@@ -274,7 +274,6 @@ const UserProfile = () => {
     const roleMap = {
       PLATFORM_ADMIN: "Administrator Platformă",
       ADMIN_INSTITUTION: "Administrator Instituție",
-      ADMIN_INSTITUTION: "Administrator Instituție",
       EDITOR_INSTITUTION: "Editor Instituție",
       REGULATOR_VIEWER: "Vizualizator",
       OPERATOR_USER: "Operator",
