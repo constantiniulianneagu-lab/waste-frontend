@@ -41,10 +41,33 @@ import SortingContractModal from "./SortingContractModal";
 import DisposalContractModal from "./DisposalContractModal";
 import TMBContractModal from "./TMBContractModal";
 import { INSTITUTION_TYPES, getInstitutionTypeLabel } from "./constants/institutionTypes";
-
-const user = JSON.parse(localStorage.getItem('wasteUser')) || { role: 'OPERATOR' };
+import { useAuth } from "./AuthContext";
+import { usePermissions } from "./hooks/usePermissions";
 
 const Institutions = () => {
+  // ========================================================================
+  // AUTH & PERMISSIONS
+  // ========================================================================
+  const { user } = useAuth();
+  const permissions = usePermissions();
+  const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
+
+  // Access guard
+  if (!hasAccess('institutions')) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[18px] p-6">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Acces restricționat
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Nu ai permisiuni pentru pagina „Instituții".
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ========================================================================
   // STATE
   // ========================================================================
@@ -1162,7 +1185,7 @@ const Institutions = () => {
                   <FileText className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                   Contracte TMB
                 </h4>
-                {(user.role === 'PLATFORM_ADMIN' || user.role === 'INSTITUTION_ADMIN') && (
+                {canEditData && (
   <button
     onClick={() => {
       setCurrentInstitutionId(inst.id);
@@ -1256,7 +1279,7 @@ const Institutions = () => {
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                   Contracte Operator Colectare
                 </h4>
-                {(user.role === 'PLATFORM_ADMIN' || user.role === 'INSTITUTION_ADMIN') && (
+                {canEditData && (
   <button
     onClick={() => {
       setCurrentInstitutionId(inst.id);

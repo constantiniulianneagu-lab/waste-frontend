@@ -26,6 +26,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   if (!user || location.pathname === "/login") return null;
 
   const getAllMenuItems = () => {
+    // Get scopes from userAccess
+    const scopes = user?.userAccess?.scopes || {};
+    
     const allItems = [
       {
         title: "Depozitare",
@@ -34,7 +37,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-emerald-500 to-teal-600",
         iconColor: "text-emerald-500 dark:text-emerald-400",
         hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+        visible: scopes.landfill !== 'NONE',
       },
       {
         title: "Tratare Mecano-Biologică",
@@ -43,7 +46,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-lime-500 to-emerald-600",
         iconColor: "text-lime-500 dark:text-lime-400",
         hoverBg: "hover:bg-lime-50 dark:hover:bg-lime-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+        visible: scopes.tmb !== 'NONE',
       },
       {
         title: "Rapoarte",
@@ -52,7 +55,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-cyan-500 to-blue-600",
         iconColor: "text-cyan-500 dark:text-cyan-400",
         hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+        visible: scopes.reports !== 'NONE',
       },
       {
         title: "Sectoare",
@@ -61,7 +64,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-blue-500 to-indigo-600",
         iconColor: "text-blue-500 dark:text-blue-400",
         hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+        visible: scopes.sectors !== 'NONE',
       },
       {
         title: "Utilizatori",
@@ -70,8 +73,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-violet-500 to-purple-600",
         iconColor: "text-violet-500 dark:text-violet-400",
         hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-500/10",
-        // ✅ IMPORTANT: și ADMIN_INSTITUTION vede Users
-        roles: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
+        visible: scopes.users !== 'NONE',
       },
       {
         title: "Instituții",
@@ -80,11 +82,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-amber-500 to-orange-600",
         iconColor: "text-amber-500 dark:text-amber-400",
         hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
-        roles: ["PLATFORM_ADMIN"],
+        visible: scopes.institutions !== 'NONE',
       },
     ];
 
-    return allItems.filter((item) => item.roles.includes(user?.role));
+    return allItems.filter((item) => item.visible);
   };
 
   const menuItems = getAllMenuItems();

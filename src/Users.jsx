@@ -1,6 +1,7 @@
 // src/Users.jsx
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { useAuth } from "./AuthContext";
+import { usePermissions } from "./hooks/usePermissions";
 import { userService } from "./userService";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import UserSidebar from "./components/users/UserSidebar";
@@ -21,13 +22,12 @@ import {
 
 const Users = () => {
   const { user: currentUser } = useAuth();
-
-  const isPlatformAdmin = currentUser?.role === "PLATFORM_ADMIN";
-  const isInstitutionAdmin = currentUser?.role === "ADMIN_INSTITUTION";
-  const canAccessUsers = isPlatformAdmin || isInstitutionAdmin;
+  const permissions = usePermissions();
+  
+  const { canCreateData, canEditData, canDeleteData, hasAccess, isPlatformAdmin, isInstitutionAdmin } = permissions;
 
   // hard guard (in case someone types /users manually)
-  if (!canAccessUsers) {
+  if (!hasAccess('users')) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[18px] p-6">
@@ -446,13 +446,15 @@ const Users = () => {
             </button>
           )}
 
-          <button
-            onClick={handleCreateUser}
-            className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Utilizator Nou
-          </button>
+          {canCreateData && (
+            <button
+              onClick={handleCreateUser}
+              className="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-[14px] transition-all active:scale-98 shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Utilizator Nou
+            </button>
+          )}
         </div>
 
         <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -584,29 +586,33 @@ const Users = () => {
 
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-2">
-                              {(isPlatformAdmin || canManageThis) && (
+                              {(canEditData || canDeleteData) && (isPlatformAdmin || canManageThis) && (
                                 <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditUser(u);
-                                    }}
-                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
-                                    title="Editează"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </button>
+                                  {canEditData && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditUser(u);
+                                      }}
+                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-[10px] transition-colors"
+                                      title="Editează"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                  )}
 
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteConfirm(u);
-                                    }}
-                                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
-                                    title="Șterge"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
+                                  {canDeleteData && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteConfirm(u);
+                                      }}
+                                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-[10px] transition-colors"
+                                      title="Șterge"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>

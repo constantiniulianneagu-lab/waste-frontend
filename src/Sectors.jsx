@@ -1,6 +1,7 @@
 // src/Sectors.jsx
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { usePermissions } from "./hooks/usePermissions";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import SectorSidebar from "./components/sectors/SectorSidebar";
 import {
@@ -17,6 +18,24 @@ import {
 
 const Sectors = () => {
   const { user } = useAuth();
+  const permissions = usePermissions();
+  const { canEditData, hasAccess } = permissions;
+
+  // Access guard
+  if (!hasAccess('sectors')) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[18px] p-6">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Acces restricționat
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Nu ai permisiuni pentru pagina „Sectoare".
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // State
   const [sectors, setSectors] = useState([]);
@@ -329,7 +348,7 @@ const Sectors = () => {
                       <Eye className="w-4 h-4" />
                       Detalii
                     </button>
-                    {user?.role === 'PLATFORM_ADMIN' && (
+                    {canEditData && (
                       <button
                         onClick={() => handleEditSector(sector)}
                         className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-[12px] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
