@@ -57,7 +57,7 @@ const DashboardHeader = ({
   const formatRole = (role) => {
     const roleMap = {
       SUPER_ADMIN: "Super Administrator",
-      INSTITUTION_ADMIN: "Administrator Instituție",
+      ADMIN_INSTITUTION: "Administrator Instituție",
       OPERATOR_ADMIN: "Administrator Operator",
       OPERATOR_USER: "Utilizator Operator",
       VIEWER: "Vizualizator",
