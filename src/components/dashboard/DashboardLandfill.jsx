@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle, Download } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import { getLandfillStats } from "../../services/dashboardLandfillService.js";
 import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
@@ -193,6 +193,8 @@ const DashboardLandfill = () => {
       <DashboardHeader 
         notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
+        onExport={handleExport}
+        exporting={exporting}
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
@@ -204,18 +206,6 @@ const DashboardLandfill = () => {
           availableYears={availableYears}
           loading={loading}
         />
-
-        {/* Export PDF Button */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleExport}
-            disabled={exporting || loading || !data}
-            className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
-          >
-            <Download className="w-5 h-5" />
-            {exporting ? 'Generare PDF...' : 'Export PDF'}
-          </button>
-        </div>
 
         {!data?.summary ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">

@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, User, Download } from "lucide-react";
 import { useAuth } from "../../AuthContext";
 import { useTheme } from "../../hooks/useTheme";
 import ThemeToggle from "./ThemeToggle";
@@ -27,7 +27,9 @@ import ThemeToggle from "./ThemeToggle";
 const DashboardHeader = ({ 
   notificationCount = 0, 
   onSearchChange,
-  title = "Dashboard Depozitarea deșeurilor"
+  title = "Dashboard Depozitarea deșeurilor",
+  onExport,
+  exporting = false
 }) => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
@@ -180,6 +182,46 @@ const DashboardHeader = ({
 
             {/* Theme Toggle - COMPACT */}
             <ThemeToggle />
+
+            {/* Export PDF Button - Same style as Notifications */}
+            {onExport && (
+              <button
+                type="button"
+                onClick={onExport}
+                disabled={exporting}
+                className="relative 
+                         p-2.5 rounded-[14px] 
+                         bg-gradient-to-r from-blue-500 to-cyan-600
+                         hover:from-blue-600 hover:to-cyan-700
+                         text-white
+                         transition-all duration-300
+                         active:scale-95
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         group
+                         shadow-lg shadow-blue-500/20"
+                aria-label="Export PDF"
+                title="Export PDF"
+              >
+                <Download className={`w-5 h-5 
+                           group-hover:scale-110 
+                           transition-transform duration-300
+                           ${exporting ? 'animate-bounce' : ''}`} />
+                
+                {/* Tooltip (desktop) */}
+                <span className="hidden xl:block
+                               absolute -bottom-10 left-1/2 -translate-x-1/2
+                               px-2 py-1 rounded-lg
+                               bg-gray-900 dark:bg-gray-100
+                               text-white dark:text-gray-900
+                               text-xs font-medium
+                               opacity-0 group-hover:opacity-100
+                               transition-opacity duration-200
+                               whitespace-nowrap
+                               pointer-events-none">
+                  {exporting ? 'Generare...' : 'Export PDF'}
+                </span>
+              </button>
+            )}
 
             {/* Separator subtil */}
             <div className="hidden lg:block 
