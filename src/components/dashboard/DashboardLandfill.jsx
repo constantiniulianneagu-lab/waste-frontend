@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Download } from "lucide-react";
 
 import { getLandfillStats } from "../../services/dashboardLandfillService.js";
 import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
@@ -25,6 +25,7 @@ const DashboardLandfill = () => {
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationCount] = useState(3);
+  const [exporting, setExporting] = useState(false);
 
   const [filters, setFilters] = useState({
     year: new Date().getFullYear(),
@@ -79,6 +80,52 @@ const DashboardLandfill = () => {
   const handleSearchChange = (query) => {
     setSearchQuery(query);
     console.log("🔍 Search query:", query);
+  };
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      
+      // Build query params from current filters
+      const params = new URLSearchParams();
+      if (filters.year) params.append('year', filters.year);
+      if (filters.from) params.append('from', filters.from);
+      if (filters.to) params.append('to', filters.to);
+      if (filters.sector_id) params.append('sectorId', filters.sector_id);
+
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const token = localStorage.getItem('wasteAccessToken');
+      
+      const response = await fetch(
+        `${API_URL}/api/dashboard/landfill/export?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      // Download PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `raport-depozitare-${filters.year || 'current'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Eroare la generarea raportului PDF. Vă rugăm încercați din nou.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -157,6 +204,18 @@ const DashboardLandfill = () => {
           availableYears={availableYears}
           loading={loading}
         />
+
+        {/* Export PDF Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleExport}
+            disabled={exporting || loading || !data}
+            className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
+          >
+            <Download className="w-5 h-5" />
+            {exporting ? 'Generare PDF...' : 'Export PDF'}
+          </button>
+        </div>
 
         {!data?.summary ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
