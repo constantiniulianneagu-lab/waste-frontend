@@ -179,10 +179,11 @@ const Sectors = () => {
       TMB_OPERATOR: Recycle,
       SORTING_OPERATOR: Layers,
       LANDFILL: MapPin,
-      REGULATOR: Building2,
     };
+  
     return icons[type] || Building2;
   };
+  
 
   // ========== RENDER ==========
   return (
