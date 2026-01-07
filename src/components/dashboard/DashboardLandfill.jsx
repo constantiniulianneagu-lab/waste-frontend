@@ -91,7 +91,7 @@ const DashboardLandfill = () => {
       if (filters.year) params.append('year', filters.year);
       if (filters.from) params.append('from', filters.from);
       if (filters.to) params.append('to', filters.to);
-      if (filters.sector_id) params.append('sectorId', filters.sector_id);
+      if (filters.sector_id) params.append('sector_id', filters.sector_id);
 
       const API_URL = 'https://waste-backend-3u9c.onrender.com';
       const token = localStorage.getItem('wasteAccessToken');
