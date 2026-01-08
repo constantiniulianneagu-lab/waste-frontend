@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Recycle,
   Layers,
+  TrendingUp,
 } from "lucide-react";
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -64,6 +65,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-blue-500 to-indigo-600",
         iconColor: "text-blue-500 dark:text-blue-400",
         hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
+        visible: scopes.sectors !== 'NONE',
+      },
+      {
+        title: "Statistici Sectoare",
+        icon: TrendingUp,
+        path: "/sectoare",
+        gradient: "from-emerald-500 to-teal-600",
+        iconColor: "text-emerald-500 dark:text-emerald-400",
+        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
         visible: scopes.sectors !== 'NONE',
       },
       {

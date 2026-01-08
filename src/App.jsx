@@ -19,6 +19,8 @@ import ReportsMain from "./components/reports/ReportsMain";
 import ReportTMB from "./components/reports/ReportTMB";
 import UserProfile from "./components/UserProfile";
 import Sectors from "./Sectors";
+import SectorStatsOverview from "./pages/SectorStatsOverview";
+import SectorStatsDetail from "./pages/SectorStatsDetail";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
@@ -143,6 +145,26 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
                 <Sectors />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SECTOR STATS OVERVIEW - fără REGULATOR_VIEWER */}
+          <Route
+            path="/sectoare"
+            element={
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+                <SectorStatsOverview />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SECTOR STATS DETAIL - fără REGULATOR_VIEWER */}
+          <Route
+            path="/sectoare/:sector_number"
+            element={
+              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+                <SectorStatsDetail />
               </ProtectedRoute>
             }
           />
