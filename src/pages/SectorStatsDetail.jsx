@@ -448,12 +448,14 @@ const ComponentCard = ({ title, icon, gradient, data, type, formatNumber }) => {
                     {data.contract_info.contract_number}
                   </span>
                 </div>
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Operator:</span>
-                  <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                    {data.contract_info.operator_name || data.contract_info.station_name || data.contract_info.facility_name}
-                  </span>
-                </div>
+                {(data.contract_info.operator_name || data.contract_info.station_name || data.contract_info.facility_name) && (
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">Operator:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                      {data.contract_info.operator_name || data.contract_info.station_name || data.contract_info.facility_name}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Tarif:</span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-white">
