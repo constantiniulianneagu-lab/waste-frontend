@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE
+ * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE + PDF EXPORT
  * ============================================================================
  * 
  * Modern UI with glassmorphism, perfect light/dark mode, and premium gradients
@@ -10,6 +10,7 @@
  * ✅ Filtre: start_date / end_date (nu from/to)
  * ✅ Sectoare: Hardcoded București + Sector 1-6
  * ✅ Default: An curent, startOfYear, today
+ * ✅ PDF Export: Raport_TMB_YYYYMMDD_HHMMSS.pdf
  * 
  * ============================================================================
  */
@@ -48,6 +49,7 @@ const DashboardTmb = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationCount] = useState(3);
   const [chartType, setChartType] = useState('bar');
+  const [exporting, setExporting] = useState(false);
 
   // ========================================================================
   // FILTRE - CONFORM COD VECHI TMB
@@ -165,6 +167,52 @@ const DashboardTmb = () => {
     console.log("🔍 Search query:", query);
   };
 
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      
+      // Build query params from current filters
+      const params = new URLSearchParams();
+      if (filters.year) params.append('year', filters.year);
+      if (filters.from) params.append('start_date', filters.from);
+      if (filters.to) params.append('end_date', filters.to);
+      if (filters.sector_id) params.append('sector_id', filters.sector_id);
+
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const token = localStorage.getItem('wasteAccessToken');
+      
+      const response = await fetch(
+        `${API_URL}/api/dashboard/tmb/export?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      // Download PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `raport-tmb-${filters.year || 'current'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Eroare la generarea raportului PDF. Vă rugăm încercați din nou.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ========================================================================
   // LOADING STATE
   // ========================================================================
@@ -175,6 +223,8 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
+          onExport={handleExport}
+          exporting={exporting}
           title="Dashboard Tratare Mecano-Biologică"
         />
         <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
@@ -199,6 +249,8 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
+          onExport={handleExport}
+          exporting={exporting}
           title="Dashboard Tratare Mecano-Biologică"
         />
         <div className="p-6">
@@ -359,6 +411,8 @@ const DashboardTmb = () => {
       <DashboardHeader
         notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
+        onExport={handleExport}
+        exporting={exporting}
         title="Dashboard Tratare Mecano-Biologică"
       />
 
