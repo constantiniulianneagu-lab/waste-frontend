@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardTmb.jsx
 /**
  * ============================================================================
- * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE + PDF EXPORT
+ * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE
  * ============================================================================
  * 
  * Modern UI with glassmorphism, perfect light/dark mode, and premium gradients
@@ -10,7 +10,6 @@
  * ✅ Filtre: start_date / end_date (nu from/to)
  * ✅ Sectoare: Hardcoded București + Sector 1-6
  * ✅ Default: An curent, startOfYear, today
- * ✅ PDF Export: Raport_TMB_YYYYMMDD_HHMMSS.pdf
  * 
  * ============================================================================
  */
@@ -48,7 +47,8 @@ const DashboardTmb = () => {
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationCount] = useState(3);
-  const [chartType, setChartType] = useState('bar');
+  const [chartType, setChartType] = useState('bar'); // Pentru "Evoluția cantităților"
+  const [chartType2, setChartType2] = useState('bar'); // Pentru "Distribuția pe sectoare"
   const [exporting, setExporting] = useState(false);
 
   // ========================================================================
@@ -223,8 +223,6 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
-          onExport={handleExport}
-          exporting={exporting}
           title="Dashboard Tratare Mecano-Biologică"
         />
         <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
@@ -249,8 +247,6 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
-          onExport={handleExport}
-          exporting={exporting}
           title="Dashboard Tratare Mecano-Biologică"
         />
         <div className="p-6">
@@ -352,6 +348,9 @@ const DashboardTmb = () => {
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     };
 
+    // CYAN/TEAL for "Deșeuri tratate" instead of green
+    const CYAN_COLOR = '#06b6d4'; // cyan-500
+
     if (chartType === 'bar') {
       return (
         <BarChart {...commonProps}>
@@ -360,7 +359,7 @@ const DashboardTmb = () => {
           <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Bar dataKey="Deșeuri tratate" fill="#10b981" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="Deșeuri tratate" fill={CYAN_COLOR} radius={[8, 8, 0, 0]} />
           <Bar dataKey="Deșeuri depozitate" fill="#ef4444" radius={[8, 8, 0, 0]} />
         </BarChart>
       );
@@ -372,7 +371,7 @@ const DashboardTmb = () => {
           <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Line type="monotone" dataKey="Deșeuri tratate" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', r: 4 }} />
+          <Line type="monotone" dataKey="Deșeuri tratate" stroke={CYAN_COLOR} strokeWidth={3} dot={{ fill: CYAN_COLOR, r: 4 }} />
           <Line type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 4 }} />
         </LineChart>
       );
@@ -381,8 +380,8 @@ const DashboardTmb = () => {
         <AreaChart {...commonProps}>
           <defs>
             <linearGradient id="colorTratate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+              <stop offset="5%" stopColor={CYAN_COLOR} stopOpacity={0.4} />
+              <stop offset="95%" stopColor={CYAN_COLOR} stopOpacity={0.05} />
             </linearGradient>
             <linearGradient id="colorDepozitate" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
@@ -394,8 +393,69 @@ const DashboardTmb = () => {
           <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Area type="monotone" dataKey="Deșeuri tratate" stroke="#10b981" strokeWidth={2} fill="url(#colorTratate)" />
+          <Area type="monotone" dataKey="Deșeuri tratate" stroke={CYAN_COLOR} strokeWidth={2} fill="url(#colorTratate)" />
           <Area type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={2} fill="url(#colorDepozitate)" />
+        </AreaChart>
+      );
+    }
+  };
+
+  // ========================================================================
+  // RENDER CHART 2 - Distribuția pe sectoare (cu switcher Area/Bare/Linie)
+  // ========================================================================
+  const renderChart2 = () => {
+    const commonProps = {
+      data: sectorPieData,
+      margin: { top: 5, right: 30, left: 20, bottom: 5 }
+    };
+
+    const CYAN_COLOR = '#06b6d4'; // cyan-500 for "Tratate"
+    const RED_COLOR = '#ef4444'; // red-500 for "Depozitate"
+
+    if (chartType2 === 'bar') {
+      return (
+        <BarChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          <Bar dataKey="tratate" name="Tratate" fill={CYAN_COLOR} radius={[8, 8, 0, 0]} />
+          <Bar dataKey="depozitate" name="Depozitate" fill={RED_COLOR} radius={[8, 8, 0, 0]} />
+        </BarChart>
+      );
+    } else if (chartType2 === 'line') {
+      return (
+        <LineChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          <Line type="monotone" dataKey="tratate" name="Tratate" stroke={CYAN_COLOR} strokeWidth={3} dot={{ fill: CYAN_COLOR, r: 4 }} />
+          <Line type="monotone" dataKey="depozitate" name="Depozitate" stroke={RED_COLOR} strokeWidth={3} dot={{ fill: RED_COLOR, r: 4 }} />
+        </LineChart>
+      );
+    } else {
+      return (
+        <AreaChart {...commonProps}>
+          <defs>
+            <linearGradient id="colorTratate2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={CYAN_COLOR} stopOpacity={0.4} />
+              <stop offset="95%" stopColor={CYAN_COLOR} stopOpacity={0.05} />
+            </linearGradient>
+            <linearGradient id="colorDepozitate2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={RED_COLOR} stopOpacity={0.4} />
+              <stop offset="95%" stopColor={RED_COLOR} stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
+          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          <Area type="monotone" dataKey="tratate" name="Tratate" stroke={CYAN_COLOR} strokeWidth={2} fill="url(#colorTratate2)" />
+          <Area type="monotone" dataKey="depozitate" name="Depozitate" stroke={RED_COLOR} strokeWidth={2} fill="url(#colorDepozitate2)" />
         </AreaChart>
       );
     }
@@ -583,20 +643,157 @@ const DashboardTmb = () => {
               <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
                             border border-gray-200 dark:border-gray-700/50 p-6 
                             shadow-sm dark:shadow-none">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-6">
-                  Distribuția pe sectoare
-                </h3>
+                
+                {/* HEADER cu Switcher */}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                    Distribuția pe sectoare
+                  </h3>
+
+                  {/* SWITCHER Area/Bare/Linie */}
+                  <div className="flex gap-2">
+                    {[
+                      { type: 'area', label: 'Area', icon: '📊' },
+                      { type: 'bar', label: 'Bare', icon: '📊' },
+                      { type: 'line', label: 'Linie', icon: '📈' }
+                    ].map(({ type, label }) => (
+                      <button
+                        key={type}
+                        onClick={() => setChartType2(type)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 
+                                  ${chartType2 === type
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CHART */}
                 <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={sectorPieData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-                    <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-                    <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                    <Bar dataKey="tratate" name="Tratate" fill="#10b981" radius={[8, 8, 0, 0]} />
-                    <Bar dataKey="depozitate" name="Depozitate" fill="#ef4444" radius={[8, 8, 0, 0]} />
-                  </BarChart>
+                  {renderChart2()}
                 </ResponsiveContainer>
+
+                {/* CARDURI SUB GRAFIC - 4 STATS */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700/50">
+                  
+                  {/* Card 1: TOTAL DEPOZITATE */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-600 
+                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
+                    <div className="relative p-4 rounded-[20px] border border-red-200 dark:border-red-500/20
+                                  hover:border-red-300 dark:hover:border-red-500/40 transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-red-500 to-rose-600 
+                                      flex items-center justify-center shadow-md">
+                          <Trash2 className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
+                          Total Depozitate
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                        {formatNumberRO(sectorPieData.reduce((sum, s) => sum + (s.depozitate || 0), 0))}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                        tone
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 2: TOTAL TRATATE */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 
+                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
+                    <div className="relative p-4 rounded-[20px] border border-cyan-200 dark:border-cyan-500/20
+                                  hover:border-cyan-300 dark:hover:border-cyan-500/40 transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-cyan-500 to-blue-600 
+                                      flex items-center justify-center shadow-md">
+                          <Factory className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
+                          Total Tratate
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
+                        {formatNumberRO(sectorPieData.reduce((sum, s) => sum + (s.tratate || 0), 0))}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                        tone
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 3: RATA TRATARE */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 
+                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
+                    <div className="relative p-4 rounded-[20px] border border-violet-200 dark:border-violet-500/20
+                                  hover:border-violet-300 dark:hover:border-violet-500/40 transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-violet-500 to-purple-600 
+                                      flex items-center justify-center shadow-md">
+                          <Activity className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
+                          Rată Tratare
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold text-violet-600 dark:text-violet-400">
+                        {(() => {
+                          const totalTratate = sectorPieData.reduce((sum, s) => sum + (s.tratate || 0), 0);
+                          const totalDepozitate = sectorPieData.reduce((sum, s) => sum + (s.depozitate || 0), 0);
+                          const total = totalTratate + totalDepozitate;
+                          return total > 0 ? ((totalTratate / total) * 100).toFixed(1) : '0.0';
+                        })()}%
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                        din total
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 4: SECTOR LIDER */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 
+                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
+                    <div className="relative p-4 rounded-[20px] border border-cyan-200 dark:border-cyan-500/20
+                                  hover:border-cyan-300 dark:hover:border-cyan-500/40 transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-cyan-500 to-blue-600 
+                                      flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">🏆</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
+                          Sector Lider
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
+                        {(() => {
+                          const leader = sectorPieData.reduce((max, s) => 
+                            (s.tratate || 0) > (max.tratate || 0) ? s : max, 
+                            sectorPieData[0] || {}
+                          );
+                          return leader.name || '-';
+                        })()}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                        {(() => {
+                          const leader = sectorPieData.reduce((max, s) => 
+                            (s.tratate || 0) > (max.tratate || 0) ? s : max, 
+                            sectorPieData[0] || {}
+                          );
+                          return formatNumberRO(leader.tratate || 0) + ' t';
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
               {/* OPERATORS TABLE */}
