@@ -158,8 +158,8 @@ const SectorStatsTable = ({ data = [], loading = false }) => {
       <div className="space-y-2 flex-1 overflow-hidden">
         {data.slice(0, 6).map((sector, index) => {
           const theme = sectorColorThemes[sector.sector_number] || sectorColorThemes[1];
-          const positive = (sector.variation_percent || 0) >= 0;
-          const variation = Math.abs(Number(sector.variation_percent || 0));
+          const positive = (sector.variation_pct || 0) >= 0;
+          const variation = Math.abs(Number(sector.variation_pct || 0));
 
           return (
             <div
