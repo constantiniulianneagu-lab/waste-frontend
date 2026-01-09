@@ -280,15 +280,7 @@ const TopOperatorsTable = ({ data = [], loading = false }) => {
                   />
                 </div>
 
-                {/* Performance indicator (subtle badge) */}
-                {idx < 3 && (
-                  <div className="absolute top-3 right-3 
-                              bg-gradient-to-br from-amber-400 to-orange-500 
-                              rounded-full w-6 h-6 flex items-center justify-center
-                              shadow-md shadow-amber-500/30">
-                    <TrendingUp className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-                  </div>
-                )}
+                {/* Performance indicator removed per user request */}
               </div>
             </div>
           );

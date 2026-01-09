@@ -288,11 +288,7 @@ const RecentTicketsTable = ({ data = [], loading = false }) => {
                   </div>
                 </div>
 
-                {/* New entry indicator (for very recent entries) */}
-                {idx < 3 && (
-                  <div className="absolute top-2 right-2 w-1.5 h-1.5 
-                              rounded-full bg-emerald-500 animate-pulse" />
-                )}
+                {/* New entry indicator removed per user request */}
               </div>
             </div>
           );
