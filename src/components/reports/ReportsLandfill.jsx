@@ -340,7 +340,7 @@ const ReportsLandfill = () => {
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* Card 1: Perioada analizată - MODIFICAT */}
+        {/* Card 1: Perioada analizată - DESIGN NOU */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
             <div className="flex items-center gap-3 text-white">
@@ -354,42 +354,48 @@ const ReportsLandfill = () => {
               </div>
             </div>
           </div>
-          <div className="p-4 space-y-3 text-sm overflow-y-auto flex-1">
-            {/* Cantitate totală - EVIDENȚIATĂ */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg p-3 border-2 border-emerald-400 dark:border-emerald-600">
-              <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium mb-1">Total cantitate</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                {formatNumberRO(summaryData?.total_quantity || 0)} t
+          
+          <div className="p-4 flex flex-col gap-4 overflow-y-auto flex-1">
+            
+            {/* Cantitate totală - MARE ȘI EVIDENȚIATĂ */}
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-center shadow-lg">
+              <p className="text-xs font-semibold text-white/80 uppercase tracking-wide mb-1">
+                Total cantitate
               </p>
+              <p className="text-3xl font-black text-white">
+                {formatNumberRO(summaryData?.total_quantity || 0)}
+              </p>
+              <p className="text-sm font-bold text-white/90 mt-0.5">tone</p>
             </div>
             
-            {/* Perioada - COMPACTĂ */}
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 w-16">An:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 w-16">De la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_from || '-'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 w-16">Până la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_to || '-'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 w-16">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
+            {/* Detalii perioadă - COMPACT */}
+            <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 block mb-0.5">An</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 block mb-0.5">UAT</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 block mb-0.5">De la</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{summaryData?.period?.date_from || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400 block mb-0.5">Până la</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{summaryData?.period?.date_to || '-'}</span>
+                </div>
               </div>
             </div>
             
             {/* Total tichete */}
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Total tichete:</span>
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{summaryData?.total_tickets || 0}</span>
-              </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 flex items-center justify-between border border-blue-200 dark:border-blue-800">
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Total tichete</span>
+              <span className="text-xl font-black text-blue-600 dark:text-blue-400">{summaryData?.total_tickets || 0}</span>
             </div>
+            
           </div>
         </div>
 
