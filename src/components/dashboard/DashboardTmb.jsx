@@ -409,7 +409,7 @@ const DashboardTmb = () => {
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     };
 
-    const CYAN_COLOR = '#06b6d4'; // cyan-500 for "Tratate"
+    const CYAN_COLOR = '#0077b6'; // cyan-500 for "Tratate"
     const RED_COLOR = '#ef4444'; // red-500 for "Depozitate"
 
     if (chartType2 === 'bar') {
