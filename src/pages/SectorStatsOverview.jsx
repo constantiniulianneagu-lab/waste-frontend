@@ -15,6 +15,7 @@ import {
   AlertCircle, ChevronRight, DollarSign 
 } from 'lucide-react';
 import { getAllSectorsOverview } from '../services/sectorWasteManagementService';
+import DashboardHeader from '../components/dashboard/DashboardHeader';
 
 const SectorStatsOverview = () => {
   const navigate = useNavigate();
@@ -113,38 +114,37 @@ const SectorStatsOverview = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* HEADER */}
+      {/* HEADER - standardizat */}
+      <DashboardHeader 
+        title="Statistici Sectoare - Managementul Deșeurilor"
+        notificationCount={0}
+      />
+
+      {/* FILTRE - Sub header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 lg:px-8 py-6">
+        <div className="px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Statistici Sectoare - Managementul Deșeurilor
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Vizualizează statistici complete pentru fiecare sector din București
-              </p>
-            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Vizualizează statistici complete pentru fiecare sector din București
+            </p>
 
             {/* YEAR FILTER */}
-            <div className="flex items-center gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  An
-                </label>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value))}
-                  className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
-                           rounded-lg text-sm font-medium text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-emerald-500 focus:border-transparent
-                           transition-all"
-                >
-                  {availableYears.map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                An:
+              </label>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
+                         rounded-lg text-sm font-medium text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-emerald-500 focus:border-transparent
+                         transition-all"
+              >
+                {availableYears.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

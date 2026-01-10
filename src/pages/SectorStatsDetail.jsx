@@ -21,6 +21,7 @@ import {
   Building2, Calendar, ChevronDown
 } from 'lucide-react';
 import { getSectorWasteManagementStats } from '../services/sectorWasteManagementService';
+import DashboardHeader from '../components/dashboard/DashboardHeader';
 
 const SectorStatsDetail = () => {
   const { sector_number } = useParams();
@@ -145,40 +146,36 @@ const SectorStatsDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* HEADER */}
+      {/* HEADER - standardizat */}
+      <DashboardHeader 
+        title={`Sector ${sector_info.sector_number} - ${sector_info.sector_name}`}
+        notificationCount={0}
+      />
+
+      {/* SUB-HEADER cu info sector și filtre */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 lg:px-8 py-6">
+        <div className="px-6 lg:px-8 py-4">
           {/* Back Button */}
           <button
             onClick={() => navigate('/sectoare')}
-            className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 
+            className="mb-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 
                      hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Înapoi la Sectoare
           </button>
 
-          {/* Title & Info */}
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-emerald-500 to-teal-600
-                            flex items-center justify-center text-white shadow-lg">
-                <Building2 className="w-8 h-8" />
+          {/* Info & Filters Row */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            {/* Sector Info */}
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span>{formatNumber(sector_info.population)} locuitori</span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  Sector {sector_info.sector_number} - {sector_info.sector_name}
-                </h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>{formatNumber(sector_info.population)} locuitori</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{sector_info.area_km2} km²</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                <span>{sector_info.area_km2} km²</span>
               </div>
             </div>
 
@@ -192,7 +189,7 @@ const SectorStatsDetail = () => {
                 <select
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
+                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
                            rounded-lg text-sm font-medium text-gray-900 dark:text-white
                            focus:ring-2 focus:ring-emerald-500 transition-all"
                 >
@@ -210,7 +207,7 @@ const SectorStatsDetail = () => {
                 <select
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
-                  className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
+                  className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 
                            rounded-lg text-sm font-medium text-gray-900 dark:text-white
                            focus:ring-2 focus:ring-emerald-500 transition-all"
                 >
