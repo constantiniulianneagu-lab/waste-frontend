@@ -340,7 +340,7 @@ const ReportsLandfill = () => {
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* Card 1: Perioada analizată */}
+        {/* Card 1: Perioada analizată - MODIFICAT */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
             <div className="flex items-center gap-3 text-white">
@@ -354,37 +354,46 @@ const ReportsLandfill = () => {
               </div>
             </div>
           </div>
-          <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500 dark:text-gray-400">An:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
+          <div className="p-4 space-y-3 text-sm overflow-y-auto flex-1">
+            {/* Cantitate totală - EVIDENȚIATĂ */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg p-3 border-2 border-emerald-400 dark:border-emerald-600">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium mb-1">Total cantitate</p>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {formatNumberRO(summaryData?.total_quantity || 0)} t
+              </p>
             </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500 dark:text-gray-400">De la:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.date_from || '-'}</span>
-            </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500 dark:text-gray-400">Până la:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.date_to || '-'}</span>
-            </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
-            </div>
-            <div className="border-t border-gray-200 dark:border-gray-700 my-2 pt-2">
-              <div className="flex justify-between py-1.5">
-                <span className="text-gray-500 dark:text-gray-400">Total cantitate:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatNumberRO(summaryData?.total_quantity || 0)} t</span>
+            
+            {/* Perioada - COMPACTĂ */}
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 w-16">An:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
               </div>
-              <div className="flex justify-between py-1.5">
-                <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">{summaryData?.total_tickets || 0}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 w-16">De la:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_from || '-'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 w-16">Până la:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_to || '-'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 w-16">UAT:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
+              </div>
+            </div>
+            
+            {/* Total tichete */}
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Total tichete:</span>
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{summaryData?.total_tickets || 0}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Furnizori deșeuri */}
+        {/* Card 2: Furnizori deșeuri - MODIFICAT cu toate codurile și procente */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4">
             <div className="flex items-center gap-3 text-white">
@@ -402,21 +411,42 @@ const ReportsLandfill = () => {
             {(summaryData?.suppliers || []).length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
             ) : (
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3">
                 {summaryData.suppliers.slice(0, 10).map((supplier, idx) => (
-                  <div key={idx} className="flex items-start justify-between gap-2 py-1.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">{supplier.name}</p>
-                      {supplier.codes && supplier.codes.length > 0 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {supplier.codes.slice(0, 2).map(c => c.code).join(', ')}
-                          {supplier.codes.length > 2 && ` +${supplier.codes.length - 2}`}
-                        </p>
-                      )}
+                  <div key={idx} className="border-l-2 border-emerald-500 pl-3">
+                    {/* Nume furnizor + Total */}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate flex-1">
+                        {supplier.name}
+                      </p>
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        {formatNumberRO(supplier.total)} t
+                      </span>
                     </div>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">
-                      {formatNumberRO(supplier.total)} t
-                    </span>
+                    
+                    {/* Toate codurile cu cantități și procente */}
+                    {supplier.codes && supplier.codes.length > 0 && (
+                      <div className="space-y-0.5">
+                        {supplier.codes.map((code, codeIdx) => {
+                          const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(1) : 0;
+                          return (
+                            <div key={codeIdx} className="flex items-center justify-between text-xs gap-2">
+                              <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
+                                {code.code}
+                              </span>
+                              <div className="flex items-center gap-2 whitespace-nowrap">
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                  {formatNumberRO(code.quantity)} t
+                                </span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                  ({percentage}%)
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -424,7 +454,7 @@ const ReportsLandfill = () => {
           </div>
         </div>
 
-        {/* Card 3: Coduri deșeuri depozitate */}
+        {/* Card 3: Coduri deșeuri depozitate - NESCHIMBAT */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4">
             <div className="flex items-center gap-3 text-white">
