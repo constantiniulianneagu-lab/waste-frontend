@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import ReportsFilters from './ReportsFilters';
 import ReportsTmbSidebar from './ReportsTmbSidebar';
 import RecyclingSidebar from './RecyclingSidebar';
@@ -27,10 +28,31 @@ import {
 } from '../../services/reportsService';
 
 const ReportTMB = () => {
+  const [searchParams] = useSearchParams();
+  
   // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('tmb');
+  
+  // Detectează ?view= din URL și deschide sidebar-ul corespunzător
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view) {
+      // Map view params to tab names
+      const viewToTab = {
+        'recycling': 'recycling',
+        'recovery': 'recovery',
+        'disposal': 'disposal'
+      };
+      
+      if (viewToTab[view]) {
+        setActiveTab(viewToTab[view]);
+        setSidebarOpen(true);
+        setSidebarMode('create');
+      }
+    }
+  }, [searchParams]);
   
   // Filters
   const currentYear = new Date().getFullYear();

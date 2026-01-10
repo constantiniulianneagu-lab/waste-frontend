@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AlertCircle, Factory, Trash2, Package, Activity } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
@@ -42,6 +43,7 @@ const ProgressBar = ({ value, gradient }) => (
 );
 
 const DashboardTmb = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
@@ -349,7 +351,7 @@ const DashboardTmb = () => {
     };
 
     // CYAN/TEAL for "Deșeuri tratate" instead of green
-    const CYAN_COLOR = '#00b4d8'; // cyan-500
+    const CYAN_COLOR = '#06b6d4'; // cyan-500
 
     if (chartType === 'bar') {
       return (
@@ -409,7 +411,7 @@ const DashboardTmb = () => {
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     };
 
-    const CYAN_COLOR = '#0077b6'; // cyan-500 for "Tratate"
+    const CYAN_COLOR = '#06b6d4'; // cyan-500 for "Tratate"
     const RED_COLOR = '#ef4444'; // red-500 for "Depozitate"
 
     if (chartType2 === 'bar') {
@@ -576,10 +578,12 @@ const DashboardTmb = () => {
                 badgeColor="bg-emerald-500"
                 value={formatNumberRO(data.outputs.recycling.sent)}
                 percentage={`${data.outputs.percentages.recycling}% din total TMB`}
+                percentageFromTotal={data.outputs.percentages.recycling}
                 sent={formatNumberRO(data.outputs.recycling.sent)}
                 accepted={formatNumberRO(data.outputs.recycling.accepted)}
                 acceptanceRate={data.outputs.recycling.acceptance_rate}
                 gradient="from-emerald-500 to-teal-600"
+                onReportClick={() => navigate('/reports/tmb?view=recycling')}
               />
 
               <OutputCard
@@ -587,10 +591,12 @@ const DashboardTmb = () => {
                 badgeColor="bg-red-500"
                 value={formatNumberRO(data.outputs.recovery.sent)}
                 percentage={`${data.outputs.percentages.recovery}% din total TMB`}
+                percentageFromTotal={data.outputs.percentages.recovery}
                 sent={formatNumberRO(data.outputs.recovery.sent)}
                 accepted={formatNumberRO(data.outputs.recovery.accepted)}
                 acceptanceRate={data.outputs.recovery.acceptance_rate}
                 gradient="from-red-500 to-rose-600"
+                onReportClick={() => navigate('/reports/tmb?view=recovery')}
               />
 
               <OutputCard
@@ -598,10 +604,12 @@ const DashboardTmb = () => {
                 badgeColor="bg-purple-500"
                 value={formatNumberRO(data.outputs.disposal.sent)}
                 percentage={`${data.outputs.percentages.disposal}% din total TMB`}
+                percentageFromTotal={data.outputs.percentages.disposal}
                 sent={formatNumberRO(data.outputs.disposal.sent)}
                 accepted={formatNumberRO(data.outputs.disposal.accepted)}
                 acceptanceRate={data.outputs.disposal.acceptance_rate}
                 gradient="from-purple-500 to-violet-600"
+                onReportClick={() => navigate('/reports/tmb?view=disposal')}
               />
 
               <div className="group relative">
@@ -862,6 +870,43 @@ const DashboardTmb = () => {
                         );
                       })}
                     </tbody>
+                    
+                    {/* FOOTER cu TOTALE */}
+                    <tfoot className="border-t-2 border-gray-300 dark:border-gray-600">
+                      <tr className="bg-gray-50 dark:bg-gray-900/30">
+                        <td colSpan="2" className="py-4 pl-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-indigo-500 to-purple-600
+                                          flex items-center justify-center text-white text-xs font-bold shadow-lg">
+                              Σ
+                            </div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              TOTAL GENERAL
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="text-cyan-600 dark:text-cyan-400 font-bold text-base">
+                            {formatNumberRO(
+                              data.operators.reduce((sum, op) => sum + (parseFloat(op.tmb_total_tons) || 0), 0)
+                            )} t
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                            100%
+                          </div>
+                        </td>
+                        <td className="py-4 text-right pr-4">
+                          <div className="text-red-600 dark:text-red-400 font-bold text-base">
+                            {formatNumberRO(
+                              data.operators.reduce((sum, op) => sum + (parseFloat(op.landfill_total_tons) || 0), 0)
+                            )} t
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                            100%
+                          </div>
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
@@ -933,7 +978,18 @@ const StatCard = ({ icon, iconGradient, label, value, subtitle, percentage, perc
  * OUTPUT CARD - 2026 SAMSUNG/APPLE STYLE
  * ============================================================================
  */
-const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acceptanceRate, gradient }) => (
+const OutputCard = ({ 
+  label, 
+  badgeColor, 
+  value, 
+  percentage, 
+  sent, 
+  accepted, 
+  acceptanceRate, 
+  gradient,
+  percentageFromTotal, // % din total TMB (pentru progress bar)
+  onReportClick // callback pentru click pe Raport
+}) => (
   <div className="group relative">
     <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
                   rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
@@ -955,10 +1011,14 @@ const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acce
           <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
             {label}
           </p>
-          <span className={`px-3 py-1.5 ${badgeColor} text-white text-[10px] font-bold rounded-[10px] shadow-lg
-                        group-hover:scale-110 transition-all`}>
+          <button
+            onClick={onReportClick}
+            className={`px-3 py-1.5 ${badgeColor} text-white text-[10px] font-bold rounded-[10px] shadow-lg
+                      group-hover:scale-110 transition-all cursor-pointer
+                      hover:shadow-xl active:scale-95`}
+          >
             Raport
-          </span>
+          </button>
         </div>
 
         <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} 
@@ -982,7 +1042,8 @@ const OutputCard = ({ label, badgeColor, value, percentage, sent, accepted, acce
         </div>
 
         <div>
-          <ProgressBar value={parseFloat(acceptanceRate)} gradient={gradient} />
+          {/* Progress bar bazat pe % din total TMB, NU rata de acceptare */}
+          <ProgressBar value={parseFloat(percentageFromTotal)} gradient={gradient} />
           <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
             <Activity className="w-3 h-3" />
             Rata acceptare: {acceptanceRate}%
