@@ -393,7 +393,7 @@ const ReportsLandfill = () => {
           </div>
         </div>
 
-        {/* Card 2: Furnizori deșeuri - MODIFICAT cu toate codurile și procente */}
+        {/* Card 2: Furnizori deșeuri - DESIGN NOU */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4">
             <div className="flex items-center gap-3 text-white">
@@ -411,37 +411,47 @@ const ReportsLandfill = () => {
             {(summaryData?.suppliers || []).length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {summaryData.suppliers.slice(0, 10).map((supplier, idx) => (
-                  <div key={idx} className="border-l-2 border-emerald-500 pl-3">
-                    {/* Nume furnizor + Total */}
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <p className="font-semibold text-sm text-gray-900 dark:text-white truncate flex-1">
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Header furnizor */}
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
                         {supplier.name}
                       </p>
-                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
                         {formatNumberRO(supplier.total)} t
                       </span>
                     </div>
                     
-                    {/* Toate codurile cu cantități și procente */}
+                    {/* Lista coduri */}
                     {supplier.codes && supplier.codes.length > 0 && (
-                      <div className="space-y-0.5">
+                      <div className="space-y-1.5">
                         {supplier.codes.map((code, codeIdx) => {
-                          const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(1) : 0;
+                          const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(0) : 0;
                           return (
-                            <div key={codeIdx} className="flex items-center justify-between text-xs gap-2">
-                              <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
-                                {code.code}
-                              </span>
-                              <div className="flex items-center gap-2 whitespace-nowrap">
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                  {formatNumberRO(code.quantity)} t
-                                </span>
-                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                                  ({percentage}%)
-                                </span>
+                            <div key={codeIdx} className="flex items-center gap-2">
+                              {/* Progress bar */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    {code.code}
+                                  </span>
+                                  <span className="text-xs font-semibold text-gray-900 dark:text-white ml-2">
+                                    {formatNumberRO(code.quantity)} t
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${percentage}%` }}
+                                  ></div>
+                                </div>
                               </div>
+                              {/* Procent */}
+                              <span className="text-xs font-bold text-teal-600 dark:text-teal-400 w-10 text-right">
+                                {percentage}%
+                              </span>
                             </div>
                           );
                         })}
