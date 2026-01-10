@@ -349,7 +349,7 @@ const DashboardTmb = () => {
     };
 
     // CYAN/TEAL for "Deșeuri tratate" instead of green
-    const CYAN_COLOR = '#0077b6'; // cyan-500
+    const CYAN_COLOR = '#014f86'; // cyan-500
 
     if (chartType === 'bar') {
       return (
