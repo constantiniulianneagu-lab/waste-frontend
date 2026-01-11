@@ -288,14 +288,13 @@ const ReportsLandfill = () => {
       const result = await handleExport(format, allTickets, summaryData, filters, 'landfill');
 
       if (result.success) {
-        // ✅ Toast notification (îl facem după)
-        alert(`Export ${format.toUpperCase()} realizat cu succes!\n${allTickets.length} înregistrări exportate.`);
+        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
       } else {
-        alert(`Eroare la export: ${result.error}`);
+        alert(`❌ Eroare la export: ${result.error}`);
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert(`Eroare la export: ${error.message}`);
+      alert(`❌ Eroare la export: ${error.message}`);
     } finally {
       setExporting(false);
     }
