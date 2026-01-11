@@ -340,7 +340,7 @@ const ReportsLandfill = () => {
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* Card 1: Perioada analizată - AJUSTAT SUBTIL */}
+        {/* Card 1: Perioada analizată - FĂRĂ SCROLL */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
             <div className="flex items-center gap-3 text-white">
@@ -355,10 +355,10 @@ const ReportsLandfill = () => {
             </div>
           </div>
           
-          <div className="p-4 space-y-3 overflow-y-auto flex-1">
+          <div className="p-4 flex flex-col justify-between flex-1">
             
             {/* Perioada - compact */}
-            <div className="space-y-1.5 text-xs">
+            <div className="space-y-1 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">An:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
@@ -377,22 +377,16 @@ const ReportsLandfill = () => {
               </div>
             </div>
             
-            {/* Separator */}
-            <div className="border-t border-gray-200 dark:border-gray-700"></div>
-            
             {/* Total cantitate - FONT MARE */}
-            <div className="text-center py-3">
+            <div className="text-center py-4">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total cantitate</p>
-              <p className="text-3xl font-black text-gray-900 dark:text-white">
-                {formatNumberRO(summaryData?.total_quantity || 0)} <span className="text-lg">t</span>
+              <p className="text-4xl font-black text-gray-900 dark:text-white">
+                {formatNumberRO(summaryData?.total_quantity || 0)} <span className="text-xl">t</span>
               </p>
             </div>
             
-            {/* Separator */}
-            <div className="border-t border-gray-200 dark:border-gray-700"></div>
-            
             {/* Total tichete */}
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-200 dark:border-gray-700">
               <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
