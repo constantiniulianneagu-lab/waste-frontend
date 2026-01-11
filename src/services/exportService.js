@@ -12,7 +12,7 @@
 
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
 
 /**
@@ -243,7 +243,7 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
     const tableData = tickets.map(dataTransform);
 
     // Generează tabel
-    doc.autoTable({
+    autoTable(doc, {
       head: [columns],
       body: tableData,
       startY: yStart + 30,
