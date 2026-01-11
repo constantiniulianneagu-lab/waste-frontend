@@ -267,28 +267,59 @@ const ReportsSidebar = ({
       tare_weight_kg: currentKg.tare
     };
 
-    console.log('📤 Payload:', payload);
+    console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
+    console.log('📊 Payload types:', {
+      ticket_number: typeof payload.ticket_number,
+      ticket_date: typeof payload.ticket_date,
+      ticket_time: typeof payload.ticket_time,
+      supplier_id: typeof payload.supplier_id,
+      waste_code_id: typeof payload.waste_code_id,
+      sector_id: typeof payload.sector_id,
+      vehicle_number: typeof payload.vehicle_number,
+      generator_type: typeof payload.generator_type,
+      operation_type: typeof payload.operation_type,
+      contract_type: typeof payload.contract_type,
+      gross_weight_kg: typeof payload.gross_weight_kg,
+      tare_weight_kg: typeof payload.tare_weight_kg
+    });
 
     try {
       setLoading(true);
       let response;
       if (mode === 'edit' && ticket?.id) {
+        console.log('✏️ Updating ticket ID:', ticket.id);
         response = await updateLandfillTicket(ticket.id, payload);
       } else {
+        console.log('➕ Creating new ticket...');
         response = await createLandfillTicket(payload);
       }
 
       console.log('✅ Response:', response);
 
       if (response?.success) {
+        console.log('🎉 Success! Closing sidebar...');
         onSuccess?.();
         onClose();
       } else {
-        setError(response?.message || 'Eroare la salvare');
+        const errorMsg = response?.message || 'Eroare la salvare';
+        console.error('❌ API returned error:', errorMsg, 'Full response:', response);
+        setError(errorMsg);
       }
     } catch (err) {
-      console.error('❌ Error:', err);
-      setError(err?.response?.data?.message || err?.message || 'Eroare la salvare');
+      console.error('❌ Catch block error:', err);
+      console.error('❌ Error details:', {
+        message: err?.message,
+        response: err?.response,
+        responseData: err?.response?.data,
+        stack: err?.stack
+      });
+      
+      const errorMessage = err?.response?.data?.message 
+        || err?.response?.data?.error
+        || err?.message 
+        || 'Eroare la salvare';
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

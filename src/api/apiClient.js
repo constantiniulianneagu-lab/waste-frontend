@@ -33,8 +33,22 @@ export const apiClient = async (endpoint, options = {}) => {
     }
   };
 
+  console.log('🌐 API Request:', {
+    url: `${API_URL}${endpoint}`,
+    method: config.method || 'GET',
+    hasBody: !!config.body,
+    bodyPreview: config.body ? JSON.parse(config.body) : null
+  });
+
   try {
     let response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    console.log('📡 API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
     
     // Token expired - try refresh
     if (response.status === 401) {
@@ -108,12 +122,22 @@ export const apiClient = async (endpoint, options = {}) => {
     // Check for other HTTP errors
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      
+      console.error('❌ API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData
+      });
+      
+      throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
     
-    return response.json();
+    const responseData = await response.json();
+    console.log('✅ API Success Response:', responseData);
+    
+    return responseData;
   } catch (error) {
-    console.error('API Client Error:', error);
+    console.error('❌ API Client Error:', error);
     throw error;
   }
 };
