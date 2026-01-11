@@ -1,13 +1,11 @@
 // src/services/exportService.js
 /**
  * ============================================================================
- * EXPORT SERVICE - Excel, PDF, CSV
+ * EXPORT SERVICE - Excel, PDF, CSV - CORECTAT
  * ============================================================================
  * 
- * Funcționalitate completă pentru export rapoarte în:
- * - Excel (.xlsx) - folosind xlsx library
- * - PDF (.pdf) - folosind jsPDF + autoTable
- * - CSV (.csv) - folosind papaparse
+ * ✅ Adăugate coloane: Tip Contract, Generator
+ * ✅ Support pentru toate tipurile de rapoarte
  * 
  * ============================================================================
  */
@@ -54,8 +52,8 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
         { header: 'Furnizor', key: 'supplier_name' },
         { header: 'Cod Deșeu', key: 'waste_code' },
         { header: 'Descriere Deșeu', key: 'waste_description' },
-        { header: 'Tip Contract', key: 'contract_type' },          // ✅ ADĂUGAT
-        { header: 'Generator', key: 'generator_type' },             // ✅ ADĂUGAT
+        { header: 'Tip Contract', key: 'contract_type' },
+        { header: 'Generator', key: 'generator_type' },
         { header: 'Sector', key: 'sector_name' },
         { header: 'Nr. Auto', key: 'vehicle_number' },
         { header: 'Tone Net', key: 'net_weight_tons', format: 'number' },
@@ -86,7 +84,7 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
 
     const columns = columnsConfig[reportType] || columnsConfig.landfill;
 
-    // Transformă datele
+    // Transformă datele pentru Excel
     const excelData = tickets.map(ticket => {
       const row = {};
       columns.forEach(col => {
@@ -102,35 +100,35 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
       return row;
     });
 
-    // Adaugă header cu informații generale
-    const headerData = [
+    // Creează workbook
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Summary
+    const summaryData_array = [
       ['RAPORT DEȘEURI'],
       [''],
-      ['Perioada:', `${formatDateRO(filters.from)} - ${formatDateRO(filters.to)}`],
-      ['An:', filters.year],
+      ['Perioada analizată'],
+      ['An:', filters.year || ''],
+      ['De la:', formatDateRO(filters.from) || ''],
+      ['Până la:', formatDateRO(filters.to) || ''],
       ['Locație:', summaryData?.period?.sector || 'București'],
+      [''],
       ['Total cantitate:', `${formatNumberRO(summaryData?.total_quantity || 0)} tone`],
       ['Total tichete:', summaryData?.total_tickets || tickets.length],
       [''],
+      ['Generat la:', new Date().toLocaleString('ro-RO')]
     ];
 
-    // Creează worksheet
-    const ws = XLSX.utils.aoa_to_sheet(headerData);
-    XLSX.utils.sheet_add_json(ws, excelData, { origin: -1, skipHeader: false });
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData_array);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Sumar');
 
-    // Styling (setează width-uri coloane)
-    const colWidths = columns.map(col => ({ wch: 20 }));
-    ws['!cols'] = colWidths;
-
-    // Creează workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Raport');
-
-    // Generează filename
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `Raport_${reportType}_${filters.year}_${timestamp}.xlsx`;
+    // Sheet 2: Data
+    const dataSheet = XLSX.utils.json_to_sheet(excelData);
+    XLSX.utils.book_append_sheet(wb, dataSheet, 'Înregistrări');
 
     // Download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `Raport_${reportType}_${filters.year}_${timestamp}.xlsx`;
     XLSX.writeFile(wb, filename);
 
     console.log('✅ Excel exported successfully:', filename);
@@ -174,6 +172,8 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         'Data',
         'Furnizor',
         'Cod',
+        'Tip Contract',
+        'Generator',
         'Sector',
         'Auto',
         'Tone',
@@ -185,6 +185,7 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         'Prestator',
         'Cod',
         'Proveniență',
+        'Generator',
         'Auto',
         'Tone',
       ],
@@ -194,6 +195,7 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         'Client',
         'Furnizor',
         'Cod',
+        'Auto',
         'Livrată',
         'Acceptată',
       ],
@@ -208,6 +210,8 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         formatDateRO(t.ticket_date),
         t.supplier_name,
         t.waste_code,
+        t.contract_type || '-',
+        t.generator_type || '-',
         t.sector_name,
         t.vehicle_number,
         formatNumberRO(t.net_weight_tons),
@@ -219,6 +223,7 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         t.operator_name,
         t.waste_code,
         t.sector_name,
+        t.generator_type || '-',
         t.vehicle_number,
         formatNumberRO(t.net_weight_tons),
       ],
@@ -228,6 +233,7 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
         t.client_name,
         t.supplier_name,
         t.waste_code,
+        t.vehicle_number,
         formatNumberRO(t.delivered_quantity_tons),
         formatNumberRO(t.accepted_quantity_tons),
       ],
@@ -243,8 +249,8 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
       startY: yStart + 30,
       theme: 'grid',
       styles: {
-        fontSize: 8,
-        cellPadding: 2,
+        fontSize: 7,
+        cellPadding: 1.5,
       },
       headStyles: {
         fillColor: [16, 185, 129], // emerald-500
@@ -301,6 +307,8 @@ export const exportToCSV = (tickets, summaryData, filters, reportType = 'landfil
         { label: 'Furnizor', key: 'supplier_name' },
         { label: 'Cod Deșeu', key: 'waste_code' },
         { label: 'Descriere Deșeu', key: 'waste_description' },
+        { label: 'Tip Contract', key: 'contract_type' },
+        { label: 'Generator', key: 'generator_type' },
         { label: 'Sector', key: 'sector_name' },
         { label: 'Nr. Auto', key: 'vehicle_number' },
         { label: 'Tone Net', key: 'net_weight_tons', format: 'number' },
