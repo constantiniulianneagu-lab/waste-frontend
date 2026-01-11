@@ -107,7 +107,7 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
 
     // Sheet 1: Summary
     const summaryData_array = [
-      ['RAPORT DEȘEURI'],
+      ['RAPORT DEȘEURI DEPOZITATE'],
       [''],
       ['Perioada analizată'],
       ['An:', filters.year || ''],
