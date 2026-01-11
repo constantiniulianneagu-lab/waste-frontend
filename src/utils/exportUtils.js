@@ -197,20 +197,20 @@ export const exportToPDF = (tickets, summaryData, filename = 'raport_depozitare'
   yPos += 10;
 
   // Table
-  doc.autoTable({
-    startY: yPos,
-    head: [[
-      'Ticket',
-      'Data',
-      'Ora',
-      'Furnizor',
-      'Cod',
-      'Sector',
-      'Generator',
-      'Nr. Auto',
-      'T. Net',
-      'Contract'
-    ]],
+autoTable(doc, {
+  startY: yPos,
+  head: [[
+    'Ticket',
+    'Data',
+    'Ora',
+    'Furnizor',
+    'Cod',
+    'Sector',
+    'Generator',
+    'Nr. Auto',
+    'T. Net',
+    'Contract'
+  ]],
     body: tickets.map(ticket => [
       ticket.ticket_number,
       new Date(ticket.ticket_date).toLocaleDateString('ro-RO'),
