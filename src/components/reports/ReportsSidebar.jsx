@@ -314,11 +314,13 @@ const ReportsSidebar = ({
         stack: err?.stack
       });
       
-      const errorMessage = err?.response?.data?.message 
+      // Extract error message from various possible locations
+      const errorMessage = err?.message 
         || err?.response?.data?.error
-        || err?.message 
-        || 'Eroare la salvare';
+        || err?.response?.data?.message 
+        || 'Eroare necunoscută la salvare';
       
+      console.error('🚨 Final error message:', errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);

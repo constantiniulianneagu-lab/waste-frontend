@@ -129,7 +129,14 @@ export const apiClient = async (endpoint, options = {}) => {
         errorData: errorData
       });
       
-      throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      // Extract error message from various possible locations
+      const errorMessage = errorData.error 
+        || errorData.message 
+        || errorData.details
+        || `HTTP ${response.status}: ${response.statusText}`;
+      
+      throw new Error(errorMessage);
+    }
     }
     
     const responseData = await response.json();
