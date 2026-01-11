@@ -96,10 +96,10 @@ export const deleteLandfillTicket = async (ticketId) => {
   try {
     const headers = createAuthHeaders();
     const response = await axios.delete(
-      `${API_BASE_URL}/waste-tickets/landfill/${ticketId}`,
+      `${API_BASE_URL}/tickets/landfill/${ticketId}`,
       headers
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('❌ deleteLandfillTicket error:', error);
@@ -111,11 +111,11 @@ export const createLandfillTicket = async (ticketData) => {
   try {
     const headers = createAuthHeaders();
     const response = await axios.post(
-      `${API_BASE_URL}/waste-tickets/landfill`,
+      `${API_BASE_URL}/tickets/landfill`,
       ticketData,
       headers
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('❌ createLandfillTicket error:', error);
@@ -127,17 +127,18 @@ export const updateLandfillTicket = async (ticketId, ticketData) => {
   try {
     const headers = createAuthHeaders();
     const response = await axios.put(
-      `${API_BASE_URL}/waste-tickets/landfill/${ticketId}`,
+      `${API_BASE_URL}/tickets/landfill/${ticketId}`,
       ticketData,
       headers
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('❌ updateLandfillTicket error:', error);
     throw error;
   }
 };
+
 
 /**
  * ============================================================================
