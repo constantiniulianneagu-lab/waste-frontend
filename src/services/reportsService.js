@@ -33,7 +33,7 @@ export const getLandfillReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      per_page: filters.per_page
+      limit: filters.per_page  // ✅ SCHIMBAT din per_page în limit
     });
     
     if (filters.sector_id) {
