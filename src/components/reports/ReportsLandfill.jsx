@@ -575,7 +575,7 @@ const ReportsLandfill = () => {
                 <React.Fragment key={ticket.id}>
                   {/* Main Row */}
                   <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
                       {ticket.ticket_number}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
