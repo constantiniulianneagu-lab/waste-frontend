@@ -157,13 +157,13 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
     doc.setFont('DejaVuSans');
 
     // Header
-    doc.setFontSize(18);
-    doc.setFont(undefined, 'bold');
-    doc.text('RAPORT DEȘEURI', 14, 15);
+    doc.setFont('DejaVuSans', 'normal');   // ✅ nu mai folosi undefined
+doc.setFontSize(18);
+doc.text('RAPORT DEȘEURI', 14, 15);
 
     // Informații generale
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('DejaVuSans', 'normal');   // ✅ rămâi pe fontul tău
+doc.setFontSize(10);
     const yStart = 25;
     doc.text(`Perioada: ${formatDateRO(filters.from)} - ${formatDateRO(filters.to)}`, 14, yStart);
     doc.text(`An: ${filters.year}`, 14, yStart + 5);
