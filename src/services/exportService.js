@@ -54,6 +54,8 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
         { header: 'Furnizor', key: 'supplier_name' },
         { header: 'Cod Deșeu', key: 'waste_code' },
         { header: 'Descriere Deșeu', key: 'waste_description' },
+        { header: 'Tip Contract', key: 'contract_type' },          // ✅ ADĂUGAT
+        { header: 'Generator', key: 'generator_type' },             // ✅ ADĂUGAT
         { header: 'Sector', key: 'sector_name' },
         { header: 'Nr. Auto', key: 'vehicle_number' },
         { header: 'Tone Net', key: 'net_weight_tons', format: 'number' },
