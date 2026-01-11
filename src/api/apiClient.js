@@ -137,7 +137,6 @@ export const apiClient = async (endpoint, options = {}) => {
       
       throw new Error(errorMessage);
     }
-    }
     
     const responseData = await response.json();
     console.log('✅ API Success Response:', responseData);
