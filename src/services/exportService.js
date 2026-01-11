@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
-import DejaVuSansRO from '../assets/fonts/DejaVuSansRO';
+import DejaVuSans from '../assets/fonts/DejaVuSans';
 
 
 /**
@@ -152,9 +152,9 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
 
     const doc = new jsPDF('l', 'mm', 'a4'); // landscape
     // Unicode font (RO diacritics)
-    doc.addFileToVFS('DejaVuSansRO.ttf', DejaVuSansRO);
-    doc.addFont('DejaVuSansRO.ttf', 'DejaVuSansRO', 'normal');
-    doc.setFont('DejaVuSansRO');
+    doc.addFileToVFS('DejaVuSans.ttf', DejaVuSans);
+    doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+    doc.setFont('DejaVuSans');
 
     // Header
     doc.setFontSize(18);
@@ -255,18 +255,18 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
       startY: yStart + 30,
       theme: 'grid',
       styles: {
-        font: 'DejaVuSansRO',      // ✅ aici
+        font: 'DejaVuSans',      // ✅ aici
         fontSize: 7,
         cellPadding: 1.5,
       },
       headStyles: {
-        font: 'DejaVuSansRO',      // ✅ și aici
+        font: 'DejaVuSans',      // ✅ și aici
         fillColor: [16, 185, 129],
         textColor: 255,
         fontStyle: 'bold',
       },
       bodyStyles: {
-        font: 'DejaVuSansRO',      // ✅ opțional, dar îl punem ca să fie clar
+        font: 'DejaVuSans',      // ✅ opțional, dar îl punem ca să fie clar
       },
       alternateRowStyles: {
         fillColor: [249, 250, 251],
