@@ -1,14 +1,25 @@
 // src/components/reports/ReportsSidebar.jsx
 /**
  * ============================================================================
- * REPORTS SIDEBAR COMPONENT - FIX KG/TONS + UX KG READONLY
+ * REPORTS SIDEBAR (LANDFILL) - FINAL FIX (UUID sector_id / waste_code_id)
  * ============================================================================
  *
- * Fixes:
- * - Sidebar edit pre-populează corect Data + Brut/Tară (din kg -> tone)
- * - Submit trimite kg către backend (gross_weight_kg / tare_weight_kg)
- * - Validare robustă (NaN, brut > tară)
- * - UX: afișează sub câmpuri valoarea "Înregistrat (kg)" + "Curent (kg)"
+ * DB schema:
+ * - sectors.id            => UUID   (sector_id in tickets)
+ * - waste_codes.id        => UUID   (waste_code_id in tickets)
+ * - operators.id          => INT    (supplier_id in tickets)
+ * - waste_tickets_landfill: gross_weight_kg / tare_weight_kg (INT)
+ *
+ * UI:
+ * - input weights in tons (gross_weight_tons / tare_weight_tons)
+ * - show original kg values (read-only) + current kg (computed)
+ * - net tons auto-calculated (gross - tare)
+ *
+ * Submit:
+ * - sends sector_id (UUID string)
+ * - sends waste_code_id (UUID string)
+ * - sends supplier_id (int)
+ * - sends gross_weight_kg / tare_weight_kg (int)
  * ============================================================================
  */
 
@@ -18,6 +29,11 @@ import { createLandfillTicket, updateLandfillTicket } from '../../services/repor
 const toNumber = (v) => {
   const n = typeof v === 'string' ? parseFloat(v) : Number(v);
   return Number.isFinite(n) ? n : NaN;
+};
+
+const isUuid = (v) => {
+  if (!v || typeof v !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 };
 
 const kgToTonsStr = (kg) => {
@@ -47,7 +63,7 @@ const ReportsSidebar = ({
   const [error, setError] = useState(null);
   const [ticketNumberConfirmed, setTicketNumberConfirmed] = useState(false);
 
-  // păstrăm valorile originale din DB (kg) pentru UX (read-only)
+  // Original values from DB (kg) for UX
   const [originalKg, setOriginalKg] = useState({
     gross: null,
     tare: null,
@@ -58,28 +74,30 @@ const ReportsSidebar = ({
     ticket_number: '',
     ticket_date: new Date().toISOString().split('T')[0],
     ticket_time: new Date().toTimeString().slice(0, 5),
-    supplier_id: '',
-    waste_code_id: '',
-    sector_id: '',
+
+    supplier_id: '',      // INT (operator id)
+    waste_code_id: '',    // UUID (waste_codes.id)
+    sector_id: '',        // UUID (sectors.id)
+
     generator_type: '',
     vehicle_number: '',
+
     gross_weight_tons: '',
     tare_weight_tons: '',
     net_weight_tons: '',
+
     contract_type: '',
     operation_type: '',
     observations: ''
   });
 
-  // Pre-populare pentru edit / reset pentru create
+  // Pre-populate on edit; reset on create
   useEffect(() => {
     if (mode === 'edit' && ticket) {
-      // Data: input type="date" vrea yyyy-mm-dd
       const ticketDate = ticket.ticket_date
         ? String(ticket.ticket_date).slice(0, 10)
         : new Date().toISOString().split('T')[0];
 
-      // Original kg (din DB)
       const origGrossKg = ticket.gross_weight_kg ?? null;
       const origTareKg = ticket.tare_weight_kg ?? null;
       const origNetKg = ticket.net_weight_kg ?? null;
@@ -90,8 +108,6 @@ const ReportsSidebar = ({
         net: origNetKg
       });
 
-      // În form: vrem tone. Dacă API-ul nu are *_tons pentru brut/tară,
-      // convertim din kg. Dacă există (fallback), le folosim.
       const grossTons =
         ticket.gross_weight_tons != null && ticket.gross_weight_tons !== ''
           ? Number(ticket.gross_weight_tons).toFixed(2)
@@ -116,14 +132,18 @@ const ReportsSidebar = ({
         ticket_number: ticket.ticket_number || '',
         ticket_date: ticketDate,
         ticket_time: ticket.ticket_time || '',
-        supplier_id: ticket.supplier_id || '',
-        waste_code_id: ticket.waste_code_id || '',
-        sector_id: ticket.sector_id || '',
+
+        supplier_id: ticket.supplier_id ?? '',
+        waste_code_id: ticket.waste_code_id ?? '',
+        sector_id: ticket.sector_id ?? '',
+
         generator_type: ticket.generator_type || '',
         vehicle_number: ticket.vehicle_number || '',
+
         gross_weight_tons: grossTons || '',
         tare_weight_tons: tareTons || '',
         net_weight_tons: netTons || '',
+
         contract_type: ticket.contract_type || '',
         operation_type: ticket.operation_type || '',
         observations: ticket.observations || ''
@@ -137,14 +157,18 @@ const ReportsSidebar = ({
         ticket_number: '',
         ticket_date: new Date().toISOString().split('T')[0],
         ticket_time: new Date().toTimeString().slice(0, 5),
+
         supplier_id: '',
         waste_code_id: '',
         sector_id: '',
+
         generator_type: '',
         vehicle_number: '',
+
         gross_weight_tons: '',
         tare_weight_tons: '',
         net_weight_tons: '',
+
         contract_type: '',
         operation_type: '',
         observations: ''
@@ -156,41 +180,28 @@ const ReportsSidebar = ({
     setError(null);
   }, [mode, ticket, isOpen]);
 
-  // Net = brut - tară (tone) (UI only)
+  // auto-calc net tons
   useEffect(() => {
     const gross = toNumber(formData.gross_weight_tons);
     const tare = toNumber(formData.tare_weight_tons);
 
     if (Number.isFinite(gross) && Number.isFinite(tare) && gross >= tare) {
       const net = gross - tare;
-      setFormData((prev) => ({
-        ...prev,
-        net_weight_tons: net.toFixed(2)
-      }));
-    } else {
-      // dacă e invalid, nu forțăm; lăsăm ce e / gol
-      setFormData((prev) => ({
-        ...prev,
-        net_weight_tons: prev.net_weight_tons === '' ? '' : prev.net_weight_tons
-      }));
+      setFormData((prev) => ({ ...prev, net_weight_tons: net.toFixed(2) }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.gross_weight_tons, formData.tare_weight_tons]);
 
+  // current kg (derived from current tons inputs)
   const currentKg = useMemo(() => {
     const grossKg = tonsStrToKgInt(formData.gross_weight_tons);
     const tareKg = tonsStrToKgInt(formData.tare_weight_tons);
-
     const netKg =
       Number.isFinite(grossKg) && Number.isFinite(tareKg) && grossKg >= tareKg
         ? grossKg - tareKg
         : NaN;
 
-    return {
-      gross: grossKg,
-      tare: tareKg,
-      net: netKg
-    };
+    return { gross: grossKg, tare: tareKg, net: netKg };
   }, [formData.gross_weight_tons, formData.tare_weight_tons]);
 
   const handleChange = (field, value) => {
@@ -214,6 +225,7 @@ const ReportsSidebar = ({
   };
 
   const validateForm = () => {
+    // required fields
     const required = [
       'ticket_number',
       'ticket_date',
@@ -232,6 +244,24 @@ const ReportsSidebar = ({
       }
     }
 
+    // UUID validations
+    if (!isUuid(formData.sector_id)) {
+      setError(`sector_id invalid: ${formData.sector_id}`);
+      return false;
+    }
+    if (!isUuid(formData.waste_code_id)) {
+      setError(`waste_code_id invalid: ${formData.waste_code_id}`);
+      return false;
+    }
+
+    // supplier_id must be int
+    const supplierId = Number(formData.supplier_id);
+    if (!Number.isFinite(supplierId) || supplierId <= 0) {
+      setError(`supplier_id invalid: ${formData.supplier_id}`);
+      return false;
+    }
+
+    // weights validations (tons)
     const gross = toNumber(formData.gross_weight_tons);
     const tare = toNumber(formData.tare_weight_tons);
 
@@ -239,13 +269,12 @@ const ReportsSidebar = ({
       setError('Greutățile trebuie să fie numere valide');
       return false;
     }
-
     if (gross <= tare) {
       setError('Greutatea brută trebuie să fie mai mare decât tara');
       return false;
     }
 
-    // kg trebuie să fie valide și pozitive
+    // weights validations (kg)
     const grossKg = tonsStrToKgInt(formData.gross_weight_tons);
     const tareKg = tonsStrToKgInt(formData.tare_weight_tons);
     if (!Number.isFinite(grossKg) || grossKg <= 0) {
@@ -262,14 +291,12 @@ const ReportsSidebar = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      // backend lucrează în KG
       const grossKg = tonsStrToKgInt(formData.gross_weight_tons);
       const tareKg = tonsStrToKgInt(formData.tare_weight_tons);
 
@@ -277,9 +304,11 @@ const ReportsSidebar = ({
         ticket_number: formData.ticket_number,
         ticket_date: formData.ticket_date,
         ticket_time: formData.ticket_time,
-        supplier_id: Number(formData.supplier_id),
-        waste_code_id: formData.waste_code_id,
-        sector_id: formData.sector_id,
+
+        supplier_id: Number(formData.supplier_id),  // INT
+        waste_code_id: formData.waste_code_id,      // UUID
+        sector_id: formData.sector_id,              // UUID
+
         generator_type: formData.generator_type,
         vehicle_number: formData.vehicle_number,
         contract_type: formData.contract_type,
@@ -291,7 +320,7 @@ const ReportsSidebar = ({
       };
 
       let response;
-      if (mode === 'edit') {
+      if (mode === 'edit' && ticket?.id) {
         response = await updateLandfillTicket(ticket.id, payload);
       } else {
         response = await createLandfillTicket(payload);
@@ -304,7 +333,13 @@ const ReportsSidebar = ({
       }
     } catch (err) {
       console.error('Submit error:', err);
-      setError(err?.message || 'Eroare la salvare');
+      // încearcă să extragi mesajul de la backend
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Eroare la salvare';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -316,10 +351,7 @@ const ReportsSidebar = ({
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black/50 transition-opacity" onClick={onClose}></div>
 
-      <div
-        className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-[#242b3d] shadow-xl
-                   transform transition-transform duration-300 ease-in-out overflow-y-auto"
-      >
+      <div className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-[#242b3d] shadow-xl overflow-y-auto">
         <form onSubmit={handleSubmit} className="h-full flex flex-col">
           {/* Header */}
           <div className="sticky top-0 bg-white dark:bg-[#242b3d] border-b border-gray-200 dark:border-gray-700 px-6 py-4 z-10">
@@ -342,13 +374,13 @@ const ReportsSidebar = ({
           {/* Error Message */}
           {error && (
             <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 whitespace-pre-wrap">{error}</p>
             </div>
           )}
 
           {/* Form Content */}
           <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto">
-            {/* Număr ticket cântar */}
+            {/* Ticket number */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Număr ticket cântar <span className="text-red-500">*</span>
@@ -357,9 +389,8 @@ const ReportsSidebar = ({
                 type="text"
                 value={formData.ticket_number}
                 onChange={(e) => handleTicketNumberChange(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="ex: 1286659"
               />
             </div>
@@ -374,9 +405,8 @@ const ReportsSidebar = ({
                   type="date"
                   value={formData.ticket_date}
                   onChange={(e) => handleChange('ticket_date', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                             rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                             transition-colors"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -387,14 +417,13 @@ const ReportsSidebar = ({
                   type="time"
                   value={formData.ticket_time}
                   onChange={(e) => handleChange('ticket_time', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                             rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                             transition-colors"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
             </div>
 
-            {/* Furnizor */}
+            {/* Supplier */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Furnizor <span className="text-red-500">*</span>
@@ -402,9 +431,8 @@ const ReportsSidebar = ({
               <select
                 value={formData.supplier_id}
                 onChange={(e) => handleChange('supplier_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">Selectează furnizor</option>
                 {operators.map((op) => (
@@ -415,7 +443,7 @@ const ReportsSidebar = ({
               </select>
             </div>
 
-            {/* Cod deșeu */}
+            {/* Waste code (UUID) */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Cod deșeu <span className="text-red-500">*</span>
@@ -423,22 +451,20 @@ const ReportsSidebar = ({
               <select
                 value={formData.waste_code_id}
                 onChange={(e) => handleChange('waste_code_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors max-h-32"
-                style={{ maxHeight: '200px' }}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">Selectează cod deșeu</option>
                 {wasteCodes.map((wc) => (
-                  <option key={wc.id} value={wc.id} className="text-sm py-1">
+                  <option key={wc.id} value={wc.id}>
                     {wc.code} - {wc.description}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Scroll pentru mai multe opțiuni</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selectează din listă (UUID în backend)</p>
             </div>
 
-            {/* Proveniență (Sector) */}
+            {/* Sector (UUID) */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Proveniență <span className="text-red-500">*</span>
@@ -446,9 +472,8 @@ const ReportsSidebar = ({
               <select
                 value={formData.sector_id}
                 onChange={(e) => handleChange('sector_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">Selectează sector</option>
                 {sectors.map((s) => (
@@ -468,14 +493,13 @@ const ReportsSidebar = ({
                 type="text"
                 value={formData.generator_type}
                 onChange={(e) => handleChange('generator_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
-                placeholder="ex: CASNIC, NON-CASNIC"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="ex: CASNIC / NON-CASNIC"
               />
             </div>
 
-            {/* Nr. Auto */}
+            {/* Vehicle */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Nr. Auto <span className="text-red-500">*</span>
@@ -484,9 +508,8 @@ const ReportsSidebar = ({
                 type="text"
                 value={formData.vehicle_number}
                 onChange={(e) => handleChange('vehicle_number', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="ex: B 526 SDF"
               />
             </div>
@@ -502,11 +525,9 @@ const ReportsSidebar = ({
                   step="0.01"
                   value={formData.gross_weight_tons}
                   onChange={(e) => handleChange('gross_weight_tons', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                             rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                             transition-colors"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                {/* UX KG read-only */}
                 <div className="mt-1 space-y-0.5">
                   {mode === 'edit' && originalKg.gross != null && (
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -530,11 +551,9 @@ const ReportsSidebar = ({
                   step="0.01"
                   value={formData.tare_weight_tons}
                   onChange={(e) => handleChange('tare_weight_tons', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                             rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                             transition-colors"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                {/* UX KG read-only */}
                 <div className="mt-1 space-y-0.5">
                   {mode === 'edit' && originalKg.tare != null && (
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -558,10 +577,9 @@ const ReportsSidebar = ({
                   step="0.01"
                   value={formData.net_weight_tons}
                   readOnly
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700
-                             rounded-lg text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
                 />
-                {/* UX KG net */}
                 <div className="mt-1 space-y-0.5">
                   {mode === 'edit' && originalKg.net != null && (
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
@@ -580,22 +598,21 @@ const ReportsSidebar = ({
             {/* Contract */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Contract
+                Tip contract
               </label>
               <select
                 value={formData.contract_type}
                 onChange={(e) => handleChange('contract_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">Selectează tip contract</option>
-                <option value="TAXA">Taxă</option>
-                <option value="TARIF">Tarif</option>
+                <option value="TAXA">TAXĂ</option>
+                <option value="TARIF">TARIF</option>
               </select>
             </div>
 
-            {/* Operație */}
+            {/* Operation */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Operație
@@ -604,14 +621,13 @@ const ReportsSidebar = ({
                 type="text"
                 value={formData.operation_type}
                 onChange={(e) => handleChange('operation_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="ex: Depozitare"
               />
             </div>
 
-            {/* Observații */}
+            {/* Notes */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Observații
@@ -620,9 +636,8 @@ const ReportsSidebar = ({
                 value={formData.observations}
                 onChange={(e) => handleChange('observations', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700
-                           rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                           transition-colors resize-none"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                 placeholder="Observații opționale..."
               />
             </div>
@@ -652,6 +667,7 @@ const ReportsSidebar = ({
                   </>
                 )}
               </button>
+
               <button
                 type="button"
                 onClick={onClose}
