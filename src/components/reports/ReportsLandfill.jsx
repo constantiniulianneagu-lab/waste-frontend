@@ -275,12 +275,8 @@ const ReportsLandfill = () => {
         per_page: 100000  // Toate înregistrările
       };
 
-      console.log('🔍 Export filters:', exportFilters); // ✅ ADAUGĂ ASTA
-
-
       const exportResponse = await getLandfillReports(exportFilters);
-      console.log('🔍 Export response:', exportResponse); // ✅ ȘI ASTA
-
+      
       if (!exportResponse.success) {
         throw new Error(exportResponse.message || 'Eroare la obținerea datelor pentru export');
       }
