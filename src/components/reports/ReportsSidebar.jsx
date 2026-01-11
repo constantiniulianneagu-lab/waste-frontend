@@ -590,8 +590,8 @@ const ReportsSidebar = ({
                            transition-colors"
               >
                 <option value="">Selectează tip contract</option>
-                <option value="TAXA">TAXĂ</option>
-                <option value="TARIF">TARIF</option>
+                <option value="TAXA">Taxă</option>
+                <option value="TARIF">Tarif</option>
               </select>
             </div>
 
