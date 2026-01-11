@@ -1,12 +1,15 @@
 // src/components/reports/ReportsLandfill.jsx
 /**
  * ============================================================================
- * REPORTS LANDFILL - VERSIUNE COMPLETĂ 2026 - CORECTAT
+ * REPORTS LANDFILL - VERSIUNE COMPLETĂ 2026 - FIXED
  * ============================================================================
  * 
  * ✅ Fix toggle expand (când deschizi un row, celelalte se închid)
  * ✅ Tone Net cu culoare specială (emerald)
  * ✅ Fix pagination error
+ * ✅ Delete confirmation dialog
+ * ✅ Auto-refresh după CREATE/UPDATE/DELETE
+ * ✅ Remove observations (not in DB)
  * 
  * ============================================================================
  */
@@ -64,6 +67,13 @@ const ReportsLandfill = () => {
 
   // Expanded rows
   const [expandedRows, setExpandedRows] = useState(new Set());
+
+  // Delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    open: false,
+    ticketId: null,
+    ticketNumber: ''
+  });
 
   // ========================================================================
   // FORMAT ROMÂNESC
@@ -181,11 +191,11 @@ const ReportsLandfill = () => {
         setWasteCodesDepozitate(response.data.waste_codes || []);
 
       } else {
-        setError(response.message || 'Eroare la încărcarea datelor');
+        setError(response.message || 'Nu s-au putut încărca rapoartele');
       }
     } catch (err) {
-      console.error('❌ Fetch reports error:', err);
-      setError(err.message || 'Eroare la încărcarea datelor');
+      console.error('❌ Error fetching reports:', err);
+      setError(err.response?.data?.message || err.message || 'Eroare la încărcarea datelor');
     } finally {
       setLoading(false);
     }
@@ -196,21 +206,21 @@ const ReportsLandfill = () => {
   // ========================================================================
 
   const handleFilterChange = (newFilters) => {
-    console.log('🔄 Filter change requested:', newFilters);
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+    setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (newPage) => {
-    setFilters(prev => ({ ...prev, page: newPage }));
+    if (newPage >= 1 && newPage <= pagination.total_pages) {
+      setFilters((prev) => ({ ...prev, page: newPage }));
+    }
   };
 
   const handlePerPageChange = (newPerPage) => {
-    setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }));
+    setFilters((prev) => ({ ...prev, per_page: newPerPage, page: 1 }));
   };
 
-  // ✅ FIX: Când deschizi un row, celelalte se închid
   const toggleExpandRow = (ticketId) => {
-    setExpandedRows(prev => {
+    setExpandedRows((prev) => {
       const newSet = new Set();
       if (!prev.has(ticketId)) {
         newSet.add(ticketId);
@@ -219,34 +229,52 @@ const ReportsLandfill = () => {
     });
   };
 
-  const handleAddNew = () => {
-    setSelectedTicket(null);
+  const handleAdd = () => {
     setSidebarMode('create');
+    setSelectedTicket(null);
     setSidebarOpen(true);
   };
 
   const handleEdit = (ticket) => {
-    setSelectedTicket(ticket);
     setSidebarMode('edit');
+    setSelectedTicket(ticket);
     setSidebarOpen(true);
   };
 
-  const handleDelete = async (ticketId) => {
-    if (!window.confirm('Sigur vrei să ștergi această înregistrare?')) {
-      return;
-    }
+  const handleDeleteClick = (ticketId, ticketNumber) => {
+    setDeleteConfirmation({
+      open: true,
+      ticketId,
+      ticketNumber
+    });
+  };
 
+  const handleDeleteConfirm = async () => {
+    const { ticketId } = deleteConfirmation;
+    
     try {
+      setLoading(true);
       const response = await deleteLandfillTicket(ticketId);
-      if (response.success) {
-        alert('Înregistrare ștearsă cu succes!');
-        fetchReports();
+      
+      if (response?.success) {
+        console.log('✅ Ticket deleted successfully');
+        setDeleteConfirmation({ open: false, ticketId: null, ticketNumber: '' });
+        
+        // Refresh data
+        await fetchReports();
       } else {
-        alert('Eroare la ștergere: ' + response.message);
+        setError(response?.message || 'Eroare la ștergere');
       }
     } catch (err) {
-      alert('Eroare la ștergere: ' + err.message);
+      console.error('❌ Delete error:', err);
+      setError(err?.response?.data?.message || err?.message || 'Eroare la ștergere');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmation({ open: false, ticketId: null, ticketNumber: '' });
   };
 
   const handleSidebarClose = () => {
@@ -254,323 +282,204 @@ const ReportsLandfill = () => {
     setSelectedTicket(null);
   };
 
-  const handleSidebarSuccess = () => {
-    setSidebarOpen(false);
-    setSelectedTicket(null);
-    fetchReports();
+  const handleSidebarSuccess = async () => {
+    console.log('✅ Sidebar success - refreshing data...');
+    await fetchReports();
   };
 
-  const handleExportData = async (format) => {
+  const handleExportClick = async (format) => {
     try {
       setExporting(true);
-      console.log(`🚀 Exporting as ${format}...`);
-
-      // ✅ FETCH ALL DATA pentru export (fără paginare)
-      const exportFilters = {
-        year: filters.year,
-        from: filters.from,
-        to: filters.to,
-        sector_id: filters.sector_id,
-        page: 1,
-        per_page: 100000  // Toate înregistrările
-      };
-
-      const exportResponse = await getLandfillReports(exportFilters);
-      
-      if (!exportResponse.success) {
-        throw new Error(exportResponse.message || 'Eroare la obținerea datelor pentru export');
-      }
-
-      const allTickets = exportResponse.data.items || exportResponse.data.tickets || [];
-      
-      console.log(`📊 Exporting ${allTickets.length} tickets`);
-
-      const result = await handleExport(format, allTickets, summaryData, filters, 'landfill');
-
-      if (result.success) {
-        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
-      } else {
-        alert(`❌ Eroare la export: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      alert(`❌ Eroare la export: ${error.message}`);
+      await handleExport('landfill', format, filters);
+    } catch (err) {
+      console.error('Export error:', err);
+      setError('Eroare la export');
     } finally {
       setExporting(false);
     }
   };
 
   // ========================================================================
-  // RENDER - LOADING
+  // RENDER
   // ========================================================================
 
-  if (loading && !summaryData) {
+  if (loading && !tickets.length) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-            Se încarcă rapoartele...
-          </p>
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Se încarcă rapoartele...</p>
         </div>
       </div>
     );
   }
-
-  // ========================================================================
-  // RENDER - ERROR
-  // ========================================================================
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
-          <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-            Eroare la încărcarea datelor
-          </h3>
-          <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
-          <button
-            onClick={fetchReports}
-            className="px-4 py-2 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-                     text-white rounded-lg transition-all duration-200 shadow-md"
-          >
-            Încearcă din nou
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ========================================================================
-  // RENDER - MAIN
-  // ========================================================================
 
   return (
     <div className="space-y-6">
-      
-      {/* FILTERS */}
-      <ReportsFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        sectors={sectors}
-        availableYears={availableYears}
-        loading={loading}
-      />
-
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        
-        {/* Card 1: Perioada analizată - FĂRĂ SCROLL */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Perioada analizată</h3>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 flex flex-col justify-between flex-1">
-            
-            {/* Perioada - compact */}
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">An:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.year || currentYear}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">De la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_from || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Până la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.date_to || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
-              </div>
-            </div>
-            
-            {/* Total cantitate - FONT MARE */}
-            <div className="text-center py-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total cantitate</p>
-              <p className="text-4xl font-black text-gray-700 dark:text-white">
-                {formatNumberRO(summaryData?.total_quantity || 0)} <span className="text-xl">t</span>
-              </p>
-            </div>
-            
-            {/* Total tichete */}
-            <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
-            </div>
-            
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            📊 Rapoarte Depozitare
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Vizualizare și export rapoarte buletin depozitare deșeuri
+          </p>
         </div>
-
-        {/* Card 2: Furnizori deșeuri - DESIGN NOU */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4">
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Furnizori deșeuri</h3>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.suppliers || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
-            ) : (
-              <div className="space-y-4">
-                {summaryData.suppliers.slice(0, 10).map((supplier, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    {/* Header furnizor */}
-                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
-                        {supplier.name}
-                      </p>
-                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                        {formatNumberRO(supplier.total)} t
-                      </span>
-                    </div>
-                    
-                    {/* Lista coduri */}
-                    {supplier.codes && supplier.codes.length > 0 && (
-                      <div className="space-y-1.5">
-                        {supplier.codes.map((code, codeIdx) => {
-                          const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(0) : 0;
-                          return (
-                            <div key={codeIdx} className="flex items-center gap-2">
-                              {/* Progress bar */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {code.code}
-                                  </span>
-                                  <span className="text-xs font-semibold text-gray-900 dark:text-white ml-2">
-                                    {formatNumberRO(code.quantity)} t
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                  <div 
-                                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full transition-all duration-300"
-                                    style={{ width: `${percentage}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                              {/* Procent */}
-                              <span className="text-xs font-bold text-teal-600 dark:text-teal-400 w-10 text-right">
-                                {percentage}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Card 3: Coduri deșeuri depozitate - NESCHIMBAT */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4">
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Coduri deșeuri depozitate</h3>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(wasteCodesDepozitate || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există coduri</p>
-            ) : (
-              <div className="space-y-2 text-sm">
-                {wasteCodesDepozitate.slice(0, 10).map((wc, idx) => (
-                  <div key={idx} className="flex items-start justify-between gap-2 py-1.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white">{wc.code}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{wc.description}</p>
-                    </div>
-                    <div className="text-right whitespace-nowrap">
-                      <p className="text-purple-600 dark:text-purple-400 font-semibold">
-                        {formatNumberRO(wc.total_tons)} t
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {wc.percent}%
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex gap-3">
+          <ExportDropdown onExport={handleExportClick} loading={exporting} />
+          <button
+            onClick={handleAdd}
+            className="px-4 py-2 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 
+                     hover:to-emerald-700 text-white rounded-lg font-medium transition-all duration-200 
+                     shadow-md hover:shadow-lg flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Adaugă Buletin
+          </button>
         </div>
       </div>
 
-      {/* TABLE SECTION */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        
-        {/* Table Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete Depozitare ({pagination?.total_count || 0})
-            </h3>
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddNew}
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-blue-500 to-blue-600 
-                         hover:from-blue-600 hover:to-blue-700 text-white rounded-lg 
-                         transition-all duration-200 shadow-md flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Adaugă tichet
-              </button>
-              <ExportDropdown 
-                onExport={handleExportData}
-                disabled={tickets.length === 0}
-                loading={exporting}
-              />
+      {/* Filters */}
+      <ReportsFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        availableYears={availableYears}
+        sectors={sectors}
+      />
+
+      {/* Error Alert */}
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Eroare</h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
             </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Table */}
+      {/* Summary Cards */}
+      {summaryData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Quantity */}
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-emerald-100">Total Tone Depozitate</h3>
+              <svg className="w-8 h-8 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold">{formatNumberRO(summaryData.total_quantity)} t</p>
+            <p className="text-xs text-emerald-100 mt-2">
+              {summaryData.period.date_from} - {summaryData.period.date_to}
+            </p>
+          </div>
+
+          {/* Total Tickets */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-blue-100">Total Buletine</h3>
+              <svg className="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <p className="text-3xl font-bold">{summaryData.total_tickets.toLocaleString('ro-RO')}</p>
+            <p className="text-xs text-blue-100 mt-2">
+              {summaryData.period.sector}
+            </p>
+          </div>
+
+          {/* Top Supplier */}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-purple-100">Top Furnizor</h3>
+              <svg className="w-8 h-8 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            {summaryData.suppliers && summaryData.suppliers.length > 0 ? (
+              <>
+                <p className="text-lg font-bold truncate">{summaryData.suppliers[0].name}</p>
+                <p className="text-sm text-purple-100 mt-1">
+                  {formatNumberRO(summaryData.suppliers[0].total)} tone
+                </p>
+              </>
+            ) : (
+              <p className="text-lg font-bold">N/A</p>
+            )}
+          </div>
+
+          {/* Period */}
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-orange-100">Perioada</h3>
+              <svg className="w-8 h-8 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-lg font-bold">Anul {summaryData.period.year}</p>
+            <p className="text-xs text-orange-100 mt-1">
+              {summaryData.period.date_from} - {summaryData.period.date_to}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="bg-white dark:bg-[#1a1f2e] rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
-              <tr className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Tichet Cântar</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tip Contract</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Sector</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
-                <th className="px-4 py-3 text-center w-20"></th>
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Nr. Buletin
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Data
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Furnizor
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Cod Deșeu
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Contract
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Sector
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Auto
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Tone Net
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Detalii
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              {tickets.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Nu există buletine pentru filtrul selectat
+                  </td>
+                </tr>
+              ) : null}
+
               {tickets.map((ticket) => (
                 <React.Fragment key={ticket.id}>
                   {/* Main Row */}
@@ -673,7 +582,7 @@ const ReportsLandfill = () => {
                             Editează
                           </button>
                           <button
-                            onClick={() => handleDelete(ticket.id)}
+                            onClick={() => handleDeleteClick(ticket.id, ticket.ticket_number)}
                             className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
                                      hover:from-red-600 hover:to-red-700 text-white rounded 
                                      transition-all duration-200 shadow-md flex items-center gap-1"
@@ -735,6 +644,58 @@ const ReportsLandfill = () => {
           </div>
         )}
       </div>
+
+      {/* DELETE CONFIRMATION DIALOG */}
+      {deleteConfirmation.open && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+            onClick={handleDeleteCancel}
+          />
+
+          {/* Dialog */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                          w-full max-w-md bg-white dark:bg-[#1a1f2e] rounded-xl shadow-2xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Confirmare ștergere
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Ești sigur că vrei să ștergi buletinul <span className="font-semibold text-gray-900 dark:text-white">{deleteConfirmation.ticketNumber}</span>?
+                </p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  ⚠️ Această acțiune este permanentă și nu poate fi anulată!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium
+                           transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Se șterge...' : 'Șterge definitiv'}
+              </button>
+              <button
+                onClick={handleDeleteCancel}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600
+                           text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anulează
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SIDEBAR */}
       <ReportsSidebar
