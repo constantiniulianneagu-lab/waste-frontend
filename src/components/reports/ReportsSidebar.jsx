@@ -92,6 +92,16 @@ const ReportsSidebar = ({
 
   // Pre-populate on edit; reset on create
   useEffect(() => {
+    // DEBUG: Check sectors structure
+    if (sectors && sectors.length > 0) {
+      console.log('🔍 Sectors structure:', sectors[0]);
+    }
+    
+    // DEBUG: Check waste codes structure
+    if (wasteCodes && wasteCodes.length > 0) {
+      console.log('🔍 Waste Codes structure:', wasteCodes[0]);
+    }
+
     if (mode === 'edit' && ticket) {
       const ticketDate = ticket.ticket_date
         ? String(ticket.ticket_date).slice(0, 10)
@@ -210,8 +220,17 @@ const ReportsSidebar = ({
     if (!formData.supplier_id) errors.push('Furnizor lipsă');
     if (!formData.waste_code_id) errors.push('Cod deșeu lipsă');
     if (!formData.sector_id) errors.push('Sector lipsă');
-    if (!isUuid(formData.sector_id)) errors.push('Sector ID invalid (UUID)');
-    if (!isUuid(formData.waste_code_id)) errors.push('Waste Code ID invalid (UUID)');
+    
+    // UUID validation with better error messages
+    if (formData.sector_id && !isUuid(formData.sector_id)) {
+      console.error('❌ Invalid sector_id:', formData.sector_id, 'Type:', typeof formData.sector_id);
+      errors.push(`Sector ID invalid (trebuie UUID, primit: ${formData.sector_id.substring(0, 20)}...)`);
+    }
+    if (formData.waste_code_id && !isUuid(formData.waste_code_id)) {
+      console.error('❌ Invalid waste_code_id:', formData.waste_code_id, 'Type:', typeof formData.waste_code_id);
+      errors.push(`Waste Code ID invalid (trebuie UUID, primit: ${formData.waste_code_id.substring(0, 20)}...)`);
+    }
+    
     if (!formData.vehicle_number?.trim()) errors.push('Număr auto lipsă');
     if (!formData.generator_type?.trim()) errors.push('Tip generator lipsă');
     if (!formData.operation_type?.trim()) errors.push('Tip operație lipsă');
@@ -380,10 +399,21 @@ const ReportsSidebar = ({
                            text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Selectează cod deșeu</option>
-                {wasteCodes.map((wc) => (
-                  <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>
-                ))}
+                {wasteCodes && wasteCodes.length > 0 ? (
+                  wasteCodes.map((wc) => (
+                    <option key={wc.id} value={wc.id}>
+                      {wc.code} - {wc.description}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Niciun cod deșeu disponibil</option>
+                )}
               </select>
+              {formData.waste_code_id && (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  UUID: <span className="font-mono text-[10px]">{formData.waste_code_id}</span>
+                </p>
+              )}
             </div>
 
             {/* Sector */}
@@ -398,10 +428,21 @@ const ReportsSidebar = ({
                            text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Selectează sector</option>
-                {sectors.map((sec) => (
-                  <option key={sec.id} value={sec.id}>Sector {sec.sector_number} - {sec.sector_name}</option>
-                ))}
+                {sectors && sectors.length > 0 ? (
+                  sectors.map((sec) => (
+                    <option key={sec.id || sec.sector_id} value={sec.id || sec.sector_id}>
+                      Sector {sec.sector_number} - {sec.sector_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Niciun sector disponibil</option>
+                )}
               </select>
+              {formData.sector_id && (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  UUID: <span className="font-mono text-[10px]">{formData.sector_id}</span>
+                </p>
+              )}
             </div>
 
             {/* Tip Generator */}
