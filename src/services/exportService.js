@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
-import DejaVuSansRO from '@/assets/fonts/DejaVuSansRO';
+import DejaVuSansRO from '../assets/fonts/DejaVuSansRO';
 
 
 /**
