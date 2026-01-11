@@ -14,6 +14,8 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
+import DejaVuSansRO from '@/assets/fonts/DejaVuSansRO';
+
 
 /**
  * Format număr românesc pentru export
@@ -149,6 +151,10 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
     console.log('📄 Exporting to PDF...', { tickets: tickets.length, reportType });
 
     const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+    // Unicode font (RO diacritics)
+    doc.addFileToVFS('DejaVuSansRO.ttf', DejaVuSansRO);
+    doc.addFont('DejaVuSansRO.ttf', 'DejaVuSansRO', 'normal');
+    doc.setFont('DejaVuSansRO');
 
     // Header
     doc.setFontSize(18);
@@ -249,18 +255,24 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
       startY: yStart + 30,
       theme: 'grid',
       styles: {
+        font: 'DejaVuSansRO',      // ✅ aici
         fontSize: 7,
         cellPadding: 1.5,
       },
       headStyles: {
-        fillColor: [16, 185, 129], // emerald-500
+        font: 'DejaVuSansRO',      // ✅ și aici
+        fillColor: [16, 185, 129],
         textColor: 255,
         fontStyle: 'bold',
       },
+      bodyStyles: {
+        font: 'DejaVuSansRO',      // ✅ opțional, dar îl punem ca să fie clar
+      },
       alternateRowStyles: {
-        fillColor: [249, 250, 251], // gray-50
+        fillColor: [249, 250, 251],
       },
     });
+    
 
     // Footer
     const pageCount = doc.internal.getNumberOfPages();
