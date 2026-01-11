@@ -265,10 +265,31 @@ const ReportsLandfill = () => {
       setExporting(true);
       console.log(`🚀 Exporting as ${format}...`);
 
-      const result = await handleExport(format, tickets, summaryData, filters, 'landfill');
+      // ✅ FETCH ALL DATA pentru export (fără paginare)
+      const exportFilters = {
+        year: filters.year,
+        from: filters.from,
+        to: filters.to,
+        sector_id: filters.sector_id,
+        page: 1,
+        per_page: 100000  // Toate înregistrările
+      };
+
+      const exportResponse = await getLandfillReports(exportFilters);
+      
+      if (!exportResponse.success) {
+        throw new Error(exportResponse.message || 'Eroare la obținerea datelor pentru export');
+      }
+
+      const allTickets = exportResponse.data.items || exportResponse.data.tickets || [];
+      
+      console.log(`📊 Exporting ${allTickets.length} tickets`);
+
+      const result = await handleExport(format, allTickets, summaryData, filters, 'landfill');
 
       if (result.success) {
-        alert(`Export ${format.toUpperCase()} realizat cu succes!`);
+        // ✅ Toast notification (îl facem după)
+        alert(`Export ${format.toUpperCase()} realizat cu succes!\n${allTickets.length} înregistrări exportate.`);
       } else {
         alert(`Eroare la export: ${result.error}`);
       }
