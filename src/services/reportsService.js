@@ -5,6 +5,8 @@
  */
 
 import axios from 'axios';
+import { apiClient } from '../api/apiClient';
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://waste-backend-3u9c.onrender.com/api';
 
@@ -94,13 +96,9 @@ export const getAuxiliaryData = async () => {
 
 export const deleteLandfillTicket = async (ticketId) => {
   try {
-    const headers = createAuthHeaders();
-    const response = await axios.delete(
-      `${API_BASE_URL}/tickets/landfill/${ticketId}`,
-      headers
-    );
-
-    return response.data;
+    return await apiClient(`/api/tickets/landfill/${ticketId}`, {
+      method: 'DELETE',
+    });
   } catch (error) {
     console.error('❌ deleteLandfillTicket error:', error);
     throw error;
@@ -109,14 +107,10 @@ export const deleteLandfillTicket = async (ticketId) => {
 
 export const createLandfillTicket = async (ticketData) => {
   try {
-    const headers = createAuthHeaders();
-    const response = await axios.post(
-      `${API_BASE_URL}/tickets/landfill`,
-      ticketData,
-      headers
-    );
-
-    return response.data;
+    return await apiClient(`/api/tickets/landfill`, {
+      method: 'POST',
+      body: JSON.stringify(ticketData),
+    });
   } catch (error) {
     console.error('❌ createLandfillTicket error:', error);
     throw error;
@@ -125,19 +119,16 @@ export const createLandfillTicket = async (ticketData) => {
 
 export const updateLandfillTicket = async (ticketId, ticketData) => {
   try {
-    const headers = createAuthHeaders();
-    const response = await axios.put(
-      `${API_BASE_URL}/tickets/landfill/${ticketId}`,
-      ticketData,
-      headers
-    );
-
-    return response.data;
+    return await apiClient(`/api/tickets/landfill/${ticketId}`, {
+      method: 'PUT',
+      body: JSON.stringify(ticketData),
+    });
   } catch (error) {
     console.error('❌ updateLandfillTicket error:', error);
     throw error;
   }
 };
+
 
 
 /**
