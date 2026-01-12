@@ -411,67 +411,44 @@ const ReportTMB = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
               ) : (
                 <div className="space-y-4">
-                  {summaryData.suppliers.slice(0, 10).map((supplier, idx) => {
-                    const supplierPercentage = summaryData.total_quantity > 0 
-                      ? ((supplier.total / summaryData.total_quantity) * 100).toFixed(1)
-                      : '0.0';
-                    return (
-                      <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
-                            {supplier.name}
-                          </p>
-                          <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                            {formatNumberRO(supplier.total)} t
-                          </span>
-                        </div>
-                        
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total</span>
-                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{supplierPercentage}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${supplierPercentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                  {summaryData.suppliers.slice(0, 10).map((supplier, idx) => (
+                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+                          {supplier.name}
+                        </p>
+                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
+                          {formatNumberRO(supplier.total)} t
+                        </span>
+                      </div>
 
-                        {supplier.codes && supplier.codes.length > 0 && (
-                          <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700">
-                            {supplier.codes.map((code, codeIdx) => {
-                              const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(0) : 0;
-                              return (
-                                <div key={codeIdx} className="flex items-center gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {code.code}
-                                      </span>
-                                      <span className="text-xs font-semibold text-gray-900 dark:text-white ml-2">
-                                        {formatNumberRO(code.quantity)} t
-                                      </span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                      <div 
-                                        className="bg-gradient-to-r from-emerald-400 to-teal-400 h-1.5 rounded-full transition-all duration-300"
-                                        style={{ width: `${percentage}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                  <span className="text-xs font-bold text-teal-600 dark:text-teal-400 w-10 text-right">
+                      {supplier.codes && supplier.codes.length > 0 && (
+                        <div className="space-y-2">
+                          {supplier.codes.map((code, codeIdx) => {
+                            const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(0) : 0;
+                            return (
+                              <div key={codeIdx}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    {code.code}
+                                  </span>
+                                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                     {percentage}%
                                   </span>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${percentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -510,49 +487,17 @@ const ReportTMB = () => {
                           </span>
                         </div>
                         
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total</span>
-                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400">{operatorPercentage}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                             <div 
                               className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${operatorPercentage}%` }}
                             ></div>
                           </div>
+                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                            {operatorPercentage}%
+                          </span>
                         </div>
-
-                        {operator.codes && operator.codes.length > 0 && (
-                          <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700">
-                            {operator.codes.map((code, codeIdx) => {
-                              const percentage = operator.total > 0 ? ((code.quantity / operator.total) * 100).toFixed(0) : 0;
-                              return (
-                                <div key={codeIdx} className="flex items-center gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {code.code}
-                                      </span>
-                                      <span className="text-xs font-semibold text-gray-900 dark:text-white ml-2">
-                                        {formatNumberRO(code.quantity)} t
-                                      </span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                      <div 
-                                        className="bg-gradient-to-r from-purple-400 to-pink-400 h-1.5 rounded-full transition-all duration-300"
-                                        style={{ width: `${percentage}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                  <span className="text-xs font-bold text-pink-600 dark:text-pink-400 w-10 text-right">
-                                    {percentage}%
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
