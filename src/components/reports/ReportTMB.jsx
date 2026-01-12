@@ -184,11 +184,16 @@ const ReportTMB = () => {
   };
 
   const handleFilterChange = (newFilters) => {
-    setFilters(prev => ({
-      ...prev, 
-      ...newFilters,
-      page: 1
-    }));
+    console.log('🔄 handleFilterChange received:', newFilters);
+    setFilters(prev => {
+      const updated = {
+        ...prev, 
+        ...newFilters,
+        page: 1
+      };
+      console.log('📝 Updated filters state:', updated);
+      return updated;
+    });
   };
 
   const handlePageChange = (newPage) => {
@@ -406,16 +411,25 @@ const ReportTMB = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
               ) : (
                 <div className="space-y-4">
-                  {summaryData.suppliers.slice(0, 10).map((supplier, idx) => (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                        <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
-                          {supplier.name}
-                        </p>
-                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                          {formatNumberRO(supplier.total)} t
-                        </span>
-                      </div>
+                  {summaryData.suppliers.slice(0, 10).map((supplier, idx) => {
+                    const supplierPercentage = summaryData.total_quantity > 0 
+                      ? ((supplier.total / summaryData.total_quantity) * 100).toFixed(1)
+                      : '0.0';
+                    return (
+                      <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                          <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+                            {supplier.name}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                              {formatNumberRO(supplier.total)} t
+                            </span>
+                            <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400">
+                              ({supplierPercentage}%)
+                            </span>
+                          </div>
+                        </div>
                       {supplier.codes && supplier.codes.length > 0 && (
                         <div className="space-y-1.5">
                           {supplier.codes.map((code, codeIdx) => {
@@ -471,16 +485,25 @@ const ReportTMB = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există prestatori</p>
               ) : (
                 <div className="space-y-4">
-                  {summaryData.operators.slice(0, 10).map((operator, idx) => (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                        <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
-                          {operator.name}
-                        </p>
-                        <span className="text-lg font-black text-purple-600 dark:text-purple-400 ml-2">
-                          {formatNumberRO(operator.total)} t
-                        </span>
-                      </div>
+                  {summaryData.operators.slice(0, 10).map((operator, idx) => {
+                    const operatorPercentage = summaryData.total_quantity > 0 
+                      ? ((operator.total / summaryData.total_quantity) * 100).toFixed(1)
+                      : '0.0';
+                    return (
+                      <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                          <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+                            {operator.name}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-black text-purple-600 dark:text-purple-400">
+                              {formatNumberRO(operator.total)} t
+                            </span>
+                            <span className="text-xs font-bold text-purple-500 dark:text-purple-400">
+                              ({operatorPercentage}%)
+                            </span>
+                          </div>
+                        </div>
                       {operator.codes && operator.codes.length > 0 && (
                         <div className="space-y-1.5">
                           {operator.codes.map((code, codeIdx) => {
