@@ -123,6 +123,17 @@ const ReportTMB = () => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log('📊 Fetching TMB reports with filters:', filters);
+      console.log('📊 Filter breakdown:', {
+        year: filters.year,
+        from: filters.from,
+        to: filters.to,
+        sector_id: filters.sector_id,
+        page: filters.page,
+        per_page: filters.per_page
+      });
+
       let response;
       switch (activeTab) {
         case 'tmb':
@@ -425,7 +436,9 @@ const ReportTMB = () => {
                       {supplier.codes && supplier.codes.length > 0 && (
                         <div className="space-y-2">
                           {supplier.codes.map((code, codeIdx) => {
-                            const percentage = supplier.total > 0 ? ((code.quantity / supplier.total) * 100).toFixed(0) : 0;
+                            const percentage = summaryData.total_quantity > 0 
+                              ? ((code.quantity / summaryData.total_quantity) * 100).toFixed(1)
+                              : '0.0';
                             return (
                               <div key={codeIdx}>
                                 <div className="flex items-center justify-between mb-1">
