@@ -142,8 +142,8 @@ export const getTmbReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: filters.page,
       limit: filters.per_page
     });
@@ -151,6 +151,8 @@ export const getTmbReports = async (filters) => {
     if (filters.sector_id) {
       params.append('sector_id', filters.sector_id);
     }
+
+    console.log('🔵 getTmbReports sending params:', Object.fromEntries(params));
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/tmb?${params}`,
