@@ -1,21 +1,28 @@
 /**
  * ============================================================================
- * REPORTS TMB COMPONENT - VERSIUNE FINALĂ REPARATĂ
+ * REPORTS TMB COMPONENT - VERSIUNE ACTUALIZATĂ 2026
  * ============================================================================
- * ✅ onFilterChange fix (ca la ReportsLandfill)
- * ✅ Păstrează toată logica de tabs
- * ✅ useEffect corect cu [filters]
+ * ✅ Dark/Light Mode Fix - toate componentele
+ * ✅ Bug Fix - filtrare corectă pe an 2024
+ * ✅ Card 1 - Model ca la Depozitare (Perioada analizată)
+ * ✅ Card 2 - Furnizori deșeuri (cu cantitate + procent)
+ * ✅ Card 3 - Prestatori TMB (cu cantitate + procent)
+ * ✅ Tabel restructurat: Tichet Cântar | Data | Furnizor | Cod Deșeu | Proveniență | Generator | Nr. Auto | Tone Net
+ * ✅ Restul datelor în Expand Row
+ * ✅ Culori diferite: Tichet Cântar (albastru) | Tone Net (verde)
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { AlertCircle, Plus } from 'lucide-react';
 import ReportsFilters from './ReportsFilters';
 import ReportsTmbSidebar from './ReportsTmbSidebar';
 import RecyclingSidebar from './RecyclingSidebar';
 import RecoverySidebar from './RecoverySidebar';
 import DisposalSidebar from './DisposalSidebar';
 import RejectedSidebar from './RejectedSidebar';
+import ExportDropdown from './ExportDropdown';
 import { 
   getTmbReports, 
   getRecyclingReports,
@@ -26,6 +33,7 @@ import {
   deleteRecyclingTicket,
   getAuxiliaryData 
 } from '../../services/reportsService';
+import { handleExport } from '../../services/exportService';
 
 const ReportTMB = () => {
   const [searchParams] = useSearchParams();
@@ -33,13 +41,13 @@ const ReportTMB = () => {
   // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const [activeTab, setActiveTab] = useState('tmb');
   
   // Detectează ?view= din URL și deschide sidebar-ul corespunzător
   useEffect(() => {
     const view = searchParams.get('view');
     if (view) {
-      // Map view params to tab names
       const viewToTab = {
         'recycling': 'recycling',
         'recovery': 'recovery',
@@ -101,7 +109,7 @@ const ReportTMB = () => {
   };
 
   // ========================================================================
-  // GROUPING
+  // GROUPING PENTRU CARDS
   // ========================================================================
 
   const groupRowsByNameWithCodes = (rows = []) => {
@@ -200,8 +208,9 @@ const ReportTMB = () => {
           total_count: Number(paginationData.total || paginationData.total_records || 0),
         });
 
+        // ✅ SUMMARY DATA - MODEL CA LA DEPOZITARE
         const summary = {
-          total_quantity: response.data.summary?.total_tons || response.data.summary?.total_delivered || response.data.summary?.total_accepted || response.data.summary?.total_rejected_tons || 0,
+          total_quantity: response.data.summary?.total_tons || 0,
           total_tickets: response.data.summary?.total_tickets || ticketsList.length,
           period: {
             year: filters.year,
@@ -210,26 +219,22 @@ const ReportTMB = () => {
             sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București'
           },
           suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
-          operators: (response.data.operators || []).map(operator => ({
-            name: operator.name,
-            total: operator.total_tons
-          })),
-          clients: groupRowsByNameWithCodes(response.data.clients || [])
+          operators: groupRowsByNameWithCodes(response.data.operators || []),
         };
 
         setSummaryData(summary);
-
         setAvailableYears(response.data.available_years || [currentYear]);
         
         const allSectors = response.data.all_sectors || [];
         setSectors(allSectors);
-
       } else {
-        setError(response.message || 'Eroare la încărcarea datelor');
+        throw new Error(response.message || 'Failed to fetch reports');
       }
     } catch (err) {
-      console.error('❌ fetchReports error:', err);
-      setError(err.message || 'Eroare la încărcarea datelor');
+      console.error('❌ Error fetching reports:', err);
+      setError(err.message || 'A apărut o eroare la încărcarea datelor');
+      setTickets([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
@@ -240,31 +245,29 @@ const ReportTMB = () => {
   // ========================================================================
 
   const handleFilterChange = (newFilters) => {
-    console.log('🔄 Filter change requested:', newFilters);
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+    console.log('🔄 handleFilterChange called with:', newFilters);
+    setFilters(prev => {
+      const updated = { 
+        ...prev, 
+        ...newFilters,
+        page: 1  // Reset to first page on filter change
+      };
+      console.log('📝 Updated filters:', updated);
+      return updated;
+    });
   };
 
   const handlePageChange = (newPage) => {
-    setFilters(prev => ({ ...prev, page: newPage }));
+    if (newPage >= 1 && newPage <= (pagination?.total_pages || 1)) {
+      setFilters(prev => ({ ...prev, page: newPage }));
+    }
   };
 
   const handlePerPageChange = (newPerPage) => {
     setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }));
   };
 
-  const toggleExpandRow = (ticketId) => {
-    setExpandedRows(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleAddNew = () => {
+  const handleCreate = () => {
     setSelectedTicket(null);
     setSidebarMode('create');
     setSidebarOpen(true);
@@ -277,31 +280,29 @@ const ReportTMB = () => {
   };
 
   const handleDelete = async (ticketId) => {
-    if (!window.confirm('Sigur vrei să ștergi această înregistrare?')) {
-      return;
-    }
-
+    if (!window.confirm('Sigur doriți să ștergeți acest tichet?')) return;
+    
     try {
       let response;
-      
       switch (activeTab) {
+        case 'tmb':
+          response = await deleteTmbTicket(ticketId);
+          break;
         case 'recycling':
           response = await deleteRecyclingTicket(ticketId);
           break;
-        case 'tmb':
         default:
-          response = await deleteTmbTicket(ticketId);
-          break;
+          throw new Error('Delete not implemented for this tab');
       }
 
       if (response.success) {
-        alert('Înregistrare ștearsă cu succes!');
-        fetchReports();
+        await fetchReports();
       } else {
-        alert('Eroare la ștergere: ' + response.message);
+        alert(response.message || 'Eroare la ștergerea tichetului');
       }
     } catch (err) {
-      alert('Eroare la ștergere: ' + err.message);
+      console.error('Error deleting ticket:', err);
+      alert('A apărut o eroare la ștergerea tichetului');
     }
   };
 
@@ -311,23 +312,58 @@ const ReportTMB = () => {
   };
 
   const handleSidebarSuccess = () => {
-    setSidebarOpen(false);
-    setSelectedTicket(null);
+    handleSidebarClose();
     fetchReports();
+  };
+
+  const toggleExpandRow = (ticketId) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(ticketId)) {
+        newSet.delete(ticketId);
+      } else {
+        newSet.clear(); // Close other rows
+        newSet.add(ticketId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleExportClick = async (format) => {
+    try {
+      setExporting(true);
+      const endpoint = `/api/reports/tmb/${activeTab}`;
+      await handleExport(endpoint, filters, format, `raport-tmb-${activeTab}`);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Eroare la export');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // ========================================================================
+  // TAB LABELS
+  // ========================================================================
+
+  const tabLabels = {
+    tmb: 'Deșeuri trimise la tratare mecano-biologică',
+    recycling: 'Deșeuri trimise la reciclare',
+    recovery: 'Deșeuri trimise la valorificare',
+    disposal: 'Deșeuri trimise la eliminare',
+    rejected: 'Deșeuri respinse',
   };
 
   // ========================================================================
   // RENDER
   // ========================================================================
 
-  if (loading && !summaryData) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Se încarcă rapoartele TMB...
-          </p>
+          <div className="w-16 h-16 border-4 border-emerald-600 dark:border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Se încarcă...</p>
         </div>
       </div>
     );
@@ -335,18 +371,19 @@ const ReportTMB = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
-          <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-            Eroare la încărcarea datelor
-          </h3>
-          <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 max-w-md">
+          <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-4">
+            <AlertCircle className="w-6 h-6" />
+            <h3 className="text-lg font-semibold">Eroare</h3>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
           <button
-            onClick={fetchReports}
-            className="px-4 py-2 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-                     text-white rounded-lg transition-all duration-200 shadow-md"
+            onClick={() => window.location.reload()}
+            className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 
+                     text-white rounded-lg font-medium transition-colors"
           >
-            Încearcă din nou
+            Reîncarcă pagina
           </button>
         </div>
       </div>
@@ -354,543 +391,362 @@ const ReportTMB = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Tab Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setActiveTab('tmb')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-            activeTab === 'tmb'
-              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#242b3d] text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          Deșeuri trimise la tratare mecano-biologică
-        </button>
-        
-        <button
-          onClick={() => setActiveTab('recycling')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-            activeTab === 'recycling'
-              ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#242b3d] text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          Deșeuri trimise la reciclare
-        </button>
-        
-        <button
-          onClick={() => setActiveTab('recovery')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-            activeTab === 'recovery'
-              ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#242b3d] text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          Deșeuri trimise la valorificare energetică
-        </button>
-        
-        <button
-          onClick={() => setActiveTab('disposal')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-            activeTab === 'disposal'
-              ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#242b3d] text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          Deșeuri trimise la depozitare
-        </button>
-        
-        <button
-          onClick={() => setActiveTab('rejected')}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-            activeTab === 'rejected'
-              ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#242b3d] text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          Deșeuri refuzate/neacceptate în instalația TMB
-        </button>
-      </div>
-
-      {/* Filters - FIX: onFilterChange în loc de setFilters */}
-      <ReportsFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        sectors={sectors}
-        availableYears={availableYears}
-        loading={loading}
-      />
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Card 1: Perioada analizată */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4">
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Perioada analizată</h3>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 space-y-2 text-sm overflow-y-auto flex-1">
-            <div className="flex justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-gray-600 dark:text-gray-400">Total:</span>
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatNumberRO(summaryData?.total_quantity || 0)} t
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">An:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.year}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Data început:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.date_from}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Data sfârșit:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.date_to}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Locație:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{summaryData?.period.sector}</span>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className="p-4 sm:p-6 lg:p-8">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Rapoarte TMB
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Gestionează și vizualizează rapoartele de tratare mecano-biologică
+            </p>
           </div>
         </div>
 
-        {/* Card 2 - Furnizori SAU Prestatori based on tab */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className={`bg-gradient-to-br ${
-            activeTab === 'rejected' ? 'from-purple-500 to-purple-600' : 'from-cyan-500 to-cyan-600'
-          } p-4 flex-shrink-0`}>
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-              </div>
-              <h3 className="text-sm font-semibold">
-                {activeTab === 'rejected' 
-                  ? 'Prestatori (operatori TMB)' 
-                  : 'Furnizori (colectori)'}
-              </h3>
-            </div>
-          </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            <div className="space-y-3">
-              {(activeTab === 'rejected' ? summaryData?.operators : summaryData?.suppliers)?.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`border-l-3 pl-3 ${
-                    activeTab === 'rejected' ? 'border-purple-500' : 'border-cyan-500'
-                  }`}
-                >
-                  <div className="flex justify-between items-start gap-2 mb-1">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                      {item.name}
-                    </p>
-                    <span className={`text-sm font-bold whitespace-nowrap ${
-                      activeTab === 'rejected'
-                        ? 'text-purple-600 dark:text-purple-400'
-                        : 'text-cyan-600 dark:text-cyan-400'
-                    }`}>
-                      {formatNumberRO(item.total)} t
-                    </span>
-                  </div>
-                  {item.codes && (
-                    <div className="space-y-1">
-                      {item.codes.map((code, codeIdx) => (
-                        <div key={codeIdx} className="flex justify-between text-xs gap-2">
-                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">{code.code}</span>
-                          <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                            {formatNumberRO(code.quantity)} t
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3 - Prestatori SAU Clienți based on tab */}
-        <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
-          <div className={`bg-gradient-to-br ${
-            activeTab === 'tmb' ? 'from-pink-500 to-pink-600' : 'from-orange-500 to-orange-600'
-          } p-4 flex-shrink-0`}>
-            <div className="flex items-center gap-3 text-white">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                </svg>
-              </div>
-              <h3 className="text-sm font-semibold">
-                {activeTab === 'tmb' 
-                  ? 'Prestatori (operatori TMB)' 
-                  : activeTab === 'rejected'
-                  ? 'Furnizori (colectori)'
-                  : `Clienți (${activeTab === 'recycling' ? 'reciclatori' : activeTab === 'recovery' ? 'valorificatori' : 'operator depozitare'})`}
-              </h3>
-            </div>
-          </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            <div className="space-y-3">
-              {(activeTab === 'tmb'
-                ? summaryData?.operators
-                : activeTab === 'rejected'
-                ? summaryData?.suppliers
-                : summaryData?.clients
-              )?.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`border-l-3 pl-3 ${
-                    activeTab === 'tmb' ? 'border-pink-500' : 'border-orange-500'
-                  }`}
-                >
-                  <div className="flex justify-between items-start gap-2 mb-1">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white flex-1 min-w-0">
-                      {item.name}
-                    </p>
-                    <span
-                      className={`text-sm font-bold whitespace-nowrap ${
-                        activeTab === 'tmb'
-                          ? 'text-pink-600 dark:text-pink-400'
-                          : 'text-orange-600 dark:text-orange-400'
-                      }`}
-                    >
-                      {formatNumberRO(item.total)} t
-                    </span>
-                  </div>
-
-                  {item.codes && item.codes.length > 0 && (
-                    <div className="space-y-1">
-                      {item.codes.map((code, codeIdx) => (
-                        <div key={codeIdx} className="flex justify-between text-xs gap-2">
-                          <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
-                            {code.code}
-                          </span>
-                          <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                            {formatNumberRO(code.quantity)} t
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section - păstrează exact cum era */}
-      <div className="bg-white dark:bg-[#242b3d] rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {activeTab === 'tmb' && `Deșeuri trimise la TMB (${pagination?.total_count || 0})`}
-              {activeTab === 'recycling' && `Deșeuri trimise la reciclare (${pagination?.total_count || 0})`}
-              {activeTab === 'recovery' && `Deșeuri trimise la valorificare energetică (${pagination?.total_count || 0})`}
-              {activeTab === 'disposal' && `Deșeuri trimise la depozitare (${pagination?.total_count || 0})`}
-              {activeTab === 'rejected' && `Deșeuri refuzate (${pagination?.total_count || 0})`}
-            </h3>
-            <div className="flex gap-3">
+        {/* TABS */}
+        <div className="mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {Object.entries(tabLabels).map(([key, label]) => (
               <button
-                onClick={handleAddNew}
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-blue-500 to-blue-600 
-                         hover:from-blue-600 hover:to-blue-700 text-white rounded-lg 
-                         transition-all duration-200 shadow-md flex items-center gap-2"
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
+                  activeTab === key
+                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-md'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Adaugă înregistrare
+                {label}
               </button>
-              <button
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
-                         hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
-                         transition-all duration-200 shadow-md flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export date
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Tabelul rămâne exact cum era - păstrez logica originală pentru tabs */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
-              <tr className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Tichet Cântar</th>
-                <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Data</th>
-                {activeTab === 'tmb' && (
-                  <>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[80px]">Ora</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Prestator</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[150px]">Generator</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Tone Net</th>
-                  </>
-                )}
-                {(activeTab === 'recycling' || activeTab === 'recovery' || activeTab === 'disposal') && (
-                  <>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Client</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Livrată</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Acceptată</th>
-                  </>
-                )}
-                {activeTab === 'rejected' && (
-                  <>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Prestator</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Furnizor</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Cod Deșeu</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Proveniență</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Generator</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[100px]">Nr. Auto</th>
-                    <th className="px-4 py-3 whitespace-nowrap min-w-[120px]">Cant. Refuzată</th>
-                  </>
-                )}
-                <th className="px-4 py-3 text-center w-20"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {tickets.map((ticket) => (
-                <React.Fragment key={ticket.id}>
-                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {ticket.ticket_number}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                      {new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}
-                    </td>
-                    
-                    {activeTab === 'tmb' && (
-                      <>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.ticket_time}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.operator_name}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                            {ticket.waste_code}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.sector_name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.generator_type}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.vehicle_number}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                          {formatNumberRO(ticket.net_weight_tons)} t
-                        </td>
-                      </>
-                    )}
+        {/* FILTERS */}
+        <ReportsFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          availableYears={availableYears}
+          sectors={sectors}
+        />
 
-                    {(activeTab === 'recycling' || activeTab === 'recovery' || activeTab === 'disposal') && (
-                      <>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.recipient_name || ticket.client_name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.supplier_name}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                            {ticket.waste_code}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.vehicle_number}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                          {formatNumberRO(ticket.delivered_quantity_tons)} t
-                        </td>
-                        <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                          {formatNumberRO(ticket.accepted_quantity_tons)} t
-                        </td>
-                      </>
-                    )}
-
-                    {activeTab === 'rejected' && (
-                      <>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.operator_name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.supplier_name}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                            {ticket.waste_code}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.sector_name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.generator_type}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          {ticket.vehicle_number}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
-                          {formatNumberRO(ticket.rejected_quantity_tons)} t
-                        </td>
-                      </>
-                    )}
-                    
-                    <td className="px-4 py-3 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => toggleExpandRow(ticket.id)}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                      >
-                        <svg 
-                          className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`}
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* Expanded rows păstrate exact cum erau */}
-                  {expandedRows.has(ticket.id) && (
-                    <tr className="bg-gray-50 dark:bg-gray-800/30">
-                      <td colSpan="11" className="px-4 py-4">
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm mb-3">
-                          <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.waste_code} - {ticket.waste_description}
-                            </p>
-                          </div>
-                          {activeTab === 'tmb' && (
-                            <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {ticket.supplier_name}
-                              </p>
-                            </div>
-                          )}
-                          {activeTab === 'recycling' && (
-                            <>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {ticket.sector_name}
-                                </p>
-                              </div>
-                              <div className="text-left">
-                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
-                                <p className="font-medium text-red-600 dark:text-red-400">
-                                  {formatNumberRO(ticket.difference_tons || 0)} t
-                                </p>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(ticket)}
-                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
-                                     hover:from-emerald-600 hover:to-emerald-700 text-white rounded 
-                                     transition-all duration-200 shadow-md flex items-center gap-1"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Editează
-                          </button>
-                          <button
-                            onClick={() => handleDelete(ticket.id)}
-                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
-                                     hover:from-red-600 hover:to-red-700 text-white rounded 
-                                     transition-all duration-200 shadow-md flex items-center gap-1"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Șterge
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {pagination && pagination.total_pages > 0 && (
-          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Pagina {pagination.page} din {pagination.total_pages}
-                </p>
-                <select
-                  value={filters.per_page}
-                  onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
-                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 
-                           rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                >
-                  <option value="10">10 / pagină</option>
-                  <option value="20">20 / pagină</option>
-                  <option value="50">50 / pagină</option>
-                  <option value="100">100 / pagină</option>
-                </select>
+        {/* SUMMARY CARDS - DOAR PENTRU TAB TMB */}
+        {activeTab === 'tmb' && summaryData && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* CARD 1 - PERIOADA ANALIZATĂ (MODEL DEPOZITARE) */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transition-colors">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                Perioada analizată
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">An</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{summaryData.period.year}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">De la</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{summaryData.period.date_from}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Până la</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{summaryData.period.date_to}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Sector</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{summaryData.period.sector}</span>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
-                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
-                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.total_pages}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
-                           text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
-                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Următorul
-                </button>
+            </div>
+
+            {/* CARD 2 - FURNIZORI DEȘEURI */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transition-colors">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                Furnizori deșeuri
+              </h3>
+              <div className="space-y-3 max-h-[200px] overflow-y-auto">
+                {summaryData.suppliers && summaryData.suppliers.length > 0 ? (
+                  summaryData.suppliers.map((supplier, idx) => {
+                    const percentage = summaryData.total_quantity > 0 
+                      ? ((supplier.total / summaryData.total_quantity) * 100).toFixed(1)
+                      : '0.0';
+                    return (
+                      <div key={idx} className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">{supplier.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                            {formatNumberRO(supplier.total)} t
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({percentage}%)</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există date disponibile</p>
+                )}
+              </div>
+            </div>
+
+            {/* CARD 3 - PRESTATORI TMB */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 transition-colors">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+                Prestatori TMB
+              </h3>
+              <div className="space-y-3 max-h-[200px] overflow-y-auto">
+                {summaryData.operators && summaryData.operators.length > 0 ? (
+                  summaryData.operators.map((operator, idx) => {
+                    const percentage = summaryData.total_quantity > 0 
+                      ? ((operator.total / summaryData.total_quantity) * 100).toFixed(1)
+                      : '0.0';
+                    return (
+                      <div key={idx} className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">{operator.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                            {formatNumberRO(operator.total)} t
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({percentage}%)</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există date disponibile</p>
+                )}
               </div>
             </div>
           </div>
         )}
+
+        {/* ACTIONS BAR */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-emerald-600 to-emerald-700 
+                       hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 
+                       dark:hover:from-emerald-600 dark:hover:to-emerald-700 text-white rounded-lg 
+                       font-medium shadow-md transition-all duration-200"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Tichet nou</span>
+            </button>
+          </div>
+
+          <ExportDropdown
+            onExport={handleExportClick}
+            disabled={exporting || !tickets || tickets.length === 0}
+            loading={exporting}
+          />
+        </div>
+
+        {/* TABLE */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Tichet Cântar
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Data
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Furnizor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Cod Deșeu
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Proveniență
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Generator
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Nr. Auto
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Tone Net
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    Detalii
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {tickets.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                      Nu există tichete în perioada selectată
+                    </td>
+                  </tr>
+                ) : (
+                  tickets.map((ticket) => (
+                    <React.Fragment key={ticket.id}>
+                      {/* Main Row */}
+                      <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        {/* Tichet Cântar - CULOARE ALBASTRU */}
+                        <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                          {ticket.ticket_number}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          {new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          {ticket.supplier_name}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                            {ticket.waste_code}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          {ticket.sector_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          {ticket.generator_type || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          {ticket.vehicle_number}
+                        </td>
+                        {/* Tone Net - CULOARE VERDE */}
+                        <td className="px-4 py-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          {formatNumberRO(ticket.net_weight_tons)} t
+                        </td>
+                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                          <button
+                            onClick={() => toggleExpandRow(ticket.id)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                            title={expandedRows.has(ticket.id) ? "Ascunde detalii" : "Arată detalii"}
+                          >
+                            <svg 
+                              className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`}
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* Expanded Row - TOATE DATELE RĂMASE */}
+                      {expandedRows.has(ticket.id) && (
+                        <tr className="bg-gray-50 dark:bg-gray-800/30 transition-colors">
+                          <td colSpan="9" className="px-4 py-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-3">
+                              <div className="text-left">
+                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {ticket.waste_code} - {ticket.waste_description}
+                                </p>
+                              </div>
+                              <div className="text-left">
+                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Prestator TMB:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {ticket.operator_name || 'N/A'}
+                                </p>
+                              </div>
+                              <div className="text-left">
+                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {ticket.ticket_time || 'N/A'}
+                                </p>
+                              </div>
+                              <div className="text-left">
+                                <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {new Date(ticket.created_at).toLocaleString('ro-RO')}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(ticket)}
+                                className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
+                                         hover:from-emerald-600 hover:to-emerald-700 dark:from-emerald-400 dark:to-emerald-500 
+                                         dark:hover:from-emerald-500 dark:hover:to-emerald-600 text-white rounded 
+                                         transition-all duration-200 shadow-md flex items-center gap-1"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Editează
+                              </button>
+                              <button
+                                onClick={() => handleDelete(ticket.id)}
+                                className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
+                                         hover:from-red-600 hover:to-red-700 dark:from-red-400 dark:to-red-500 
+                                         dark:hover:from-red-500 dark:hover:to-red-600 text-white rounded 
+                                         transition-all duration-200 shadow-md flex items-center gap-1"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Șterge
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {pagination && pagination.total_pages > 0 && (
+            <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Pagina {pagination.page} din {pagination.total_pages}
+                  </p>
+                  <select
+                    value={filters.per_page}
+                    onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                    className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 
+                             rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent 
+                             transition-colors"
+                  >
+                    <option value="10">10 / pagină</option>
+                    <option value="20">20 / pagină</option>
+                    <option value="50">50 / pagină</option>
+                    <option value="100">100 / pagină</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                             text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
+                             disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page === pagination.total_pages}
+                    className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                             text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
+                             disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Următorul
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sidebars per tab */}
