@@ -430,6 +430,19 @@ const ReportTMB = () => {
                             </span>
                           </div>
                         </div>
+                        {/* Progress bar pentru procentul total furnizor */}
+                        <div className="mt-2 mb-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{supplierPercentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${supplierPercentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
                       {supplier.codes && supplier.codes.length > 0 && (
                         <div className="space-y-1.5">
                           {supplier.codes.map((code, codeIdx) => {
@@ -503,6 +516,19 @@ const ReportTMB = () => {
                             <span className="text-xs font-bold text-purple-500 dark:text-purple-400">
                               ({operatorPercentage}%)
                             </span>
+                          </div>
+                        </div>
+                        {/* Progress bar pentru procentul total prestator */}
+                        <div className="mt-2 mb-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total</span>
+                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400">{operatorPercentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${operatorPercentage}%` }}
+                            ></div>
                           </div>
                         </div>
                       {operator.codes && operator.codes.length > 0 && (
