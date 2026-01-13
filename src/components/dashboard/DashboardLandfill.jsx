@@ -13,7 +13,7 @@ import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
 
 import DashboardHeader from "./DashboardHeader.jsx";
 import DashboardFilters from "./DashboardFilters.jsx";
-import WasteCategoryCards from "./WasteCategoryCards.jsx";
+import WasteCodesListCard from "./WasteCodesListCard.jsx";
 import MonthlyEvolutionChart from "./MonthlyEvolutionChart.jsx";
 import SectorStatsTable from "./SectorStatsTable.jsx";
 import RecentTicketsTable from "./RecentTicketsTable.jsx";
@@ -221,43 +221,47 @@ const DashboardLandfill = () => {
           </div>
         ) : (
           <>
-            {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <SummaryCard
-                title="TOTAL DEȘEURI"
-                value={data.summary.total_tons_formatted || "0"}
-                subtitle="tone depozitate"
-                gradient="from-emerald-500 to-teal-600"
-                icon="📈"
-              />
-              <SummaryCard
-                title="TOTAL TICHETE"
-                value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
-                subtitle="înregistrări"
-                gradient="from-cyan-500 to-blue-600"
-                icon="🧾"
-              />
-              <SummaryCard
-                title="MEDIE PER TICHET"
-                value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
-                subtitle="tone / tichet"
-                gradient="from-lime-500 to-emerald-600"
-                icon="⚖️"
-              />
-              <SummaryCard
-                title="PERIOADA"
-                value={data.summary.date_range?.days || 0}
-                subtitle="zile analizate"
-                gradient="from-green-500 to-emerald-600"
-                icon="📅"
+            {/* RÂNDUL 1: 4 CARDURI STÂNGA + LISTA CODURI DREAPTA */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* STÂNGA: 4 SUMMARY CARDS în GRID 2x2 */}
+              <div className="grid grid-cols-2 gap-4">
+                <SummaryCard
+                  title="TOTAL DEȘEURI"
+                  value={data.summary.total_tons_formatted || "0"}
+                  subtitle="tone depozitate"
+                  gradient="from-emerald-500 to-teal-600"
+                  icon="📈"
+                />
+                <SummaryCard
+                  title="TOTAL TICHETE"
+                  value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
+                  subtitle="înregistrări"
+                  gradient="from-cyan-500 to-blue-600"
+                  icon="🧾"
+                />
+                <SummaryCard
+                  title="MEDIE PER TICHET"
+                  value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
+                  subtitle="tone / tichet"
+                  gradient="from-lime-500 to-emerald-600"
+                  icon="⚖️"
+                />
+                <SummaryCard
+                  title="PERIOADA"
+                  value={data.summary.date_range?.days || 0}
+                  subtitle="zile analizate"
+                  gradient="from-green-500 to-emerald-600"
+                  icon="📅"
+                />
+              </div>
+
+              {/* DREAPTA: LISTA CODURI DEȘEURI */}
+              <WasteCodesListCard
+                codes={data?.waste_categories || []}
+                loading={loading}
               />
             </div>
-
-            {/* WASTE CATEGORY CARDS */}
-            <WasteCategoryCards
-              categories={data?.waste_categories || []}
-              loading={loading}
-            />
 
             {/* CHART + SECTOR TABLE */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
