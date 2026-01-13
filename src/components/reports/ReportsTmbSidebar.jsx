@@ -1,186 +1,187 @@
+// src/components/reports/ReportsTmbSidebar.jsx
 /**
  * ============================================================================
- * REPORTS TMB SIDEBAR COMPONENT
+ * REPORTS TMB SIDEBAR - ADD/EDIT TICKETS
  * ============================================================================
- * Form complet pentru Add/Edit bonuri TMB
+ *
+ * DB schema waste_tickets_tmb:
+ * - ticket_number (varchar) - Număr Tichet Cântar
+ * - ticket_date (date) - Data
+ * - ticket_time (time) - Ora
+ * - supplier_id (uuid FK) - Furnizor Deșeuri (institutions.id)
+ * - operator_id (uuid FK) - Prestator TMB (institutions.id)
+ * - waste_code_id (uuid FK) - Cod Deșeu (waste_codes.id)
+ * - sector_id (uuid FK) - Proveniență (sectors.id)
+ * - generator_type (varchar) - Tip Generator
+ * - vehicle_number (varchar) - Nr. Auto
+ * - net_weight_tons (numeric) - Cantitate (tone)
+ *
  * ============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
-import { 
-  createTmbTicket, 
-  updateTmbTicket 
-} from '../../services/reportsService';
+import React, { useEffect, useState } from 'react';
+import { X, Save, AlertCircle } from 'lucide-react';
+import { createTmbTicket, updateTmbTicket } from '../../services/reportsService';
 
-const ReportsTmbSidebar = ({ 
-  isOpen, 
-  mode, 
-  ticket, 
-  wasteCodes = [], 
-  operators = [], 
-  suppliers = [],
-  sectors = [],
-  onClose, 
-  onSuccess 
+const toNumber = (v) => {
+  const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+  return Number.isFinite(n) ? n : NaN;
+};
+
+const ReportsTmbSidebar = ({
+  isOpen,
+  mode,
+  ticket,
+  wasteCodes,
+  suppliers,    // Furnizori deșeuri
+  operators,    // Prestatori TMB
+  sectors,
+  onClose,
+  onSuccess
 }) => {
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     ticket_number: '',
     ticket_date: new Date().toISOString().split('T')[0],
     ticket_time: new Date().toTimeString().slice(0, 5),
-    sector_id: '',
-    supplier_id: '',
-    operator_id: '',
-    waste_code_id: '',
-    vehicle_number: '',
-    generator_type: 'NON-CASNIC',
-    gross_weight_kg: '',
-    tare_weight_kg: '',
-    net_weight_kg: ''
+    
+    supplier_id: '',      // UUID - Furnizor deșeuri
+    operator_id: '',      // UUID - Prestator TMB
+    waste_code_id: '',    // UUID - Cod deșeu
+    sector_id: '',        // UUID - Proveniență
+    
+    generator_type: '',   // VARCHAR
+    vehicle_number: '',   // VARCHAR
+    net_weight_tons: '',  // DECIMAL - Cantitate tone
   });
 
-  // Populate form când se editează
+  // Pre-populate on edit; reset on create
   useEffect(() => {
+    if (!isOpen) return;
+
     if (mode === 'edit' && ticket) {
+      console.log('📝 Editing TMB ticket:', ticket);
+      
       setFormData({
         ticket_number: ticket.ticket_number || '',
         ticket_date: ticket.ticket_date || new Date().toISOString().split('T')[0],
         ticket_time: ticket.ticket_time || new Date().toTimeString().slice(0, 5),
-        sector_id: ticket.sector_id || '',
+        
         supplier_id: ticket.supplier_id || '',
         operator_id: ticket.operator_id || '',
         waste_code_id: ticket.waste_code_id || '',
+        sector_id: ticket.sector_id || '',
+        
+        generator_type: ticket.generator_type || '',
         vehicle_number: ticket.vehicle_number || '',
-        generator_type: ticket.generator_type || 'NON-CASNIC',
-        gross_weight_kg: ticket.gross_weight_tons ? Math.round(ticket.gross_weight_tons * 1000) : '',
-        tare_weight_kg: ticket.tare_weight_tons ? Math.round(ticket.tare_weight_tons * 1000) : '',
-        net_weight_kg: ticket.net_weight_tons ? Math.round(ticket.net_weight_tons * 1000) : ''
+        net_weight_tons: ticket.net_weight_tons ? ticket.net_weight_tons.toString() : '',
       });
-    } else {
-      // Reset form pentru create
+      
+      setError(null);
+    } else if (mode === 'create') {
+      // Reset form
       setFormData({
         ticket_number: '',
         ticket_date: new Date().toISOString().split('T')[0],
         ticket_time: new Date().toTimeString().slice(0, 5),
-        sector_id: '',
         supplier_id: '',
         operator_id: '',
         waste_code_id: '',
+        sector_id: '',
+        generator_type: '',
         vehicle_number: '',
-        generator_type: 'NON-CASNIC',
-        gross_weight_kg: '',
-        tare_weight_kg: '',
-        net_weight_kg: ''
+        net_weight_tons: '',
       });
+      setError(null);
     }
-    setErrors({});
-  }, [mode, ticket, isOpen]);
-
-  // Auto-calculate net weight
-  useEffect(() => {
-    const gross = parseFloat(formData.gross_weight_kg) || 0;
-    const tare = parseFloat(formData.tare_weight_kg) || 0;
-    const net = gross - tare;
-    
-    if (gross > 0 && tare >= 0 && net >= 0) {
-      setFormData(prev => ({
-        ...prev,
-        net_weight_kg: Math.round(net)
-      }));
-    }
-  }, [formData.gross_weight_kg, formData.tare_weight_kg]);
+  }, [isOpen, mode, ticket]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error când user modifică câmpul
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const validate = () => {
-    const newErrors = {};
+  const validateForm = () => {
+    const errors = [];
 
-    if (!formData.ticket_number.trim()) {
-      newErrors.ticket_number = 'Număr tichet obligatoriu';
+    if (!formData.ticket_number?.trim()) {
+      errors.push('Număr tichet cântar este obligatoriu');
     }
     if (!formData.ticket_date) {
-      newErrors.ticket_date = 'Data obligatorie';
-    }
-    if (!formData.ticket_time) {
-      newErrors.ticket_time = 'Ora obligatorie';
-    }
-    if (!formData.sector_id) {
-      newErrors.sector_id = 'Sector obligatoriu';
+      errors.push('Data este obligatorie');
     }
     if (!formData.supplier_id) {
-      newErrors.supplier_id = 'Furnizor obligatoriu';
+      errors.push('Furnizor deșeuri este obligatoriu');
     }
     if (!formData.operator_id) {
-      newErrors.operator_id = 'Operator TMB obligatoriu';
+      errors.push('Prestator TMB este obligatoriu');
     }
     if (!formData.waste_code_id) {
-      newErrors.waste_code_id = 'Cod deșeu obligatoriu';
+      errors.push('Cod deșeu este obligatoriu');
     }
-    if (!formData.vehicle_number.trim()) {
-      newErrors.vehicle_number = 'Număr auto obligatoriu';
+    if (!formData.sector_id) {
+      errors.push('Proveniența este obligatorie');
     }
-    if (!formData.gross_weight_kg || parseFloat(formData.gross_weight_kg) <= 0) {
-      newErrors.gross_weight_kg = 'Greutate brută invalidă';
-    }
-    if (!formData.tare_weight_kg || parseFloat(formData.tare_weight_kg) < 0) {
-      newErrors.tare_weight_kg = 'Greutate tară invalidă';
-    }
-    if (!formData.net_weight_kg || parseFloat(formData.net_weight_kg) <= 0) {
-      newErrors.net_weight_kg = 'Greutate netă invalidă';
+    if (!formData.vehicle_number?.trim()) {
+      errors.push('Număr auto este obligatoriu');
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const tons = toNumber(formData.net_weight_tons);
+    if (!Number.isFinite(tons) || tons <= 0) {
+      errors.push('Cantitate (tone) trebuie să fie un număr > 0');
+    }
+
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validate()) {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setError(errors.join('; '));
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
+    setError(null);
 
-      const submitData = {
-        ...formData,
-        gross_weight_kg: parseInt(formData.gross_weight_kg),
-        tare_weight_kg: parseInt(formData.tare_weight_kg),
-        net_weight_kg: parseInt(formData.net_weight_kg)
+    try {
+      const payload = {
+        ticket_number: formData.ticket_number.trim(),
+        ticket_date: formData.ticket_date,
+        ticket_time: formData.ticket_time,
+        supplier_id: formData.supplier_id,
+        operator_id: formData.operator_id,
+        waste_code_id: formData.waste_code_id,
+        sector_id: formData.sector_id,
+        generator_type: formData.generator_type?.trim() || null,
+        vehicle_number: formData.vehicle_number.trim(),
+        net_weight_tons: toNumber(formData.net_weight_tons),
       };
 
+      console.log('🚀 Submitting TMB payload:', payload);
+
       let response;
-      if (mode === 'edit') {
-        response = await updateTmbTicket(ticket.id, submitData);
+      if (mode === 'edit' && ticket?.id) {
+        response = await updateTmbTicket(ticket.id, payload);
       } else {
-        response = await createTmbTicket(submitData);
+        response = await createTmbTicket(payload);
       }
 
+      console.log('✅ TMB Response:', response);
+
       if (response.success) {
-        alert(mode === 'edit' ? 'Bon actualizat cu succes!' : 'Bon creat cu succes!');
+        alert(mode === 'edit' ? 'Tichet actualizat cu succes!' : 'Tichet creat cu succes!');
         onSuccess();
       } else {
-        alert('Eroare: ' + response.message);
+        throw new Error(response.message || 'Operație eșuată');
       }
-    } catch (error) {
-      console.error('Submit error:', error);
-      alert('Eroare la salvare: ' + error.message);
+    } catch (err) {
+      console.error('❌ TMB Submit error:', err);
+      setError(err.message || 'Eroare la salvare');
     } finally {
       setLoading(false);
     }
@@ -189,344 +190,275 @@ const ReportsTmbSidebar = ({
   if (!isOpen) return null;
 
   return (
-    <>
+    <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 z-40"
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
-      ></div>
+      />
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-full md:w-[700px] bg-white dark:bg-[#242b3d] shadow-2xl z-50 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="h-full flex flex-col">
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        <div className="h-full flex flex-col">
+          
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {mode === 'edit' ? 'Editează bon TMB' : 'Adaugă bon TMB'}
-              </h2>
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-amber-500 to-orange-600">
+            <h2 className="text-xl font-bold text-white">
+              {mode === 'edit' ? '✏️ Editează Tichet TMB' : '➕ Adaugă Tichet TMB'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
           </div>
 
-          {/* Form Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="space-y-6">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            {/* Error Alert */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Section 1: Date Bază */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                📋 Date Bază
+              </h3>
               
-              {/* Ticket Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Număr tichet cântar <span className="text-red-500">*</span>
+                    Număr Tichet Cântar *
                   </label>
                   <input
                     type="text"
                     name="ticket_number"
                     value={formData.ticket_number}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.ticket_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                    placeholder="Ex: 4107260"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    placeholder="ex: TMB-001"
                   />
-                  {errors.ticket_number && (
-                    <p className="mt-1 text-xs text-red-500">{errors.ticket_number}</p>
-                  )}
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nr. auto <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="vehicle_number"
-                    value={formData.vehicle_number}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.vehicle_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                    placeholder="Ex: B110FFC"
-                  />
-                  {errors.vehicle_number && (
-                    <p className="mt-1 text-xs text-red-500">{errors.vehicle_number}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Data <span className="text-red-500">*</span>
+                    Data *
                   </label>
                   <input
                     type="date"
                     name="ticket_date"
                     value={formData.ticket_date}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.ticket_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   />
-                  {errors.ticket_date && (
-                    <p className="mt-1 text-xs text-red-500">{errors.ticket_date}</p>
-                  )}
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Ora <span className="text-red-500">*</span>
+                    Ora
                   </label>
                   <input
                     type="time"
                     name="ticket_time"
                     value={formData.ticket_time}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.ticket_time ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   />
-                  {errors.ticket_time && (
-                    <p className="mt-1 text-xs text-red-500">{errors.ticket_time}</p>
-                  )}
                 </div>
               </div>
+            </div>
 
-              {/* Sector & Supplier */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Section 2: Instituții */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                🏢 Instituții
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sector <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="sector_id"
-                    value={formData.sector_id}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.sector_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                  >
-                    <option value="">Selectează sector</option>
-                    {sectors.map(sector => (
-                      <option key={sector.id} value={sector.id}>
-                        {sector.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.sector_id && (
-                    <p className="mt-1 text-xs text-red-500">{errors.sector_id}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Furnizor (Colector) <span className="text-red-500">*</span>
+                    Furnizor Deșeuri *
                   </label>
                   <select
                     name="supplier_id"
                     value={formData.supplier_id}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.supplier_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
-                    <option value="">Selectează furnizor</option>
-                    {suppliers.map(supplier => (
-                      <option key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                    <option value="">Selectează furnizor...</option>
+                    {suppliers?.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
                       </option>
                     ))}
                   </select>
-                  {errors.supplier_id && (
-                    <p className="mt-1 text-xs text-red-500">{errors.supplier_id}</p>
-                  )}
                 </div>
-              </div>
 
-              {/* Operator & Waste Code */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prestator (Operator TMB) <span className="text-red-500">*</span>
+                    Prestator TMB *
                   </label>
                   <select
                     name="operator_id"
                     value={formData.operator_id}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.operator_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
-                    <option value="">Selectează operator</option>
-                    {operators.map(operator => (
-                      <option key={operator.id} value={operator.id}>
-                        {operator.name}
+                    <option value="">Selectează prestator...</option>
+                    {operators?.map(o => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
                       </option>
                     ))}
                   </select>
-                  {errors.operator_id && (
-                    <p className="mt-1 text-xs text-red-500">{errors.operator_id}</p>
-                  )}
                 </div>
+              </div>
+            </div>
 
+            {/* Section 3: Deșeu & Proveniență */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                ♻️ Deșeu & Proveniență
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cod deșeu <span className="text-red-500">*</span>
+                    Cod Deșeu *
                   </label>
                   <select
                     name="waste_code_id"
                     value={formData.waste_code_id}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.waste_code_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
-                    <option value="">Selectează cod deșeu</option>
-                    {wasteCodes.map(code => (
-                      <option key={code.id} value={code.id}>
-                        {code.code} - {code.description}
+                    <option value="">Selectează cod...</option>
+                    {wasteCodes?.map(wc => (
+                      <option key={wc.id} value={wc.id}>
+                        {wc.code} - {wc.description}
                       </option>
                     ))}
                   </select>
-                  {errors.waste_code_id && (
-                    <p className="mt-1 text-xs text-red-500">{errors.waste_code_id}</p>
-                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Proveniență (Sector) *
+                  </label>
+                  <select
+                    name="sector_id"
+                    value={formData.sector_id}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  >
+                    <option value="">Selectează sector...</option>
+                    {sectors?.map(s => (
+                      <option key={s.id || s.sector_id} value={s.id || s.sector_id}>
+                        Sector {s.sector_number} - {s.sector_name || s.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Generator Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tip generator <span className="text-red-500">*</span>
+                  Tip Generator
                 </label>
                 <select
                   name="generator_type"
                   value={formData.generator_type}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
-                           rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                 >
-                  <option value="CASNIC">CASNIC</option>
-                  <option value="NON-CASNIC">NON-CASNIC</option>
-                  <option value="CASNIC / NON-CASNIC">CASNIC / NON-CASNIC</option>
+                  <option value="">Selectează tip...</option>
+                  <option value="Menajer">Menajer</option>
+                  <option value="Nemenajer">Nemenajer</option>
+                  <option value="Instituție Publică">Instituție Publică</option>
                 </select>
               </div>
+            </div>
 
-              {/* Weights */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Section 4: Transport & Cantitate */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                🚛 Transport & Cantitate
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Greutate brută (kg) <span className="text-red-500">*</span>
+                    Număr Auto *
                   </label>
                   <input
-                    type="number"
-                    name="gross_weight_kg"
-                    value={formData.gross_weight_kg}
+                    type="text"
+                    name="vehicle_number"
+                    value={formData.vehicle_number}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.gross_weight_kg ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                    placeholder="18020"
-                    min="0"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    placeholder="ex: B-123-ABC"
                   />
-                  {errors.gross_weight_kg && (
-                    <p className="mt-1 text-xs text-red-500">{errors.gross_weight_kg}</p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Greutate tară (kg) <span className="text-red-500">*</span>
+                    Cantitate (tone) *
                   </label>
                   <input
                     type="number"
-                    name="tare_weight_kg"
-                    value={formData.tare_weight_kg}
+                    step="0.01"
+                    name="net_weight_tons"
+                    value={formData.net_weight_tons}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg 
-                             text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 
-                             ${errors.tare_weight_kg ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                    placeholder="14460"
-                    min="0"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    placeholder="0.00"
                   />
-                  {errors.tare_weight_kg && (
-                    <p className="mt-1 text-xs text-red-500">{errors.tare_weight_kg}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Greutate netă (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="net_weight_kg"
-                    value={formData.net_weight_kg}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 
-                             rounded-lg text-gray-900 dark:text-white cursor-not-allowed"
-                    placeholder="Auto-calculat"
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {formData.net_weight_kg ? `${(formData.net_weight_kg / 1000).toFixed(2)} tone` : 'Auto-calculat'}
-                  </p>
                 </div>
               </div>
-
             </div>
-          </div>
 
-          {/* Footer Buttons */}
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 
-                         hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
-                         transition-all duration-200 shadow-md font-medium disabled:opacity-50 
-                         disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Se salvează...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Salvează
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 
-                         text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium 
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Anulează
-              </button>
-            </div>
+          </form>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+            >
+              Anulează
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Se salvează...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {mode === 'edit' ? 'Actualizează' : 'Salvează'}
+                </>
+              )}
+            </button>
           </div>
-        </form>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
