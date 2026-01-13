@@ -221,28 +221,23 @@ const DashboardLandfill = () => {
           </div>
         ) : (
           <>
-            {/* RÂNDUL 1: 4 CARDURI + 2 CARDURI NOI STÂNGA + LISTA CODURI DREAPTA */}
+            {/* RÂNDUL 1: 6 CARDURI STÂNGA + LISTA CODURI DREAPTA - ALINIATE PE ÎNĂLȚIME */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* STÂNGA: 6 CARDURI (4 + 2 NOI) - ocupă 5 coloane */}
-              <div className="lg:col-span-5 space-y-4">
+              {/* STÂNGA: 6 CARDURI (4 + 2 NOI) - ocupă 5 coloane - HEIGHT FIXED */}
+              <div className="lg:col-span-5 space-y-4 h-[600px] flex flex-col">
                 
                 {/* Primele 4 carduri în grid 2x2 */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* CARD 1 - EVIDENȚIAT CU BACKGROUND COLORAT */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 
-                                  dark:from-emerald-500/5 dark:to-teal-500/5 
-                                  rounded-[24px] -z-10" />
-                    <SummaryCard
-                      title="TOTAL DEȘEURI"
-                      value={data.summary.total_tons_formatted || "0"}
-                      subtitle="tone depozitate"
-                      gradient="from-emerald-500 to-teal-600"
-                      icon="📈"
-                      highlighted={true}
-                    />
-                  </div>
+                  {/* CARD 1 - EVIDENȚIAT */}
+                  <SummaryCard
+                    title="TOTAL DEȘEURI"
+                    value={data.summary.total_tons_formatted || "0"}
+                    subtitle="tone depozitate"
+                    gradient="from-emerald-500 to-teal-600"
+                    icon="📈"
+                    highlighted={true}
+                  />
                   
                   <SummaryCard
                     title="TOTAL TICHETE"
@@ -267,29 +262,33 @@ const DashboardLandfill = () => {
                   />
                 </div>
 
-                {/* Carduri NOI 5 și 6 */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* CARD 5 - DEȘEURI TRATATE (coduri 19 XX XX) */}
+                {/* Carduri NOI 5 și 6 - CU PROGRESS BAR */}
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  {/* CARD 5 - DEȘEURI TRATATE DEPOZITATE */}
                   <SummaryCard
-                    title="DEȘEURI TRATATE"
+                    title="DEȘEURI TRATATE DEPOZITATE"
                     value={data.summary.treated_waste_formatted || "0"}
-                    subtitle={`${data.summary.treated_waste_percentage || 0}% din total`}
+                    subtitle="tone deșeuri din instalații de tratare"
                     gradient="from-amber-500 to-orange-600"
                     icon="♻️"
+                    showProgressBar={true}
+                    percentage={data.summary.treated_waste_percentage || 0}
                   />
                   
-                  {/* CARD 6 - DEȘEURI DIRECTE (celelalte coduri) */}
+                  {/* CARD 6 - DEȘEURI DEPOZITATE DIRECT */}
                   <SummaryCard
-                    title="DEȘEURI DIRECTE"
+                    title="DEȘEURI DEPOZITATE DIRECT"
                     value={data.summary.direct_waste_formatted || "0"}
-                    subtitle={`${data.summary.direct_waste_percentage || 0}% din total`}
+                    subtitle="tone deșeuri fără prelucrare"
                     gradient="from-violet-500 to-purple-600"
                     icon="🗑️"
+                    showProgressBar={true}
+                    percentage={data.summary.direct_waste_percentage || 0}
                   />
                 </div>
               </div>
 
-              {/* DREAPTA: LISTA CODURI DEȘEURI - ocupă 7 coloane */}
+              {/* DREAPTA: LISTA CODURI DEȘEURI - ocupă 7 coloane - HEIGHT FIXED 600px */}
               <div className="lg:col-span-7">
                 <WasteCodesListCard
                   codes={data?.waste_categories || []}
@@ -340,75 +339,103 @@ const DashboardLandfill = () => {
 
 /**
  * ============================================================================
- * SUMMARY CARD - 2026 SAMSUNG/APPLE STYLE
+ * SUMMARY CARD - 2026 SAMSUNG/APPLE STYLE - IMPROVED
  * ============================================================================
- * Modern premium card with glassmorphism, gradients, and perfect light/dark mode
+ * Enhanced with highlighted mode and progress bars for cards 5,6
  */
-const SummaryCard = ({ title, value, subtitle, gradient, icon }) => (
-  <div className="group relative">
-    {/* Card Container - Samsung One UI rounded style */}
-    <div className="relative h-full
+const SummaryCard = ({ title, value, subtitle, gradient, icon, highlighted = false, showProgressBar = false, percentage = 0 }) => (
+  <div className="group relative h-full">
+    
+    {/* Background colorat VIZIBIL pentru card evidențiat */}
+    {highlighted && (
+      <>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-teal-500/20 
+                      dark:from-emerald-500/15 dark:to-teal-500/15 
+                      rounded-[24px] blur-md" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-teal-500/10 
+                      dark:from-emerald-500/10 dark:to-teal-500/10 
+                      rounded-[24px]" />
+      </>
+    )}
+    
+    {/* Card Container */}
+    <div className={`relative h-full
                   bg-white dark:bg-gray-800/50 backdrop-blur-xl
-                  border border-gray-200 dark:border-gray-700/50
-                  rounded-[24px] p-6
+                  ${highlighted 
+                    ? 'border-2 border-emerald-400/60 dark:border-emerald-500/50' 
+                    : 'border border-gray-200 dark:border-gray-700/50'}
+                  rounded-[24px] p-5
                   shadow-sm dark:shadow-none
                   hover:shadow-lg dark:hover:shadow-xl
-                  hover:border-gray-300 dark:hover:border-gray-600
+                  ${highlighted 
+                    ? 'hover:border-emerald-500/80 dark:hover:border-emerald-400/70' 
+                    : 'hover:border-gray-300 dark:hover:border-gray-600'}
                   hover:-translate-y-1
                   transition-all duration-300 ease-out
-                  overflow-hidden">
-      
-      {/* Accent line - left edge with gradient */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
-                    bg-gradient-to-b ${gradient}
-                    group-hover:w-1.5 transition-all duration-300`} />
-      
-      {/* Subtle gradient overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} 
-                    opacity-[0.02] dark:opacity-[0.04] 
-                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
-                    transition-opacity duration-500`} />
+                  overflow-hidden
+                  flex flex-col justify-between`}>
 
-      {/* Content wrapper */}
-      <div className="relative z-10 flex items-start justify-between gap-4">
+      {/* Gradient accent line - Top */}
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient} 
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full">
         
-        {/* Text content */}
-        <div className="flex-1 min-w-0">
-          {/* Title - uppercase label */}
-          <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 
-                      uppercase tracking-widest mb-3">
+        {/* Header: Title + Icon */}
+        <div className="flex items-start justify-between mb-3">
+          <p className="text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase leading-tight">
             {title}
           </p>
           
-          {/* Value - large gradient number */}
-          <p className={`text-3xl sm:text-4xl font-bold 
-                       bg-gradient-to-r ${gradient} 
-                       bg-clip-text text-transparent 
-                       mb-2 leading-tight`}>
+          {/* Icon Badge */}
+          <div className={`w-11 h-11 rounded-[14px] bg-gradient-to-br ${gradient} 
+                        flex items-center justify-center flex-shrink-0
+                        shadow-md group-hover:shadow-lg
+                        group-hover:scale-110 transition-all duration-300`}>
+            <span className="text-xl">{icon}</span>
+          </div>
+        </div>
+
+        {/* Value - Bigger for highlighted card */}
+        <div className="flex-1 flex items-center">
+          <p className={`${highlighted ? 'text-3xl' : 'text-2xl'} font-black 
+                      text-gray-900 dark:text-white leading-none
+                      group-hover:scale-105 transition-transform duration-300`}>
             {value}
           </p>
-          
-          {/* Subtitle - description */}
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {subtitle}
-          </p>
         </div>
 
-        {/* Icon badge - Samsung soft circles */}
-        <div className={`flex-shrink-0 w-14 h-14 rounded-[18px]
-                      bg-gradient-to-br ${gradient}
-                      flex items-center justify-center
-                      shadow-lg
-                      group-hover:scale-110 group-hover:rotate-3
-                      transition-all duration-300`}>
-          <span className="text-2xl">{icon}</span>
-        </div>
+        {/* Subtitle */}
+        <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-2">
+          {subtitle}
+        </p>
+
+        {/* Progress Bar - DOAR pentru carduri 5 și 6 */}
+        {showProgressBar && (
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-end">
+              <span className={`text-sm font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+                {percentage}%
+              </span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700/50 rounded-full overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${gradient} rounded-full 
+                          shadow-sm transition-all duration-1000 ease-out`}
+                style={{ 
+                  width: `${percentage}%`,
+                  transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Status indicator dot */}
-      <div className={`absolute top-4 left-4 w-1.5 h-1.5 rounded-full
-                    bg-gradient-to-br ${gradient}
-                    opacity-40 dark:opacity-60 animate-pulse`} />
+      {/* Glassmorphism overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent 
+                    pointer-events-none rounded-[24px]" />
     </div>
   </div>
 );
