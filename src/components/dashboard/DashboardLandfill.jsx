@@ -222,10 +222,10 @@ const DashboardLandfill = () => {
         ) : (
           <>
             {/* RÂNDUL 1: 4 CARDURI STÂNGA + LISTA CODURI DREAPTA */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* STÂNGA: 4 SUMMARY CARDS în GRID 2x2 */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* STÂNGA: 4 SUMMARY CARDS în GRID 2x2 - ocupă 5 coloane */}
+              <div className="lg:col-span-5 grid grid-cols-2 gap-4">
                 <SummaryCard
                   title="TOTAL DEȘEURI"
                   value={data.summary.total_tons_formatted || "0"}
@@ -256,11 +256,13 @@ const DashboardLandfill = () => {
                 />
               </div>
 
-              {/* DREAPTA: LISTA CODURI DEȘEURI */}
-              <WasteCodesListCard
-                codes={data?.waste_categories || []}
-                loading={loading}
-              />
+              {/* DREAPTA: LISTA CODURI DEȘEURI - ocupă 7 coloane */}
+              <div className="lg:col-span-7">
+                <WasteCodesListCard
+                  codes={data?.waste_categories || []}
+                  loading={loading}
+                />
+              </div>
             </div>
 
             {/* CHART + SECTOR TABLE */}
