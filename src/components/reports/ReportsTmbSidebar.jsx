@@ -159,7 +159,7 @@ const ReportsTmbSidebar = ({
         sector_id: formData.sector_id,
         generator_type: formData.generator_type?.trim() || null,
         vehicle_number: formData.vehicle_number.trim(),
-        net_weight_tons: toNumber(formData.net_weight_tons),
+        net_weight_kg: Math.round(toNumber(formData.net_weight_tons) * 1000), // Convertesc tone → kg (INT)
       };
 
       console.log('🚀 Submitting TMB payload:', payload);
