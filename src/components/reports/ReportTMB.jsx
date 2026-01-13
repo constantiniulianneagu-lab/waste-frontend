@@ -280,11 +280,57 @@ const ReportTMB = () => {
   const handleExportClick = async (format) => {
     try {
       setExporting(true);
-      const endpoint = `/api/reports/tmb/${activeTab}`;
-      await handleExport(endpoint, filters, format, `raport-tmb-${activeTab}`);
-    } catch (err) {
-      console.error('Export error:', err);
-      alert('Eroare la export');
+      console.log(`🚀 Exporting ${activeTab} as ${format}...`);
+
+      // ✅ FETCH ALL DATA pentru export (fără paginare)
+      const exportFilters = {
+        year: filters.year,
+        from: filters.from,
+        to: filters.to,
+        sector_id: filters.sector_id,
+        page: 1,
+        per_page: 100000  // Toate înregistrările
+      };
+
+      let exportResponse;
+      switch (activeTab) {
+        case 'tmb':
+          exportResponse = await getTmbReports(exportFilters);
+          break;
+        case 'recycling':
+          exportResponse = await getRecyclingReports(exportFilters);
+          break;
+        case 'recovery':
+          exportResponse = await getRecoveryReports(exportFilters);
+          break;
+        case 'disposal':
+          exportResponse = await getDisposalReports(exportFilters);
+          break;
+        case 'rejected':
+          exportResponse = await getRejectedReports(exportFilters);
+          break;
+        default:
+          exportResponse = await getTmbReports(exportFilters);
+      }
+      
+      if (!exportResponse.success) {
+        throw new Error(exportResponse.message || 'Eroare la obținerea datelor pentru export');
+      }
+
+      const allTickets = exportResponse.data.items || exportResponse.data.tickets || [];
+      
+      console.log(`📊 Exporting ${allTickets.length} tickets for ${activeTab}`);
+
+      const result = await handleExport(format, allTickets, summaryData, filters, activeTab);
+
+      if (result.success) {
+        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
+      } else {
+        alert(`❌ Eroare la export: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`❌ Eroare la export: ${error.message}`);
     } finally {
       setExporting(false);
     }
@@ -596,28 +642,64 @@ const ReportTMB = () => {
                     {expandedRows.has(ticket.id) && (
                       <tr className="bg-gray-50 dark:bg-gray-800/30 transition-colors">
                         <td colSpan="9" className="px-4 py-4">
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-3">
+                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
+                            {/* Row 1 */}
                             <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet Cântar:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number}</p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Data:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_time || 'N/A'}</p>
+                            </div>
+
+                            {/* Row 2 */}
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor Deșeuri:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.supplier_name || 'N/A'}</p>
                             </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Prestator TMB:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.operator_name || 'N/A'}</p>
                             </div>
                             <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_time || 'N/A'}</p>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">Sector {ticket.sector_number || 'N/A'}</p>
+                            </div>
+
+                            {/* Row 3 */}
+                            <div className="text-left col-span-2">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Tip Generator:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.generator_type || 'N/A'}</p>
+                            </div>
+
+                            {/* Row 4 */}
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cantitate (tone):</span>
+                              <p className="font-bold text-amber-600 dark:text-amber-400">{formatNumberRO(ticket.net_weight_tons)} t</p>
                             </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.created_at).toLocaleString('ro-RO')}</p>
                             </div>
                           </div>
+
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(ticket)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 dark:from-emerald-400 dark:to-emerald-500 dark:hover:from-emerald-500 dark:hover:to-emerald-600 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -626,7 +708,7 @@ const ReportTMB = () => {
                             </button>
                             <button
                               onClick={() => handleDelete(ticket.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-red-400 dark:to-red-500 dark:hover:from-red-500 dark:hover:to-red-600 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
+                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
