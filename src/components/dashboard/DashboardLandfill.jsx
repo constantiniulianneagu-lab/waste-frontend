@@ -221,39 +221,72 @@ const DashboardLandfill = () => {
           </div>
         ) : (
           <>
-            {/* RÂNDUL 1: 4 CARDURI STÂNGA + LISTA CODURI DREAPTA */}
+            {/* RÂNDUL 1: 4 CARDURI + 2 CARDURI NOI STÂNGA + LISTA CODURI DREAPTA */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* STÂNGA: 4 SUMMARY CARDS în GRID 2x2 - ocupă 5 coloane */}
-              <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-                <SummaryCard
-                  title="TOTAL DEȘEURI"
-                  value={data.summary.total_tons_formatted || "0"}
-                  subtitle="tone depozitate"
-                  gradient="from-emerald-500 to-teal-600"
-                  icon="📈"
-                />
-                <SummaryCard
-                  title="TOTAL TICHETE"
-                  value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
-                  subtitle="înregistrări"
-                  gradient="from-cyan-500 to-blue-600"
-                  icon="🧾"
-                />
-                <SummaryCard
-                  title="MEDIE PER TICHET"
-                  value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
-                  subtitle="tone / tichet"
-                  gradient="from-lime-500 to-emerald-600"
-                  icon="⚖️"
-                />
-                <SummaryCard
-                  title="PERIOADA"
-                  value={data.summary.date_range?.days || 0}
-                  subtitle="zile analizate"
-                  gradient="from-green-500 to-emerald-600"
-                  icon="📅"
-                />
+              {/* STÂNGA: 6 CARDURI (4 + 2 NOI) - ocupă 5 coloane */}
+              <div className="lg:col-span-5 space-y-4">
+                
+                {/* Primele 4 carduri în grid 2x2 */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* CARD 1 - EVIDENȚIAT CU BACKGROUND COLORAT */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 
+                                  dark:from-emerald-500/5 dark:to-teal-500/5 
+                                  rounded-[24px] -z-10" />
+                    <SummaryCard
+                      title="TOTAL DEȘEURI"
+                      value={data.summary.total_tons_formatted || "0"}
+                      subtitle="tone depozitate"
+                      gradient="from-emerald-500 to-teal-600"
+                      icon="📈"
+                      highlighted={true}
+                    />
+                  </div>
+                  
+                  <SummaryCard
+                    title="TOTAL TICHETE"
+                    value={data.summary.total_tickets?.toLocaleString("ro-RO") || "0"}
+                    subtitle="înregistrări"
+                    gradient="from-cyan-500 to-blue-600"
+                    icon="🧾"
+                  />
+                  <SummaryCard
+                    title="MEDIE PER TICHET"
+                    value={data.summary.avg_weight_per_ticket?.toFixed(2) || "0.00"}
+                    subtitle="tone / tichet"
+                    gradient="from-lime-500 to-emerald-600"
+                    icon="⚖️"
+                  />
+                  <SummaryCard
+                    title="PERIOADA"
+                    value={data.summary.date_range?.days || 0}
+                    subtitle="zile analizate"
+                    gradient="from-green-500 to-emerald-600"
+                    icon="📅"
+                  />
+                </div>
+
+                {/* Carduri NOI 5 și 6 */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* CARD 5 - DEȘEURI TRATATE (coduri 19 XX XX) */}
+                  <SummaryCard
+                    title="DEȘEURI TRATATE"
+                    value={data.summary.treated_waste_formatted || "0"}
+                    subtitle={`${data.summary.treated_waste_percentage || 0}% din total`}
+                    gradient="from-amber-500 to-orange-600"
+                    icon="♻️"
+                  />
+                  
+                  {/* CARD 6 - DEȘEURI DIRECTE (celelalte coduri) */}
+                  <SummaryCard
+                    title="DEȘEURI DIRECTE"
+                    value={data.summary.direct_waste_formatted || "0"}
+                    subtitle={`${data.summary.direct_waste_percentage || 0}% din total`}
+                    gradient="from-violet-500 to-purple-600"
+                    icon="🗑️"
+                  />
+                </div>
               </div>
 
               {/* DREAPTA: LISTA CODURI DEȘEURI - ocupă 7 coloane */}
