@@ -33,8 +33,8 @@ const ReportsTmbSidebar = ({
   mode,
   ticket,
   wasteCodes,
-  suppliers,    // Furnizori deșeuri
-  operators,    // Prestatori TMB
+  suppliers,    // TOATE institutions
+  operators,    // TOATE institutions
   sectors,
   onClose,
   onSuccess
@@ -42,19 +42,26 @@ const ReportsTmbSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Filtrare instituții
+  const wasteCollectors = suppliers?.filter(s => s.type === 'WASTE_COLLECTOR') || [];
+  const tmbOperators = operators?.filter(o => o.type === 'TMB_OPERATOR') || [];
+  
+  // Filtrare cod deșeu - DOAR 20 03 01
+  const tmbWasteCodes = wasteCodes?.filter(wc => wc.code === '20 03 01') || [];
+
   const [formData, setFormData] = useState({
     ticket_number: '',
     ticket_date: new Date().toISOString().split('T')[0],
     ticket_time: new Date().toTimeString().slice(0, 5),
     
-    supplier_id: '',      // UUID - Furnizor deșeuri
-    operator_id: '',      // UUID - Prestator TMB
-    waste_code_id: '',    // UUID - Cod deșeu
+    supplier_id: '',      // UUID - Furnizor deșeuri (WASTE_COLLECTOR)
+    operator_id: '',      // UUID - Prestator TMB (TMB_OPERATOR)
+    waste_code_id: '',    // UUID - Cod deșeu (20 03 01)
     sector_id: '',        // UUID - Proveniență
     
-    generator_type: '',   // VARCHAR
+    generator_type: '',   // CASNIC / NON-CASNIC / CASNIC / NON-CASNIC
     vehicle_number: '',   // VARCHAR
-    net_weight_tons: '',  // DECIMAL - Cantitate tone
+    net_weight_tons: '',  // DECIMAL - Cantitate tone (UI) → convertesc în kg pentru backend
   });
 
   // Pre-populate on edit; reset on create
@@ -287,7 +294,7 @@ const ReportsTmbSidebar = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Furnizor Deșeuri *
+                    Furnizor Deșeuri (WASTE_COLLECTOR) *
                   </label>
                   <select
                     name="supplier_id"
@@ -296,7 +303,7 @@ const ReportsTmbSidebar = ({
                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează furnizor...</option>
-                    {suppliers?.map(s => (
+                    {wasteCollectors?.map(s => (
                       <option key={s.id} value={s.id}>
                         {s.name}
                       </option>
@@ -306,7 +313,7 @@ const ReportsTmbSidebar = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prestator TMB *
+                    Prestator TMB (TMB_OPERATOR) *
                   </label>
                   <select
                     name="operator_id"
@@ -315,7 +322,7 @@ const ReportsTmbSidebar = ({
                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează prestator...</option>
-                    {operators?.map(o => (
+                    {tmbOperators?.map(o => (
                       <option key={o.id} value={o.id}>
                         {o.name}
                       </option>
@@ -334,7 +341,7 @@ const ReportsTmbSidebar = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cod Deșeu *
+                    Cod Deșeu (20 03 01) *
                   </label>
                   <select
                     name="waste_code_id"
@@ -343,7 +350,7 @@ const ReportsTmbSidebar = ({
                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează cod...</option>
-                    {wasteCodes?.map(wc => (
+                    {tmbWasteCodes?.map(wc => (
                       <option key={wc.id} value={wc.id}>
                         {wc.code} - {wc.description}
                       </option>
@@ -353,7 +360,7 @@ const ReportsTmbSidebar = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Proveniență (Sector) *
+                    Proveniență *
                   </label>
                   <select
                     name="sector_id"
@@ -364,7 +371,7 @@ const ReportsTmbSidebar = ({
                     <option value="">Selectează sector...</option>
                     {sectors?.map(s => (
                       <option key={s.id || s.sector_id} value={s.id || s.sector_id}>
-                        Sector {s.sector_number} - {s.sector_name || s.name}
+                        {s.sector_name || s.name}
                       </option>
                     ))}
                   </select>
@@ -373,7 +380,7 @@ const ReportsTmbSidebar = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tip Generator
+                  Tip Generator *
                 </label>
                 <select
                   name="generator_type"
@@ -382,9 +389,9 @@ const ReportsTmbSidebar = ({
                   className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                 >
                   <option value="">Selectează tip...</option>
-                  <option value="Menajer">Menajer</option>
-                  <option value="Nemenajer">Nemenajer</option>
-                  <option value="Instituție Publică">Instituție Publică</option>
+                  <option value="CASNIC">CASNIC</option>
+                  <option value="NON-CASNIC">NON-CASNIC</option>
+                  <option value="CASNIC / NON-CASNIC">CASNIC / NON-CASNIC</option>
                 </select>
               </div>
             </div>
