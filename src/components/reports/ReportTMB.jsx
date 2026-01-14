@@ -792,6 +792,9 @@ const ReportTMB = () => {
           }}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onCreate={handleCreate}
+          onExport={handleExportClick}
+          exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
           filters={filters}
@@ -819,6 +822,9 @@ const ReportTMB = () => {
           }}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onCreate={handleCreate}
+          onExport={handleExportClick}
+          exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
           filters={filters}
