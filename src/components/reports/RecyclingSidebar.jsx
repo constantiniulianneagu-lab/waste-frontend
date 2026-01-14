@@ -44,9 +44,16 @@ const RecyclingSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Filtrare instituții
-  const tmbOperators = suppliers?.filter(s => s.type === 'TMB_OPERATOR') || [];
-  const recyclingOperators = clients?.filter(c => c.type === 'RECYCLING_OPERATOR') || [];
+  // Folosim direct listele primite (backend deja le filtrează)
+  const tmbOperators = suppliers || [];
+  const recyclingOperators = clients || [];
+
+  console.log('🔍 Recycling debug:', {
+    suppliers_total: suppliers?.length,
+    clients_total: clients?.length,
+    suppliers_sample: suppliers?.[0],
+    clients_sample: clients?.[0],
+  });
 
   const [formData, setFormData] = useState({
     ticket_number: '',
