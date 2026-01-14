@@ -18,6 +18,7 @@ import {
   getRejectedReports,
   deleteTmbTicket,
   deleteRecyclingTicket,
+  deleteRecoveryTicket,
   getAuxiliaryData 
 } from '../../services/reportsService';
 import { handleExport } from '../../services/exportService';
@@ -241,6 +242,9 @@ const ReportTMB = () => {
           break;
         case 'recycling':
           response = await deleteRecyclingTicket(ticketId);
+          break;
+        case 'recovery':
+          response = await deleteRecoveryTicket(ticketId);
           break;
         default:
           throw new Error('Delete not implemented for this tab');
