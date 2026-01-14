@@ -220,6 +220,59 @@ export const getRecoveryReports = async (filters) => {
   }
 };
 
+/**
+ * CREATE Recovery Ticket
+ */
+export const createRecoveryTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/tickets/recovery`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ createRecoveryTicket error:', error);
+    throw error;
+  }
+};
+
+/**
+ * UPDATE Recovery Ticket
+ */
+export const updateRecoveryTicket = async (id, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/tickets/recovery/${id}`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ updateRecoveryTicket error:', error);
+    throw error;
+  }
+};
+
+/**
+ * DELETE Recovery Ticket
+ */
+export const deleteRecoveryTicket = async (id) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/tickets/recovery/${id}`,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ deleteRecoveryTicket error:', error);
+    throw error;
+  }
+};
+
 export const getDisposalReports = async (filters) => {
   try {
     const headers = createAuthHeaders();
