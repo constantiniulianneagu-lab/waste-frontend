@@ -300,7 +300,7 @@ const RecyclingSidebar = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Furnizor (TMB_OPERATOR) *
+                    Furnizor *
                   </label>
                   <select
                     name="supplier_id"
@@ -319,7 +319,7 @@ const RecyclingSidebar = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Client Reciclare (RECYCLING_OPERATOR) *
+                    Operator Reciclare *
                   </label>
                   <select
                     name="recipient_id"
@@ -327,7 +327,7 @@ const RecyclingSidebar = ({
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                   >
-                    <option value="">Selectează client...</option>
+                    <option value="">Selectează operator...</option>
                     {recyclingOperators?.map(c => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -393,7 +393,8 @@ const RecyclingSidebar = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
                     Cantitate Livrată (tone) *
                   </label>
                   <input
@@ -402,13 +403,14 @@ const RecyclingSidebar = ({
                     name="delivered_quantity_tons"
                     value={formData.delivered_quantity_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-emerald-300 dark:border-emerald-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-cyan-700 dark:text-cyan-400 mb-2 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-cyan-500"></span>
                     Cantitate Acceptată (tone) *
                   </label>
                   <input
@@ -417,7 +419,7 @@ const RecyclingSidebar = ({
                     name="accepted_quantity_tons"
                     value={formData.accepted_quantity_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-cyan-300 dark:border-cyan-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                   />
                 </div>
