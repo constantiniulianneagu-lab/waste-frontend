@@ -524,3 +524,55 @@ export default {
   getRecyclingTicketById,
   exportRecyclingReports
 };
+/**
+ * CREATE Disposal Ticket
+ */
+export const createDisposalTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/tickets/disposal`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ createDisposalTicket error:', error);
+    throw error;
+  }
+};
+
+/**
+ * UPDATE Disposal Ticket
+ */
+export const updateDisposalTicket = async (id, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/tickets/disposal/${id}`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ updateDisposalTicket error:', error);
+    throw error;
+  }
+};
+
+/**
+ * DELETE Disposal Ticket
+ */
+export const deleteDisposalTicket = async (id) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/tickets/disposal/${id}`,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error('❌ deleteDisposalTicket error:', error);
+    throw error;
+  }
+};

@@ -8,6 +8,7 @@ import RecyclingReportView from './RecyclingReportView';
 import RecoverySidebar from './RecoverySidebar';
 import RecoveryReportView from './RecoveryReportView';
 import DisposalSidebar from './DisposalSidebar';
+import DisposalReportView from './DisposalReportView';
 import RejectedSidebar from './RejectedSidebar';
 import ExportDropdown from './ExportDropdown';
 import { 
@@ -19,6 +20,7 @@ import {
   deleteTmbTicket,
   deleteRecyclingTicket,
   deleteRecoveryTicket,
+  deleteDisposalTicket,
   getAuxiliaryData 
 } from '../../services/reportsService';
 import { handleExport } from '../../services/exportService';
@@ -245,6 +247,9 @@ const ReportTMB = () => {
           break;
         case 'recovery':
           response = await deleteRecoveryTicket(ticketId);
+          break;
+        case 'disposal':
+          response = await deleteDisposalTicket(ticketId);
           break;
         default:
           throw new Error('Delete not implemented for this tab');
@@ -806,6 +811,36 @@ const ReportTMB = () => {
       {/* RECOVERY VIEW */}
       {activeTab === 'recovery' && (
         <RecoveryReportView
+          loading={loading}
+          tickets={tickets}
+          summaryData={summaryData}
+          pagination={pagination}
+          expandedRows={expandedRows}
+          onToggleExpand={(id) => {
+            setExpandedRows(prev => {
+              const newSet = new Set();
+              if (!prev.has(id)) {
+                newSet.add(id);
+              }
+              return newSet;
+            });
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCreate={handleCreate}
+          onExport={handleExportClick}
+          exporting={exporting}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+          filters={filters}
+          formatNumberRO={formatNumberRO}
+          groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+        />
+      )}
+
+      {/* DISPOSAL VIEW */}
+      {activeTab === 'disposal' && (
+        <DisposalReportView
           loading={loading}
           tickets={tickets}
           summaryData={summaryData}
