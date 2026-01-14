@@ -6,6 +6,7 @@ import ReportsTmbSidebar from './ReportsTmbSidebar';
 import RecyclingSidebar from './RecyclingSidebar';
 import RecyclingReportView from './RecyclingReportView';
 import RecoverySidebar from './RecoverySidebar';
+import RecoveryReportView from './RecoveryReportView';
 import DisposalSidebar from './DisposalSidebar';
 import RejectedSidebar from './RejectedSidebar';
 import ExportDropdown from './ExportDropdown';
@@ -771,6 +772,33 @@ const ReportTMB = () => {
       {/* RECYCLING VIEW */}
       {activeTab === 'recycling' && (
         <RecyclingReportView
+          loading={loading}
+          tickets={tickets}
+          summaryData={summaryData}
+          pagination={pagination}
+          expandedRows={expandedRows}
+          onToggleExpand={(id) => {
+            setExpandedRows(prev => {
+              const newSet = new Set();
+              if (!prev.has(id)) {
+                newSet.add(id);
+              }
+              return newSet;
+            });
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+          filters={filters}
+          formatNumberRO={formatNumberRO}
+          groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+        />
+      )}
+
+      {/* RECOVERY VIEW */}
+      {activeTab === 'recovery' && (
+        <RecoveryReportView
           loading={loading}
           tickets={tickets}
           summaryData={summaryData}
