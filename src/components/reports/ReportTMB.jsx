@@ -4,6 +4,7 @@ import { AlertCircle, Plus } from 'lucide-react';
 import ReportsFilters from './ReportsFilters';
 import ReportsTmbSidebar from './ReportsTmbSidebar';
 import RecyclingSidebar from './RecyclingSidebar';
+import RecyclingReportView from './RecyclingReportView';
 import RecoverySidebar from './RecoverySidebar';
 import DisposalSidebar from './DisposalSidebar';
 import RejectedSidebar from './RejectedSidebar';
@@ -763,6 +764,33 @@ const ReportTMB = () => {
           </div>
         )}
       </div>
+
+      {/* RECYCLING VIEW */}
+      {activeTab === 'recycling' && (
+        <RecyclingReportView
+          loading={loading}
+          tickets={tickets}
+          summaryData={summaryData}
+          pagination={pagination}
+          expandedRows={expandedRows}
+          onToggleExpand={(id) => {
+            setExpandedRows(prev => {
+              const newSet = new Set();
+              if (!prev.has(id)) {
+                newSet.add(id);
+              }
+              return newSet;
+            });
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+          filters={filters}
+          formatNumberRO={formatNumberRO}
+          groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+        />
+      )}
 
       {activeTab === 'tmb' && (
         <ReportsTmbSidebar
