@@ -1,12 +1,4 @@
 // src/components/reports/RecyclingReportView.jsx
-/**
- * ============================================================================
- * RECYCLING REPORT VIEW - COMPLETE
- * ============================================================================
- * Tabel + Carduri + Expand Row pentru Deșeuri Trimise la Reciclare
- * ============================================================================
- */
-
 import React from 'react';
 
 const RecyclingReportView = ({
@@ -44,11 +36,11 @@ const RecyclingReportView = ({
   return (
     <div className="space-y-6">
       
-      {/* CARDURI - STIL TMB */}
+      {/* CARDURI - ÎNĂLȚIME h-[320px] CA LA TMB */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* CARD 1 - PERIOADA ANALIZATĂ */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[420px] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-4">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -63,7 +55,7 @@ const RecyclingReportView = ({
           </div>
           
           <div className="p-4 flex flex-col justify-between flex-1">
-            <div className="space-y-1 text-xs mb-4">
+            <div className="space-y-1 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">
@@ -78,44 +70,28 @@ const RecyclingReportView = ({
               </div>
             </div>
 
-            {/* Cantitate Livrată */}
-            <div className="text-center py-3 border-b border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2 flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Cantitate livrată
-              </p>
+            <div className="text-center py-4">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2">● Cantitate livrată</p>
               <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400">
-                {formatNumberRO(delivered)} <span className="text-lg">t</span>
+                {formatNumberRO(delivered)} <span className="text-base">t</span>
               </p>
             </div>
 
-            {/* Cantitate Acceptată */}
-            <div className="text-center py-3 border-b border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-cyan-600 dark:text-cyan-400 mb-2 flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-                Cantitate acceptată
-              </p>
+            <div className="text-center py-2">
+              <p className="text-xs text-cyan-600 dark:text-cyan-400 mb-2">● Cantitate acceptată</p>
               <p className="text-3xl font-black text-cyan-700 dark:text-cyan-400">
-                {formatNumberRO(accepted)} <span className="text-lg">t</span>
+                {formatNumberRO(accepted)} <span className="text-base">t</span>
               </p>
             </div>
 
-            {/* DIFERENȚĂ */}
-            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 mt-3">
-              <p className="text-xs text-orange-600 dark:text-orange-400 mb-2 font-semibold text-center">
-                ⚠️ Diferență
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2 text-center">
+              <p className="text-xs text-orange-600 dark:text-orange-400 mb-1">⚠️ Diferență</p>
+              <p className="text-xl font-black text-orange-700 dark:text-orange-400">
+                {formatNumberRO(difference)} t <span className="text-xs">({differencePercent}%)</span>
               </p>
-              <div className="text-center">
-                <p className="text-2xl font-black text-orange-700 dark:text-orange-400">
-                  {formatNumberRO(difference)} <span className="text-base">t</span>
-                </p>
-                <p className="text-sm font-bold text-orange-600 dark:text-orange-500 mt-1">
-                  ({differencePercent}%)
-                </p>
-              </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-200 dark:border-gray-700 mt-3">
+            <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
               <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 {summaryData?.total_tickets || 0}
@@ -125,7 +101,7 @@ const RecyclingReportView = ({
         </div>
 
         {/* CARD 2 - FURNIZORI */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[420px] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -193,7 +169,7 @@ const RecyclingReportView = ({
         </div>
 
         {/* CARD 3 - OPERATORI RECICLARE */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[420px] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-gradient-to-br from-cyan-600 to-blue-700 p-4">
             <div className="flex items-center gap-3 text-white">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -256,8 +232,8 @@ const RecyclingReportView = ({
         </div>
       </div>
 
-      {/* TABEL */}
-      <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[24px] border border-gray-200 dark:border-gray-700/50 overflow-hidden shadow-sm dark:shadow-none">
+      {/* TABEL UNIC */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -296,7 +272,6 @@ const RecyclingReportView = ({
                         <button
                           onClick={() => onToggleExpand(ticket.id)}
                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                          title={expandedRows.has(ticket.id) ? "Ascunde detalii" : "Arată detalii"}
                         >
                           <svg className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -305,14 +280,12 @@ const RecyclingReportView = ({
                       </td>
                     </tr>
 
-                    {/* EXPAND ROW */}
                     {expandedRows.has(ticket.id) && (
-                      <tr className="bg-gray-50 dark:bg-gray-800/30 transition-colors">
+                      <tr className="bg-gray-50 dark:bg-gray-800/30">
                         <td colSpan="9" className="px-4 py-4">
-                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
-                            {/* Row 1 */}
+                          <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet Cântar:</span>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</p>
                             </div>
                             <div>
@@ -323,74 +296,46 @@ const RecyclingReportView = ({
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_time || 'N/A'}</p>
                             </div>
-
-                            {/* Row 2 */}
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.supplier_name}</p>
                             </div>
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator Reciclare:</span>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Client:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.recipient_name}</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.sector_name}</p>
                             </div>
-
-                            {/* Row 3 */}
                             <div className="col-span-2">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
                             </div>
-
-                            {/* Row 4 - Cantități */}
                             <div>
-                              <span className="text-emerald-600 dark:text-emerald-400 block mb-1">Cantitate Livrată:</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 block mb-1">Livrată:</span>
                               <p className="font-bold text-emerald-700 dark:text-emerald-400 text-lg">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
                             </div>
                             <div>
-                              <span className="text-cyan-600 dark:text-cyan-400 block mb-1">Cantitate Acceptată:</span>
+                              <span className="text-cyan-600 dark:text-cyan-400 block mb-1">Acceptată:</span>
                               <p className="font-bold text-cyan-700 dark:text-cyan-400 text-lg">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-orange-600 dark:text-orange-400 block mb-1">Diferență:</span>
                               <p className="font-bold text-orange-700 dark:text-orange-400 text-lg">
-                                {formatNumberRO(ticket.difference_tons)} t
+                                {formatNumberRO(ticket.difference_tons)} t ({ticket.delivered_quantity_tons > 0 ? ((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2) : 0}%)
                               </p>
-                              <p className="text-xs text-orange-600 dark:text-orange-500 mt-0.5">
-                                ({((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2)}%)
-                              </p>
-                            </div>
-
-                            {/* Row 5 */}
-                            <div className="col-span-3">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.created_at).toLocaleString('ro-RO')}</p>
                             </div>
                           </div>
-
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => onEdit(ticket)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
+                            <button onClick={() => onEdit(ticket)} className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded shadow-md">
                               Editează
                             </button>
-                            <button
-                              onClick={() => onDelete(ticket.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded transition-all duration-200 shadow-md flex items-center gap-1"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                            <button onClick={() => onDelete(ticket.id)} className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded shadow-md">
                               Șterge
                             </button>
                           </div>
@@ -404,19 +349,12 @@ const RecyclingReportView = ({
           </table>
         </div>
 
-        {/* PAGINATION */}
         {pagination && pagination.totalPages > 0 && (
-          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors">
+          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Pagina {pagination.page} din {pagination.totalPages}
-                </p>
-                <select
-                  value={filters.per_page}
-                  onChange={(e) => onPerPageChange(parseInt(e.target.value))}
-                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-colors"
-                >
+                <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.totalPages}</p>
+                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg">
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
                   <option value="50">50 / pagină</option>
@@ -424,20 +362,8 @@ const RecyclingReportView = ({
                 </select>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => onPageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => onPageChange(pagination.page + 1)}
-                  disabled={pagination.page === pagination.totalPages}
-                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Următor
-                </button>
+                <button onClick={() => onPageChange(pagination.page - 1)} disabled={pagination.page === 1} className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50">Anterior</button>
+                <button onClick={() => onPageChange(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="px-4 py-2 text-sm border rounded-lg disabled:opacity-50">Următorul</button>
               </div>
             </div>
           </div>
