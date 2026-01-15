@@ -153,7 +153,7 @@ const DisposalSidebar = ({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl">
         <div className="h-full flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-red-500 to-red-600">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-indigo-600 to-purple-600">
             <h2 className="text-xl font-bold text-white">
               {mode === 'edit' ? '✏️ Editează Tichet Eliminare' : '➕ Adaugă Tichet Eliminare'}
             </h2>
@@ -174,16 +174,16 @@ const DisposalSidebar = ({
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">📋 Date Bază</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Număr Tichet</label>
-                  <input type="text" name="ticket_number" value={formData.ticket_number} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" placeholder="ex: ELI-001" />
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Număr Tichet</label>
+                  <input type="text" name="ticket_number" value={formData.ticket_number} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="ex: ELI-001" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data *</label>
-                  <input type="date" name="ticket_date" value={formData.ticket_date} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" />
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Data *</label>
+                  <input type="date" name="ticket_date" value={formData.ticket_date} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ora</label>
-                  <input type="time" name="ticket_time" value={formData.ticket_time} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" />
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ora</label>
+                  <input type="time" name="ticket_time" value={formData.ticket_time} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
                 </div>
               </div>
             </div>
@@ -192,15 +192,15 @@ const DisposalSidebar = ({
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">🏢 Instituții</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Furnizor *</label>
-                  <select name="supplier_id" value={formData.supplier_id} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Furnizor *</label>
+                  <select name="supplier_id" value={formData.supplier_id} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                     <option value="">Selectează furnizor...</option>
                     {suppliers?.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Operator Depozit *</label>
-                  <select name="recipient_id" value={formData.recipient_id} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Operator Depozit *</label>
+                  <select name="recipient_id" value={formData.recipient_id} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                     <option value="">Selectează operator...</option>
                     {clients?.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
                   </select>
@@ -212,15 +212,15 @@ const DisposalSidebar = ({
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">♻️ Deșeu & Proveniență</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cod Deșeu *</label>
-                  <select name="waste_code_id" value={formData.waste_code_id} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cod Deșeu *</label>
+                  <select name="waste_code_id" value={formData.waste_code_id} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                     <option value="">Selectează cod...</option>
                     {wasteCodes?.map(wc => (<option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Proveniență *</label>
-                  <select name="sector_id" value={formData.sector_id} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Proveniență *</label>
+                  <select name="sector_id" value={formData.sector_id} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                     <option value="">Selectează sector...</option>
                     {sectors?.map(s => (<option key={s.id || s.sector_id} value={s.id || s.sector_id}>{s.sector_name || s.name}</option>))}
                   </select>
@@ -246,20 +246,20 @@ const DisposalSidebar = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Număr Auto</label>
-                <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleChange} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" placeholder="ex: B-123-ABC" />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Număr Auto</label>
+                <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleChange} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="ex: B-123-ABC" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Observații</label>
-                <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none" placeholder="Observații suplimentare..." />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Observații</label>
+                <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none" placeholder="Observații suplimentare..." />
               </div>
             </div>
           </form>
 
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <button type="button" onClick={onClose} className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">Anulează</button>
-            <button onClick={handleSubmit} disabled={loading} className="px-6 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onClick={handleSubmit} disabled={loading} className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Se salvează...</>) : (<><Save className="w-4 h-4" />{mode === 'edit' ? 'Actualizează' : 'Salvează'}</>)}
             </button>
           </div>

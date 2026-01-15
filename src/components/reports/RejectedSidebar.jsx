@@ -88,6 +88,7 @@ const RejectedSidebar = ({
     if (!formData.waste_code_id) newErrors.waste_code_id = 'Obligatoriu';
     if (!formData.vehicle_number.trim()) newErrors.vehicle_number = 'Obligatoriu';
     if (!formData.rejected_quantity_kg || parseFloat(formData.rejected_quantity_kg) <= 0) newErrors.rejected_quantity_kg = 'Invalid';
+    if (!formData.rejection_reason?.trim()) newErrors.rejection_reason = 'Motiv refuz este obligatoriu';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
