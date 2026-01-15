@@ -131,6 +131,9 @@ const ReportsTmbSidebar = ({
     if (!formData.sector_id) {
       errors.push('Proveniența este obligatorie');
     }
+    if (!formData.generator_type?.trim()) {
+      errors.push('Tip Generator este obligatoriu');
+    }
     if (!formData.vehicle_number?.trim()) {
       errors.push('Număr auto este obligatoriu');
     }
@@ -205,36 +208,35 @@ const ReportsTmbSidebar = ({
       />
 
       {/* Sidebar */}
-      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl">
-        <div className="h-full flex flex-col">
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-[#1a1f2e] shadow-2xl">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
           
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-amber-500 to-orange-600">
-            <h2 className="text-xl font-bold text-white">
-              {mode === 'edit' ? '✏️ Editează Tichet TMB' : '➕ Adaugă Tichet TMB'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+          {/* Header Sticky */}
+          <div className="sticky top-0 z-10 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">
+                {mode === 'edit' ? '✏️ Editează Tichet TMB' : '➕ Adaugă Tichet TMB'}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-            
-            {/* Error Alert */}
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                    {error}
-                  </p>
-                </div>
-              </div>
-            )}
+          {/* Error Alert (sub header) */}
+          {error && (
+            <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          {/* Form Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
             {/* Section 1: Date Bază */}
             <div className="space-y-4">
@@ -244,7 +246,7 @@ const ReportsTmbSidebar = ({
               
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Număr Tichet Cântar *
                   </label>
                   <input
@@ -252,13 +254,13 @@ const ReportsTmbSidebar = ({
                     name="ticket_number"
                     value={formData.ticket_number}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="ex: TMB-001"
                   />
                 </div>
 
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Data *
                   </label>
                   <input
@@ -266,12 +268,12 @@ const ReportsTmbSidebar = ({
                     name="ticket_date"
                     value={formData.ticket_date}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Ora
                   </label>
                   <input
@@ -279,7 +281,7 @@ const ReportsTmbSidebar = ({
                     name="ticket_time"
                     value={formData.ticket_time}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -293,14 +295,14 @@ const ReportsTmbSidebar = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Furnizor Deșeuri (WASTE_COLLECTOR) *
                   </label>
                   <select
                     name="supplier_id"
                     value={formData.supplier_id}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează furnizor...</option>
                     {wasteCollectors?.map(s => (
@@ -312,14 +314,14 @@ const ReportsTmbSidebar = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Prestator TMB (TMB_OPERATOR) *
                   </label>
                   <select
                     name="operator_id"
                     value={formData.operator_id}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează prestator...</option>
                     {tmbOperators?.map(o => (
@@ -340,14 +342,14 @@ const ReportsTmbSidebar = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Cod Deșeu (20 03 01) *
                   </label>
                   <select
                     name="waste_code_id"
                     value={formData.waste_code_id}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează cod...</option>
                     {tmbWasteCodes?.map(wc => (
@@ -359,14 +361,14 @@ const ReportsTmbSidebar = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Proveniență *
                   </label>
                   <select
                     name="sector_id"
                     value={formData.sector_id}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   >
                     <option value="">Selectează sector...</option>
                     {sectors?.map(s => (
@@ -379,14 +381,14 @@ const ReportsTmbSidebar = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Tip Generator *
                 </label>
                 <select
                   name="generator_type"
                   value={formData.generator_type}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 >
                   <option value="">Selectează tip...</option>
                   <option value="CASNIC">CASNIC</option>
@@ -404,7 +406,7 @@ const ReportsTmbSidebar = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Număr Auto *
                   </label>
                   <input
@@ -412,13 +414,13 @@ const ReportsTmbSidebar = ({
                     name="vehicle_number"
                     value={formData.vehicle_number}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="ex: B-123-ABC"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Cantitate (tone) *
                   </label>
                   <input
@@ -427,43 +429,47 @@ const ReportsTmbSidebar = ({
                     name="net_weight_tons"
                     value={formData.net_weight_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                   />
                 </div>
               </div>
             </div>
 
-          </form>
-
-          {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
-            >
-              Anulează
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Se salvează...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  {mode === 'edit' ? 'Actualizează' : 'Salvează'}
-                </>
-              )}
-            </button>
           </div>
-        </div>
+
+          {/* Footer Sticky ÎN FORM */}
+          <div className="sticky bottom-0 bg-white dark:bg-[#242b3d] border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Salvare...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    {mode === 'edit' ? 'Actualizează' : 'Salvează'}
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50"
+              >
+                Anulează
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   );
