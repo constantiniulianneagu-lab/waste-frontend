@@ -360,15 +360,15 @@ const RecyclingReportView = ({
                             </div>
                             <div>
                               <span className="text-emerald-600 dark:text-emerald-400 block mb-1">Livrată:</span>
-                              <p className="font-bold text-emerald-700 dark:text-emerald-400 text-lg">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
+                              <p className="font-bold text-emerald-700 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-cyan-600 dark:text-cyan-400 block mb-1">Acceptată:</span>
-                              <p className="font-bold text-cyan-700 dark:text-cyan-400 text-lg">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
+                              <p className="font-bold text-cyan-700 dark:text-cyan-400">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-orange-600 dark:text-orange-400 block mb-1">Diferență:</span>
-                              <p className="font-bold text-orange-700 dark:text-orange-400 text-lg">
+                              <p className="font-bold text-orange-700 dark:text-orange-400">
                                 {formatNumberRO(ticket.difference_tons)} t ({ticket.delivered_quantity_tons > 0 ? ((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2) : 0}%)
                               </p>
                             </div>
