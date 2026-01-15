@@ -246,7 +246,7 @@ const RecyclingReportView = ({
             <div className="flex gap-3">
               <button
                 onClick={onCreate}
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-lg transition-all duration-200 shadow-md flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -278,17 +278,17 @@ const RecyclingReportView = ({
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-cyan-500/10 to-blue-600/10 dark:from-cyan-600/20 dark:to-blue-700/20 border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tichet Cântar</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Data</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Client</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Furnizor</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Cod Deșeu</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Cant. Livrată</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wider">Cant. Acceptată</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Proveniență</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Detalii</th>
+            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <tr className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left">Tichet Cântar</th>
+                <th className="px-4 py-3 text-left">Data</th>
+                <th className="px-4 py-3 text-left">Client</th>
+                <th className="px-4 py-3 text-left">Furnizor</th>
+                <th className="px-4 py-3 text-left">Cod Deșeu</th>
+                <th className="px-4 py-3 text-right">Cant. Livrată</th>
+                <th className="px-4 py-3 text-right">Cant. Acceptată</th>
+                <th className="px-4 py-3 text-left">Proveniență</th>
+                <th className="px-4 py-3 text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -307,13 +307,13 @@ const RecyclingReportView = ({
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.recipient_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.waste_code}</td>
-                      <td className="px-4 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-sm font-bold text-cyan-700 dark:text-cyan-400">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() => onToggleExpand(ticket.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
                         >
                           <svg className={`w-5 h-5 transition-transform duration-200 ${expandedRows.has(ticket.id) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -373,11 +373,23 @@ const RecyclingReportView = ({
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => onEdit(ticket)} className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded shadow-md">
+                          <div className="flex gap-2 mt-4 justify-end">
+                            <button
+                              onClick={() => onEdit(ticket)}
+                              className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
                               Editează
                             </button>
-                            <button onClick={() => onDelete(ticket.id)} className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded shadow-md">
+                            <button
+                              onClick={() => onDelete(ticket.id)}
+                              className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                               Șterge
                             </button>
                           </div>
