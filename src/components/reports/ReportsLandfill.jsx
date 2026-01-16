@@ -617,8 +617,8 @@ const ReportsLandfill = () => {
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                       {ticket.vehicle_number}
                     </td>
-                    <td className="px-4 py-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {formatNumberRO(ticket.net_weight_tons)} t
+                    <td className="px-4 py-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                    {formatNumberRO(ticket.net_weight_tons)} t
                     </td>
                     <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
