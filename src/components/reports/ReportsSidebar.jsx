@@ -144,6 +144,7 @@ const ReportsSidebar = ({
         ticket_time: ticket.ticket_time || '',
 
         supplier_id: ticket.supplier_id ?? '',
+        operator_id: ticket.operator_id ?? '',
         waste_code_id: ticket.waste_code_id ?? '',
         sector_id: ticket.sector_id ?? '',
 
@@ -166,6 +167,7 @@ const ReportsSidebar = ({
         ticket_time: new Date().toTimeString().slice(0, 5),
 
         supplier_id: '',
+        operator_id: '',
         waste_code_id: '',
         sector_id: '',
 
@@ -183,6 +185,21 @@ const ReportsSidebar = ({
 
     setError(null);
   }, [mode, ticket, isOpen]);
+
+  // Setare DEFAULT ECOSUD SA pentru operator_id
+  useEffect(() => {
+    if (operators && operators.length > 0 && !formData.operator_id && mode === 'create') {
+      const ecosudOperator = operators.find(op => 
+        op.institution_type === 'DISPOSAL_CLIENT' || 
+        op.name?.toUpperCase().includes('ECOSUD')
+      );
+      
+      if (ecosudOperator) {
+        console.log('🏢 Setting default operator:', ecosudOperator.name);
+        setFormData(prev => ({ ...prev, operator_id: ecosudOperator.id }));
+      }
+    }
+  }, [operators, mode]);
 
   // auto-calc net tons
   useEffect(() => {
@@ -366,23 +383,21 @@ const ReportsSidebar = ({
                 📋 Date Bază
               </h3>
             
-            {/* Număr Tichet */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Număr Tichet <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.ticket_number}
-                onChange={(e) => handleChange('ticket_number', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                placeholder="ex: TICK-2024-001"
-              />
-            </div>
-
-            {/* Data & Ora */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Tichet Cântar + Data + Ora - 1 RÂND */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Tichet Cântar <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.ticket_number}
+                  onChange={(e) => handleChange('ticket_number', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  placeholder="ex: TICK-2024-001"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Data <span className="text-red-500">*</span>
@@ -416,40 +431,40 @@ const ReportsSidebar = ({
                 🏢 Instituții
               </h3>
 
-            {/* Furnizor */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Furnizor <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.supplier_id}
-                onChange={(e) => handleChange('supplier_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selectează furnizor</option>
-                {operators.map((op) => (
-                  <option key={op.id} value={op.id}>{op.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Operator Depozit */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Operator Depozit <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.operator_id}
-                onChange={(e) => handleChange('operator_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:text-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selectează operator</option>
-                {operators.map((op) => (
-                  <option key={op.id} value={op.id}>{op.name}</option>
-                ))}
-              </select>
+            {/* Furnizor + Operator Depozit - 1 RÂND */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Furnizor <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.supplier_id}
+                  onChange={(e) => handleChange('supplier_id', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Selectează furnizor</option>
+                  {operators.map((op) => (
+                    <option key={op.id} value={op.id}>{op.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Operator Depozit <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.operator_id}
+                  onChange={(e) => handleChange('operator_id', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Selectează operator</option>
+                  {operators.map((op) => (
+                    <option key={op.id} value={op.id}>{op.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             </div>
 
