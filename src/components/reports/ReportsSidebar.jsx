@@ -3,25 +3,6 @@
  * ============================================================================
  * REPORTS SIDEBAR (LANDFILL) - TERMINOLOGIE CORECTĂ
  * ============================================================================
- *
- * DB schema waste_tickets_landfill:
- * - ticket_number (varchar) - Număr Tichet
- * - ticket_date (date) - Data
- * - ticket_time (time) - Ora
- * - supplier_id (int FK) - Furnizor (institutions.id)
- * - waste_code_id (uuid FK) - Cod Deșeu (waste_codes.id)
- * - sector_id (uuid FK) - Sector (sectors.id)
- * - vehicle_number (varchar) - Nr. Auto
- * - gross_weight_kg (numeric) - Greutate Brută (kg)
- * - tare_weight_kg (numeric) - Greutate Tară (kg)
- * - net_weight_kg (computed) - Greutate Netă (kg)
- * - net_weight_tons (computed) - Tone Nete
- * - generator_type (varchar) - Tip Generator
- * - operation_type (varchar) - Tip Operație
- * - contract_type (varchar) - Tip Contract
- *
- * UI: input weights in tons → convert to kg (INT) for API
- * ============================================================================
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -63,7 +44,6 @@ const ReportsSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Original values from DB (kg) for UX
   const [originalKg, setOriginalKg] = useState({
     gross: null,
     tare: null,
@@ -75,10 +55,10 @@ const ReportsSidebar = ({
     ticket_date: new Date().toISOString().split('T')[0],
     ticket_time: new Date().toTimeString().slice(0, 5),
 
-    supplier_id: '',      // INT (furnizor - institution id)
-    operator_id: '',      // INT (operator depozit - ECOSUD SA default)
-    waste_code_id: '',    // UUID (waste_codes.id)
-    sector_id: '',        // UUID (sectors.id)
+    supplier_id: '',
+    operator_id: '',
+    waste_code_id: '',
+    sector_id: '',
 
     generator_type: '',
     vehicle_number: '',
@@ -93,16 +73,6 @@ const ReportsSidebar = ({
 
   // Pre-populate on edit; reset on create
   useEffect(() => {
-    // DEBUG: Check sectors structure
-    if (sectors && sectors.length > 0) {
-      console.log('🔍 Sectors structure:', sectors[0]);
-    }
-    
-    // DEBUG: Check waste codes structure
-    if (wasteCodes && wasteCodes.length > 0) {
-      console.log('🔍 Waste Codes structure:', wasteCodes[0]);
-    }
-
     if (mode === 'edit' && ticket) {
       const ticketDate = ticket.ticket_date
         ? String(ticket.ticket_date).slice(0, 10)
@@ -186,16 +156,15 @@ const ReportsSidebar = ({
     setError(null);
   }, [mode, ticket, isOpen]);
 
-  // Setare DEFAULT ECOSUD SA pentru operator_id
+  // DEFAULT ECOSUD SA pentru operator_id - DISPOSAL_CLIENT din institutions
   useEffect(() => {
     if (operators && operators.length > 0 && !formData.operator_id && mode === 'create') {
       const ecosudOperator = operators.find(op => 
-        op.institution_type === 'DISPOSAL_CLIENT' || 
-        op.name?.toUpperCase().includes('ECOSUD')
+        op.institution_type === 'DISPOSAL_CLIENT'
       );
       
       if (ecosudOperator) {
-        console.log('🏢 Setting default operator:', ecosudOperator.name);
+        console.log('🏢 Setting default operator (DISPOSAL_CLIENT):', ecosudOperator.name);
         setFormData(prev => ({ ...prev, operator_id: ecosudOperator.id }));
       }
     }
@@ -210,7 +179,6 @@ const ReportsSidebar = ({
       const net = gross - tare;
       setFormData((prev) => ({ ...prev, net_weight_tons: net.toFixed(2) }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.gross_weight_tons, formData.tare_weight_tons]);
 
   // current kg (derived from current tons inputs)
@@ -239,23 +207,20 @@ const ReportsSidebar = ({
     if (!formData.waste_code_id) errors.push('Cod deșeu lipsă');
     if (!formData.sector_id) errors.push('Sector lipsă');
     
-    // UUID validation with better error messages
     if (formData.sector_id && !isUuid(formData.sector_id)) {
-      console.error('❌ Invalid sector_id:', formData.sector_id, 'Type:', typeof formData.sector_id);
-      errors.push(`Sector ID invalid (trebuie UUID, primit: ${formData.sector_id.substring(0, 20)}...)`);
+      errors.push(`Sector ID invalid`);
     }
     if (formData.waste_code_id && !isUuid(formData.waste_code_id)) {
-      console.error('❌ Invalid waste_code_id:', formData.waste_code_id, 'Type:', typeof formData.waste_code_id);
-      errors.push(`Waste Code ID invalid (trebuie UUID, primit: ${formData.waste_code_id.substring(0, 20)}...)`);
+      errors.push(`Waste Code ID invalid`);
     }
     
     if (!formData.vehicle_number?.trim()) errors.push('Număr auto lipsă');
-    if (!formData.generator_type?.trim()) errors.push('Tip generator lipsă');
-    if (!formData.operation_type?.trim()) errors.push('Tip operație lipsă');
+    if (!formData.generator_type?.trim()) errors.push('Generator lipsă');
+    if (!formData.operation_type?.trim()) errors.push('Operație lipsă');
     if (!formData.contract_type?.trim()) errors.push('Tip contract lipsă');
-    if (!Number.isFinite(currentKg.gross) || currentKg.gross <= 0) errors.push('Tone brut invalid (> 0)');
-    if (!Number.isFinite(currentKg.tare) || currentKg.tare < 0) errors.push('Tone tară invalid (≥ 0)');
-    if (currentKg.gross <= currentKg.tare) errors.push('Tone brut > tone tară');
+    if (!Number.isFinite(currentKg.gross) || currentKg.gross <= 0) errors.push('Tone brut invalid');
+    if (!Number.isFinite(currentKg.tare) || currentKg.tare < 0) errors.push('Tone tară invalid');
+    if (currentKg.gross <= currentKg.tare) errors.push('Brut trebuie > Tară');
 
     return errors;
   };
@@ -285,60 +250,26 @@ const ReportsSidebar = ({
       tare_weight_kg: currentKg.tare
     };
 
-    console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
-    console.log('📊 Payload types:', {
-      ticket_number: typeof payload.ticket_number,
-      ticket_date: typeof payload.ticket_date,
-      ticket_time: typeof payload.ticket_time,
-      supplier_id: typeof payload.supplier_id,
-      waste_code_id: typeof payload.waste_code_id,
-      sector_id: typeof payload.sector_id,
-      vehicle_number: typeof payload.vehicle_number,
-      generator_type: typeof payload.generator_type,
-      operation_type: typeof payload.operation_type,
-      contract_type: typeof payload.contract_type,
-      gross_weight_kg: typeof payload.gross_weight_kg,
-      tare_weight_kg: typeof payload.tare_weight_kg
-    });
-
     try {
       setLoading(true);
       let response;
       if (mode === 'edit' && ticket?.id) {
-        console.log('✏️ Updating ticket ID:', ticket.id);
         response = await updateLandfillTicket(ticket.id, payload);
       } else {
-        console.log('➕ Creating new ticket...');
         response = await createLandfillTicket(payload);
       }
 
-      console.log('✅ Response:', response);
-
       if (response?.success) {
-        console.log('🎉 Success! Closing sidebar...');
         onSuccess?.();
         onClose();
       } else {
-        const errorMsg = response?.message || 'Eroare la salvare';
-        console.error('❌ API returned error:', errorMsg, 'Full response:', response);
-        setError(errorMsg);
+        setError(response?.message || 'Eroare la salvare');
       }
     } catch (err) {
-      console.error('❌ Catch block error:', err);
-      console.error('❌ Error details:', {
-        message: err?.message,
-        response: err?.response,
-        responseData: err?.response?.data,
-        stack: err?.stack
-      });
-      
-      // Extract error message from various possible locations
       const errorMessage = err?.message 
         || err?.response?.data?.error
         || err?.response?.data?.message 
-        || 'Eroare necunoscută la salvare';
-      
-      console.error('🚨 Final error message:', errorMessage);
+        || 'Eroare necunoscută';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -377,307 +308,255 @@ const ReportsSidebar = ({
           {/* Form */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
             
-            {/* 📋 DATE BAZĂ */}
+            {/* ═══════════════════════════════════════════════════════════════
+                📋 DATE BAZĂ - Tichet + Data + Ora PE 1 RÂND
+            ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 📋 Date Bază
               </h3>
-            
-            {/* Tichet Cântar + Data + Ora - 1 RÂND */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Tichet Cântar <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.ticket_number}
-                  onChange={(e) => handleChange('ticket_number', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  placeholder="ex: TICK-2024-001"
-                />
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tichet Cântar <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.ticket_number}
+                    onChange={(e) => handleChange('ticket_number', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    placeholder="ex: TICK-2024-001"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Data <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.ticket_date}
+                    onChange={(e) => handleChange('ticket_date', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Ora <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.ticket_time}
+                    onChange={(e) => handleChange('ticket_time', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Data <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.ticket_date}
-                  onChange={(e) => handleChange('ticket_date', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Ora <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={formData.ticket_time}
-                  onChange={(e) => handleChange('ticket_time', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
             </div>
 
-            {/* 🏢 INSTITUȚII */}
+            {/* ═══════════════════════════════════════════════════════════════
+                🏢 INSTITUȚII - Furnizor + Operator Depozit PE 1 RÂND
+                Operator Depozit = ECOSUD SA (DISPOSAL_CLIENT din DB) by default
+            ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 🏢 Instituții
               </h3>
-
-            {/* Furnizor + Operator Depozit - 1 RÂND */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Furnizor <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.supplier_id}
-                  onChange={(e) => handleChange('supplier_id', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Selectează furnizor</option>
-                  {operators.map((op) => (
-                    <option key={op.id} value={op.id}>{op.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Operator Depozit <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.operator_id}
-                  onChange={(e) => handleChange('operator_id', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Selectează operator</option>
-                  {operators.map((op) => (
-                    <option key={op.id} value={op.id}>{op.name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Furnizor <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.supplier_id}
+                    onChange={(e) => handleChange('supplier_id', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Selectează furnizor</option>
+                    {operators.map((op) => (
+                      <option key={op.id} value={op.id}>{op.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Operator Depozit <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.operator_id}
+                    onChange={(e) => handleChange('operator_id', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Selectează operator</option>
+                    {operators
+                      .filter(op => op.institution_type === 'DISPOSAL_CLIENT')
+                      .map((op) => (
+                        <option key={op.id} value={op.id}>{op.name}</option>
+                      ))}
+                  </select>
+                </div>
               </div>
             </div>
-            </div>
 
-            {/* ♻️ DEȘEU & PROVENIENȚĂ */}
+            {/* ═══════════════════════════════════════════════════════════════
+                ♻️ DEȘEU & PROVENIENȚĂ - Cod deșeu + Sector + Generator PE 1 RÂND
+            ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 ♻️ Deșeu & Proveniență
               </h3>
-
-            {/* Cod Deșeu */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Cod Deșeu <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.waste_code_id}
-                onChange={(e) => handleChange('waste_code_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selectează cod deșeu</option>
-                {wasteCodes && wasteCodes.length > 0 ? (
-                  wasteCodes
-                    .filter(wc => !wc.code.startsWith('15'))
-                    .map((wc) => (
-                      <option key={wc.id} value={wc.id}>
-                        {wc.code} - {wc.description}
-                      </option>
-                    ))
-                ) : (
-                  <option disabled>Niciun cod deșeu disponibil</option>
-                )}
-              </select>
-              {formData.waste_code_id && (
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  UUID: <span className="font-mono text-[10px]">{formData.waste_code_id}</span>
-                </p>
-              )}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Cod Deșeu <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.waste_code_id}
+                    onChange={(e) => handleChange('waste_code_id', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Selectează</option>
+                    {wasteCodes && wasteCodes.length > 0 ? (
+                      wasteCodes
+                        .filter(wc => !wc.code.startsWith('15'))
+                        .map((wc) => (
+                          <option key={wc.id} value={wc.id}>
+                            {wc.code} - {wc.description?.substring(0, 30)}
+                          </option>
+                        ))
+                    ) : (
+                      <option disabled>Niciun cod</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Sector <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.sector_id}
+                    onChange={(e) => handleChange('sector_id', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Selectează</option>
+                    {sectors && sectors.length > 0 ? (
+                      sectors.map((sec) => (
+                        <option key={sec.id || sec.sector_id} value={sec.id || sec.sector_id}>
+                          Sectorul {sec.sector_number}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>Niciun sector</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Generator <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.generator_type}
+                    onChange={(e) => handleChange('generator_type', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    placeholder="CASNIC / NON-CASNIC"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Sector */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Sector <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.sector_id}
-                onChange={(e) => handleChange('sector_id', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selectează sector</option>
-                {sectors && sectors.length > 0 ? (
-                  sectors.map((sec) => (
-                    <option key={sec.id || sec.sector_id} value={sec.id || sec.sector_id}>
-                      Sectorul {sec.sector_number}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>Niciun sector disponibil</option>
-                )}
-              </select>
-              {formData.sector_id && (
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  UUID: <span className="font-mono text-[10px]">{formData.sector_id}</span>
-                </p>
-              )}
-            </div>
-
-            {/* Tip Generator */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Generator <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.generator_type}
-                onChange={(e) => handleChange('generator_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                placeholder="ex: CASNIC / NON-CASNIC"
-              />
-            </div>
-            </div>
-
-            {/* 🚛 TRANSPORT & CANTITATE */}
+            {/* ═══════════════════════════════════════════════════════════════
+                🚛 TRANSPORT & CANTITATE
+                Rând 1: Tone brut + Tone tară + Tone net
+                Rând 2: Număr auto + Tip contract + Operație
+            ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 🚛 Transport & Cantitate
               </h3>
-
-            {/* Număr Auto */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Număr Auto <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.vehicle_number}
-                onChange={(e) => handleChange('vehicle_number', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                placeholder="ex: B 526 SDF"
-              />
-            </div>
-
-            {/* Greutăți */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Tone Brut <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.gross_weight_tons}
-                  onChange={(e) => handleChange('gross_weight_tons', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
-                {mode === 'edit' && originalKg.gross != null && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Original: <span className="font-mono">{originalKg.gross}</span> kg
-                  </p>
-                )}
-                {Number.isFinite(currentKg.gross) && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Curent: <span className="font-mono">{currentKg.gross}</span> kg
-                  </p>
-                )}
+              
+              {/* RÂND 1: Tone brut + Tone tară + Tone net */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tone Brut <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.gross_weight_tons}
+                    onChange={(e) => handleChange('gross_weight_tons', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tone Tară <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.tare_weight_tons}
+                    onChange={(e) => handleChange('tare_weight_tons', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tone Net
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.net_weight_tons}
+                    readOnly
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Tone Tară <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.tare_weight_tons}
-                  onChange={(e) => handleChange('tare_weight_tons', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
-                {mode === 'edit' && originalKg.tare != null && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Original: <span className="font-mono">{originalKg.tare}</span> kg
-                  </p>
-                )}
-                {Number.isFinite(currentKg.tare) && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Curent: <span className="font-mono">{currentKg.tare}</span> kg
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Tone Net
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.net_weight_tons}
-                  readOnly
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg
-                             text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                />
-                {mode === 'edit' && originalKg.net != null && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Original: <span className="font-mono">{originalKg.net}</span> kg
-                  </p>
-                )}
-                {Number.isFinite(currentKg.net) && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Curent: <span className="font-mono">{currentKg.net}</span> kg
-                  </p>
-                )}
+              {/* RÂND 2: Număr auto + Tip contract + Operație */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Număr Auto <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.vehicle_number}
+                    onChange={(e) => handleChange('vehicle_number', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    placeholder="ex: B 526 SDF"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tip Contract <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.contract_type}
+                    onChange={(e) => handleChange('contract_type', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Selectează</option>
+                    <option value="TAXA">Taxă</option>
+                    <option value="TARIF">Tarif</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Operație <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.operation_type}
+                    onChange={(e) => handleChange('operation_type', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    placeholder="ex: Depozitare"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Tip Contract */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Tip Contract <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.contract_type}
-                onChange={(e) => handleChange('contract_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selectează tip contract</option>
-                <option value="TAXA">Taxă</option>
-                <option value="TARIF">Tarif</option>
-              </select>
-            </div>
-
-            {/* Tip Operație */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Tip Operație <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.operation_type}
-                onChange={(e) => handleChange('operation_type', e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
-                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                placeholder="ex: Depozitare"
-              />
-            </div>
-            </div>
           </div>
 
           {/* Footer */}
@@ -686,8 +565,7 @@ const ReportsSidebar = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium
-                           disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -708,8 +586,7 @@ const ReportsSidebar = ({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600
-                           text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50"
+                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50"
               >
                 Anulează
               </button>
