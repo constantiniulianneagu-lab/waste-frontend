@@ -2,6 +2,7 @@
 /**
  * ============================================================================
  * REPORTS SIDEBAR (LANDFILL) - TERMINOLOGIE CORECTĂ
+ * Operator Depozit = TEXT FIX (ECOSUD SA) - NU se salvează în DB
  * ============================================================================
  */
 
@@ -36,7 +37,7 @@ const ReportsSidebar = ({
   mode,
   ticket,
   wasteCodes,
-  operators,
+  operators, // NOTĂ: aici folosești lista de instituții pentru "Furnizor"
   sectors,
   onClose,
   onSuccess
@@ -56,7 +57,6 @@ const ReportsSidebar = ({
     ticket_time: new Date().toTimeString().slice(0, 5),
 
     supplier_id: '',
-    operator_id: '',
     waste_code_id: '',
     sector_id: '',
 
@@ -114,7 +114,6 @@ const ReportsSidebar = ({
         ticket_time: ticket.ticket_time || '',
 
         supplier_id: ticket.supplier_id ?? '',
-        operator_id: ticket.operator_id ?? '',
         waste_code_id: ticket.waste_code_id ?? '',
         sector_id: ticket.sector_id ?? '',
 
@@ -137,7 +136,6 @@ const ReportsSidebar = ({
         ticket_time: new Date().toTimeString().slice(0, 5),
 
         supplier_id: '',
-        operator_id: '',
         waste_code_id: '',
         sector_id: '',
 
@@ -155,18 +153,6 @@ const ReportsSidebar = ({
 
     setError(null);
   }, [mode, ticket, isOpen]);
-
-  // DEFAULT ECOSUD SA pentru operator_id - DISPOSAL_CLIENT din institutions
-  useEffect(() => {
-    if (operators && operators.length > 0 && !formData.operator_id && mode === 'create') {
-      const ecosudOperator = operators.find(op => op.type === 'DISPOSAL_CLIENT');
-      
-      if (ecosudOperator) {
-        console.log('🏢 Setting default operator (DISPOSAL_CLIENT):', ecosudOperator.name);
-        setFormData(prev => ({ ...prev, operator_id: ecosudOperator.id }));
-      }
-    }
-  }, [operators, mode]);
 
   // auto-calc net tons
   useEffect(() => {
@@ -204,14 +190,14 @@ const ReportsSidebar = ({
     if (!formData.supplier_id) errors.push('Furnizor lipsă');
     if (!formData.waste_code_id) errors.push('Cod deșeu lipsă');
     if (!formData.sector_id) errors.push('Sector lipsă');
-    
+
     if (formData.sector_id && !isUuid(formData.sector_id)) {
       errors.push(`Sector ID invalid`);
     }
     if (formData.waste_code_id && !isUuid(formData.waste_code_id)) {
       errors.push(`Waste Code ID invalid`);
     }
-    
+
     if (!formData.vehicle_number?.trim()) errors.push('Număr auto lipsă');
     if (!formData.generator_type?.trim()) errors.push('Generator lipsă');
     if (!formData.operation_type?.trim()) errors.push('Operație lipsă');
@@ -237,13 +223,16 @@ const ReportsSidebar = ({
       ticket_number: formData.ticket_number.trim(),
       ticket_date: formData.ticket_date,
       ticket_time: formData.ticket_time,
+
       supplier_id: parseInt(formData.supplier_id, 10),
       waste_code_id: formData.waste_code_id,
       sector_id: formData.sector_id,
+
       vehicle_number: formData.vehicle_number.trim(),
       generator_type: formData.generator_type.trim(),
       operation_type: formData.operation_type.trim(),
       contract_type: formData.contract_type.trim(),
+
       gross_weight_kg: currentKg.gross,
       tare_weight_kg: currentKg.tare
     };
@@ -264,10 +253,11 @@ const ReportsSidebar = ({
         setError(response?.message || 'Eroare la salvare');
       }
     } catch (err) {
-      const errorMessage = err?.message 
-        || err?.response?.data?.error
-        || err?.response?.data?.message 
-        || 'Eroare necunoscută';
+      const errorMessage =
+        err?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        'Eroare necunoscută';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -288,7 +278,11 @@ const ReportsSidebar = ({
               <h2 className="text-xl font-bold text-white">
                 {mode === 'edit' ? '✏️ Editează Tichet' : '➕ Adaugă Tichet'}
               </h2>
-              <button type="button" onClick={onClose} className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -305,7 +299,6 @@ const ReportsSidebar = ({
 
           {/* Form */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            
             {/* ═══════════════════════════════════════════════════════════════
                 📋 DATE BAZĂ - Tichet + Data + Ora PE 1 RÂND
             ═══════════════════════════════════════════════════════════════ */}
@@ -352,13 +345,13 @@ const ReportsSidebar = ({
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════
-                🏢 INSTITUȚII - Furnizor + Operator Depozit PE 1 RÂND
-                Operator Depozit = ECOSUD SA (DISPOSAL_CLIENT din DB) by default
+                🏢 INSTITUȚII - Furnizor + Operator Depozit (TEXT FIX)
             ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 🏢 Instituții
               </h3>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -371,32 +364,26 @@ const ReportsSidebar = ({
                   >
                     <option value="">Selectează furnizor</option>
                     {operators.map((op) => (
-                      <option key={op.id} value={op.id}>{op.name}</option>
+                      <option key={op.id} value={op.id}>
+                        {op.name}
+                      </option>
                     ))}
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Operator Depozit <span className="text-red-500">*</span>
+                    Operator Depozit
                   </label>
-                  <select
-                    value={formData.operator_id}
-                    onChange={(e) => handleChange('operator_id', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Selectează operator</option>
-                    {operators
-                      .filter(op => op.type === 'DISPOSAL_CLIENT')
-                      .map((op) => (
-                        <option key={op.id} value={op.id}>{op.name}</option>
-                      ))}
-                  </select>
+                  <div className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+                    ECOSUD SA
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════
-                ♻️ DEȘEU & PROVENIENȚĂ - Cod deșeu + Sector + Generator PE 1 RÂND
+                ♻️ DEȘEU & PROVENIENȚĂ - Cod deșeu + Sector + Generator
             ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -415,7 +402,7 @@ const ReportsSidebar = ({
                     <option value="">Selectează</option>
                     {wasteCodes && wasteCodes.length > 0 ? (
                       wasteCodes
-                        .filter(wc => !wc.code.startsWith('15'))
+                        .filter((wc) => !wc.code.startsWith('15'))
                         .map((wc) => (
                           <option key={wc.id} value={wc.id}>
                             {wc.code} - {wc.description?.substring(0, 30)}
@@ -426,6 +413,7 @@ const ReportsSidebar = ({
                     )}
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Sector <span className="text-red-500">*</span>
@@ -447,6 +435,7 @@ const ReportsSidebar = ({
                     )}
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Generator <span className="text-red-500">*</span>
@@ -464,14 +453,12 @@ const ReportsSidebar = ({
 
             {/* ═══════════════════════════════════════════════════════════════
                 🚛 TRANSPORT & CANTITATE
-                Rând 1: Tone brut + Tone tară + Tone net
-                Rând 2: Număr auto + Tip contract + Operație
             ═══════════════════════════════════════════════════════════════ */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
                 🚛 Transport & Cantitate
               </h3>
-              
+
               {/* RÂND 1: Tone brut + Tone tară + Tone net */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -486,6 +473,7 @@ const ReportsSidebar = ({
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Tone Tară <span className="text-red-500">*</span>
@@ -498,6 +486,7 @@ const ReportsSidebar = ({
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Tone Net
@@ -526,6 +515,7 @@ const ReportsSidebar = ({
                     placeholder="ex: B 526 SDF"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Tip Contract <span className="text-red-500">*</span>
@@ -540,6 +530,7 @@ const ReportsSidebar = ({
                     <option value="TARIF">Tarif</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Operație <span className="text-red-500">*</span>
@@ -554,7 +545,6 @@ const ReportsSidebar = ({
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Footer */}
