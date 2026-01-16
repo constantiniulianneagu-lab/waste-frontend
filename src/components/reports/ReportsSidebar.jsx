@@ -376,7 +376,7 @@ const ReportsSidebar = ({
                     Operator Depozit
                   </label>
                   <div className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-                    ECOSUD SA
+                    ECO SUD SA
                   </div>
                 </div>
               </div>
