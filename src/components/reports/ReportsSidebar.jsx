@@ -159,9 +159,7 @@ const ReportsSidebar = ({
   // DEFAULT ECOSUD SA pentru operator_id - DISPOSAL_CLIENT din institutions
   useEffect(() => {
     if (operators && operators.length > 0 && !formData.operator_id && mode === 'create') {
-      const ecosudOperator = operators.find(op => 
-        op.institution_type === 'DISPOSAL_CLIENT'
-      );
+      const ecosudOperator = operators.find(op => op.type === 'DISPOSAL_CLIENT');
       
       if (ecosudOperator) {
         console.log('🏢 Setting default operator (DISPOSAL_CLIENT):', ecosudOperator.name);
@@ -388,7 +386,7 @@ const ReportsSidebar = ({
                   >
                     <option value="">Selectează operator</option>
                     {operators
-                      .filter(op => op.institution_type === 'DISPOSAL_CLIENT')
+                      .filter(op => op.type === 'DISPOSAL_CLIENT')
                       .map((op) => (
                         <option key={op.id} value={op.id}>{op.name}</option>
                       ))}
