@@ -527,7 +527,7 @@ const ReportsSidebar = ({
                   >
                     <option value="">Selectează</option>
                     <option value="TAXA">Taxă</option>
-                    <option value="TARIF">Tarif</option>
+                    <option value="Tarif">Tarif</option>
                   </select>
                 </div>
 
