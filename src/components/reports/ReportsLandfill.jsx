@@ -393,7 +393,7 @@ const ReportsLandfill = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || 'București'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || filters.location || 'București'}</span>
               </div>
             </div>
             
@@ -533,7 +533,7 @@ const ReportsLandfill = () => {
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete Depozitare ({pagination?.total_count || 0})
+              Tichete Depozitare
             </h3>
             <div className="flex gap-3">
               <button
@@ -604,7 +604,7 @@ const ReportsLandfill = () => {
                     <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
                         onClick={() => toggleExpandRow(ticket.id)}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
                         title={expandedRows.has(ticket.id) ? "Ascunde detalii" : "Arată detalii"}
                       >
                         <svg 
@@ -623,62 +623,87 @@ const ReportsLandfill = () => {
                   {expandedRows.has(ticket.id) && (
                     <tr className="bg-gray-50 dark:bg-gray-800/30">
                       <td colSpan="9" className="px-4 py-4">
-                        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-sm">
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
+                          {/* Row 1 */}
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.waste_code} - {ticket.waste_description}
-                            </p>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet Cântar:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number}</p>
                           </div>
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator depozitar:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.operator_name || 'N/A'}
-                            </p>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Data:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</p>
                           </div>
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.ticket_time || 'N/A'}
-                            </p>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_time || 'N/A'}</p>
+                          </div>
+
+                          {/* Row 2 */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor Deșeuri:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.supplier_name || 'N/A'}</p>
                           </div>
                           <div className="text-left">
-                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Generator:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.generator_type || 'N/A'}
-                            </p>
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator Depozitar:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.operator_name || 'N/A'}</p>
                           </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.sector_name || 'N/A'}</p>
+                          </div>
+
+                          {/* Row 3 */}
+                          <div className="text-left col-span-2">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Tip Generator:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.generator_type || 'N/A'}</p>
+                          </div>
+
+                          {/* Row 4 */}
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Cantitate (tone):</span>
+                            <p className="font-bold text-indigo-600 dark:text-indigo-400">{formatNumberRO(ticket.net_weight_tons)} t</p>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-gray-500 dark:text-gray-400 block mb-1">Tip Contract:</span>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.contract_type || 'N/A'}</p>
+                          </div>
+
+                          {/* Row 5 */}
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Operație:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {ticket.operation_type || 'N/A'}
-                            </p>
+                            <p className="font-medium text-gray-900 dark:text-white">{ticket.operation_type || 'N/A'}</p>
                           </div>
                           <div className="text-left">
                             <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {new Date(ticket.created_at).toLocaleString('ro-RO')}
-                            </p>
+                            <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.created_at).toLocaleString('ro-RO')}</p>
                           </div>
                         </div>
 
                         <div className="flex gap-2 mt-4 justify-end">
                           <button
                             onClick={() => handleEdit(ticket)}
-                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-blue-500 to-blue-600 
-                                     hover:from-blue-600 hover:to-blue-700 text-white rounded 
-                                     transition-all duration-200 shadow-md flex items-center gap-1"
+                            className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                             Editează
                           </button>
                           <button
                             onClick={() => handleDelete(ticket.id)}
-                            className="px-3 py-1.5 text-xs font-medium bg-gradient-to-br from-red-500 to-red-600 
-                                     hover:from-red-600 hover:to-red-700 text-white rounded 
-                                     transition-all duration-200 shadow-md flex items-center gap-1"
+                            className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                             Șterge
                           </button>
                         </div>

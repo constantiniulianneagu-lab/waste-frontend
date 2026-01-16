@@ -357,7 +357,13 @@ const ReportsSidebar = ({
           )}
 
           {/* Form */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            
+            {/* 📋 DATE BAZĂ */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                📋 Date Bază
+              </h3>
             
             {/* Număr Tichet */}
             <div>
@@ -401,6 +407,13 @@ const ReportsSidebar = ({
                 />
               </div>
             </div>
+            </div>
+
+            {/* 🏢 INSTITUȚII */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                🏢 Instituții
+              </h3>
 
             {/* Furnizor */}
             <div>
@@ -433,11 +446,13 @@ const ReportsSidebar = ({
               >
                 <option value="">Selectează cod deșeu</option>
                 {wasteCodes && wasteCodes.length > 0 ? (
-                  wasteCodes.map((wc) => (
-                    <option key={wc.id} value={wc.id}>
-                      {wc.code} - {wc.description}
-                    </option>
-                  ))
+                  wasteCodes
+                    .filter(wc => !wc.code.startsWith('15'))
+                    .map((wc) => (
+                      <option key={wc.id} value={wc.id}>
+                        {wc.code} - {wc.description}
+                      </option>
+                    ))
                 ) : (
                   <option disabled>Niciun cod deșeu disponibil</option>
                 )}
@@ -464,7 +479,7 @@ const ReportsSidebar = ({
                 {sectors && sectors.length > 0 ? (
                   sectors.map((sec) => (
                     <option key={sec.id || sec.sector_id} value={sec.id || sec.sector_id}>
-                      Sector {sec.sector_number} - {sec.sector_name}
+                      Sectorul {sec.sector_number}
                     </option>
                   ))
                 ) : (
@@ -595,8 +610,8 @@ const ReportsSidebar = ({
                            text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Selectează tip contract</option>
-                <option value="TAXA">TAXĂ</option>
-                <option value="TARIF">TARIF</option>
+                <option value="TAXA">Taxă</option>
+                <option value="TARIF">Tarif</option>
               </select>
             </div>
 
