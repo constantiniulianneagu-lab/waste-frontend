@@ -432,6 +432,13 @@ const ReportsSidebar = ({
                 ))}
               </select>
             </div>
+            </div>
+
+            {/* ♻️ DEȘEU & PROVENIENȚĂ */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                ♻️ Deșeu & Proveniență
+              </h3>
 
             {/* Cod Deșeu */}
             <div>
@@ -492,6 +499,13 @@ const ReportsSidebar = ({
                 </p>
               )}
             </div>
+            </div>
+
+            {/* 🚛 TRANSPORT & CANTITATE */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                🚛 Transport & Cantitate
+              </h3>
 
             {/* Tip Generator */}
             <div>
@@ -628,6 +642,7 @@ const ReportsSidebar = ({
                            text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                 placeholder="ex: Depozitare"
               />
+            </div>
             </div>
           </div>
 
