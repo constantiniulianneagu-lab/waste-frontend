@@ -76,6 +76,7 @@ const ReportsSidebar = ({
     ticket_time: new Date().toTimeString().slice(0, 5),
 
     supplier_id: '',      // INT (furnizor - institution id)
+    operator_id: '',      // INT (operator depozit - ECOSUD SA default)
     waste_code_id: '',    // UUID (waste_codes.id)
     sector_id: '',        // UUID (sectors.id)
 
@@ -432,6 +433,24 @@ const ReportsSidebar = ({
                 ))}
               </select>
             </div>
+
+            {/* Operator Depozit */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Operator Depozit <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.operator_id}
+                onChange={(e) => handleChange('operator_id', e.target.value)}
+                className="w-full px-3 py-2 bg-gray-50 dark:text-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg
+                           text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Selectează operator</option>
+                {operators.map((op) => (
+                  <option key={op.id} value={op.id}>{op.name}</option>
+                ))}
+              </select>
+            </div>
             </div>
 
             {/* ♻️ DEȘEU & PROVENIENȚĂ */}
@@ -499,18 +518,11 @@ const ReportsSidebar = ({
                 </p>
               )}
             </div>
-            </div>
-
-            {/* 🚛 TRANSPORT & CANTITATE */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
-                🚛 Transport & Cantitate
-              </h3>
 
             {/* Tip Generator */}
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Tip Generator <span className="text-red-500">*</span>
+                Generator <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -521,6 +533,13 @@ const ReportsSidebar = ({
                 placeholder="ex: CASNIC / NON-CASNIC"
               />
             </div>
+            </div>
+
+            {/* 🚛 TRANSPORT & CANTITATE */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+                🚛 Transport & Cantitate
+              </h3>
 
             {/* Număr Auto */}
             <div>
