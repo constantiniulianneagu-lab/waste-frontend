@@ -247,7 +247,7 @@ const ReportsTmbSidebar = ({
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Număr Tichet Cântar *
+                    Tichet Cântar *
                   </label>
                   <input
                     type="text"
@@ -296,7 +296,7 @@ const ReportsTmbSidebar = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Furnizor Deșeuri (WASTE_COLLECTOR) *
+                    Furnizor Deșeuri *
                   </label>
                   <select
                     name="supplier_id"
@@ -315,7 +315,7 @@ const ReportsTmbSidebar = ({
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Prestator TMB (TMB_OPERATOR) *
+                    Prestator TMB *
                   </label>
                   <select
                     name="operator_id"
