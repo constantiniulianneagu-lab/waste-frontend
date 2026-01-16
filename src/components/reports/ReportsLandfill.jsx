@@ -345,6 +345,25 @@ const ReportsLandfill = () => {
   // RENDER - MAIN
   // ========================================================================
 
+  // Helper pentru a obține numele locației
+  const getLocationName = () => {
+    // Prioritate 1: nume din backend (summaryData.period.sector)
+    if (summaryData?.period?.sector) {
+      return summaryData.period.sector;
+    }
+    
+    // Prioritate 2: găsește sectorul din lista sectors bazat pe filters.sector_id
+    if (filters.sector_id && sectors.length > 0) {
+      const selectedSector = sectors.find(s => s.id === filters.sector_id || s.sector_id === filters.sector_id);
+      if (selectedSector) {
+        return `Sectorul ${selectedSector.sector_number}`;
+      }
+    }
+    
+    // Default: București (când sector_id e null)
+    return 'București';
+  };
+
   return (
     <div className="space-y-6">
       
@@ -393,7 +412,7 @@ const ReportsLandfill = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.period?.sector || filters.location || 'București'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{getLocationName()}</span>
               </div>
             </div>
             
