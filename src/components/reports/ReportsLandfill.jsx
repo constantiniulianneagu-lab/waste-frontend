@@ -285,7 +285,7 @@ const ReportsLandfill = () => {
       
       console.log(`📊 Exporting ${allTickets.length} tickets`);
 
-      const result = await handleExport(format, allTickets, summaryData, filters, 'landfill');
+      const result = await handleExport(format, allTickets, summaryData, filters, 'landfill', sectors);
 
       if (result.success) {
         alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);

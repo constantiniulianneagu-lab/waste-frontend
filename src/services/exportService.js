@@ -30,6 +30,27 @@ const formatNumberRO = (number) => {
 };
 
 /**
+ * Helper pentru a obține numele locației în export
+ */
+const getLocationName = (filters, sectors, summaryData) => {
+  // Prioritate 1: dacă e filtru pe sector, folosește numele din listă
+  if (filters?.sector_id && sectors && sectors.length > 0) {
+    const selectedSector = sectors.find(s => s.id === filters.sector_id || s.sector_id === filters.sector_id);
+    if (selectedSector) {
+      return `Sectorul ${selectedSector.sector_number}`;
+    }
+  }
+  
+  // Prioritate 2: nume din backend (doar dacă nu e filtru sector)
+  if (summaryData?.period?.sector && !filters?.sector_id) {
+    return summaryData.period.sector;
+  }
+  
+  // Default: București
+  return 'București';
+};
+
+/**
  * Format dată RO pentru export
  */
 const formatDateRO = (dateStr) => {
@@ -42,7 +63,7 @@ const formatDateRO = (dateStr) => {
  * EXPORT TO EXCEL
  * ============================================================================
  */
-export const exportToExcel = (tickets, summaryData, filters, reportType = 'landfill') => {
+export const exportToExcel = (tickets, summaryData, filters, reportType = 'landfill', sectors = []) => {
   try {
     console.log('📊 Exporting to Excel...', { tickets: tickets.length, reportType });
 
@@ -115,7 +136,7 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
       ['An:', filters.year || ''],
       ['De la:', formatDateRO(filters.from) || ''],
       ['Până la:', formatDateRO(filters.to) || ''],
-      ['Locație:', summaryData?.period?.sector || 'București'],
+      ['Locație:', getLocationName(filters, sectors, summaryData)],
       [''],
       ['Total cantitate:', `${formatNumberRO(summaryData?.total_quantity || 0)} tone`],
       ['Total tichete:', summaryData?.total_tickets || tickets.length],
@@ -148,7 +169,7 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
  * EXPORT TO PDF
  * ============================================================================
  */
-export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfill') => {
+export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfill', sectors = []) => {
   try {
     console.log('📄 Exporting to PDF...', { tickets: tickets.length, reportType });
 
@@ -169,7 +190,7 @@ doc.setFontSize(10);
     const yStart = 25;
     doc.text(`Perioada: ${formatDateRO(filters.from)} - ${formatDateRO(filters.to)}`, 14, yStart);
     doc.text(`An: ${filters.year}`, 14, yStart + 5);
-    doc.text(`Locație: ${summaryData?.period?.sector || 'București'}`, 14, yStart + 10);
+    doc.text(`Locație: ${getLocationName(filters, sectors, summaryData)}`, 14, yStart + 10);
     doc.text(`Total cantitate: ${formatNumberRO(summaryData?.total_quantity || 0)} tone`, 14, yStart + 15);
     doc.text(`Total tichete: ${summaryData?.total_tickets || tickets.length}`, 14, yStart + 20);
 
@@ -311,7 +332,7 @@ doc.setFontSize(10);
  * EXPORT TO CSV
  * ============================================================================
  */
-export const exportToCSV = (tickets, summaryData, filters, reportType = 'landfill') => {
+export const exportToCSV = (tickets, summaryData, filters, reportType = 'landfill', sectors = []) => {
   try {
     console.log('📋 Exporting to CSV...', { tickets: tickets.length, reportType });
 
@@ -408,7 +429,7 @@ export const exportToCSV = (tickets, summaryData, filters, reportType = 'landfil
  * EXPORT HANDLER UNIVERSAL
  * ============================================================================
  */
-export const handleExport = async (format, tickets, summaryData, filters, reportType) => {
+export const handleExport = async (format, tickets, summaryData, filters, reportType, sectors = []) => {
   try {
     console.log(`🚀 Starting export: ${format}`, { tickets: tickets.length, reportType });
 
@@ -416,13 +437,13 @@ export const handleExport = async (format, tickets, summaryData, filters, report
     switch (format.toLowerCase()) {
       case 'excel':
       case 'xlsx':
-        result = exportToExcel(tickets, summaryData, filters, reportType);
+        result = exportToExcel(tickets, summaryData, filters, reportType, sectors);
         break;
       case 'pdf':
-        result = exportToPDF(tickets, summaryData, filters, reportType);
+        result = exportToPDF(tickets, summaryData, filters, reportType, sectors);
         break;
       case 'csv':
-        result = exportToCSV(tickets, summaryData, filters, reportType);
+        result = exportToCSV(tickets, summaryData, filters, reportType, sectors);
         break;
       default:
         throw new Error(`Format nesuportat: ${format}`);
