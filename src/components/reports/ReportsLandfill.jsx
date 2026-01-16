@@ -347,12 +347,7 @@ const ReportsLandfill = () => {
 
   // Helper pentru a obține numele locației
   const getLocationName = () => {
-    // Prioritate 1: nume din backend (summaryData.period.sector)
-    if (summaryData?.period?.sector) {
-      return summaryData.period.sector;
-    }
-    
-    // Prioritate 2: găsește sectorul din lista sectors bazat pe filters.sector_id
+    // Prioritate 1: dacă e filtru pe sector, folosește numele din listă
     if (filters.sector_id && sectors.length > 0) {
       const selectedSector = sectors.find(s => s.id === filters.sector_id || s.sector_id === filters.sector_id);
       if (selectedSector) {
@@ -360,7 +355,12 @@ const ReportsLandfill = () => {
       }
     }
     
-    // Default: București (când sector_id e null)
+    // Prioritate 2: nume din backend (summaryData.period.sector) - doar dacă nu e filtru sector
+    if (summaryData?.period?.sector && !filters.sector_id) {
+      return summaryData.period.sector;
+    }
+    
+    // Default: București (când sector_id e null sau nu găsește)
     return 'București';
   };
 
