@@ -9,6 +9,7 @@
  * - PDF (.pdf)
  * - CSV (.csv)
  * 
+ * Design: Slate uniform pentru toate tab-urile
  * ============================================================================
  */
 
@@ -65,13 +66,12 @@ const ExportDropdown = ({ onExport, disabled = false, loading = false }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Buton principal */}
+      {/* Buton principal - Slate uniform */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || loading}
-        className="px-4 py-2 text-sm font-medium bg-gradient-to-br from-emerald-500 to-emerald-600 
-                 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg 
-                 transition-all duration-200 shadow-md flex items-center gap-2
+        className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 
+                 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2
                  disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Download className="w-4 h-4" />
