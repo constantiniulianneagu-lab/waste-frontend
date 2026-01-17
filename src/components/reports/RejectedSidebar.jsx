@@ -1,10 +1,14 @@
+// src/components/reports/RejectedSidebar.jsx
 /**
  * ============================================================================
- * REJECTED SIDEBAR COMPONENT
+ * REJECTED SIDEBAR - ADD/EDIT TICKETS
+ * ============================================================================
+ * Schema de culori: Zinc - Instituțional Modern
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
+import { X, Save, AlertCircle } from 'lucide-react';
 
 const RejectedSidebar = ({ 
   isOpen, 
@@ -18,7 +22,7 @@ const RejectedSidebar = ({
   onSuccess 
 }) => {
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     ticket_number: '',
@@ -61,45 +65,42 @@ const RejectedSidebar = ({
         rejection_reason: ''
       });
     }
-    setErrors({});
+    setError(null);
   }, [mode, ticket, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.ticket_number.trim()) newErrors.ticket_number = 'Obligatoriu';
-    if (!formData.ticket_date) newErrors.ticket_date = 'Obligatoriu';
-    if (!formData.sector_id) newErrors.sector_id = 'Obligatoriu';
-    if (!formData.supplier_id) newErrors.supplier_id = 'Obligatoriu';
-    if (!formData.operator_id) newErrors.operator_id = 'Obligatoriu';
-    if (!formData.waste_code_id) newErrors.waste_code_id = 'Obligatoriu';
-    if (!formData.vehicle_number.trim()) newErrors.vehicle_number = 'Obligatoriu';
-    if (!formData.rejected_quantity_kg || parseFloat(formData.rejected_quantity_kg) <= 0) newErrors.rejected_quantity_kg = 'Invalid';
-    if (!formData.rejection_reason?.trim()) newErrors.rejection_reason = 'Motiv refuz este obligatoriu';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validateForm = () => {
+    const errors = [];
+    if (!formData.ticket_number?.trim()) errors.push('Număr tichet este obligatoriu');
+    if (!formData.ticket_date) errors.push('Data este obligatorie');
+    if (!formData.sector_id) errors.push('Sector este obligatoriu');
+    if (!formData.supplier_id) errors.push('Furnizor este obligatoriu');
+    if (!formData.operator_id) errors.push('Operator este obligatoriu');
+    if (!formData.waste_code_id) errors.push('Cod deșeu este obligatoriu');
+    if (!formData.vehicle_number?.trim()) errors.push('Nr. auto este obligatoriu');
+    if (!formData.rejected_quantity_kg || parseFloat(formData.rejected_quantity_kg) <= 0) {
+      errors.push('Cantitate refuzată trebuie să fie > 0');
+    }
+    if (!formData.rejection_reason?.trim()) errors.push('Motiv refuz este obligatoriu');
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setError(errors.join('; '));
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
+      
       const submitData = {
         ...formData,
         rejected_quantity_kg: parseInt(formData.rejected_quantity_kg)
@@ -108,9 +109,9 @@ const RejectedSidebar = ({
       console.log('Submit rejected:', submitData);
       alert('Funcția va fi implementată cu API real');
       onSuccess();
-    } catch (error) {
-      console.error('Submit error:', error);
-      alert('Eroare la salvare: ' + error.message);
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError(err.message || 'Eroare la salvare');
     } finally {
       setLoading(false);
     }
@@ -118,119 +119,184 @@ const RejectedSidebar = ({
 
   if (!isOpen) return null;
 
+  const inputClass = "w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all";
+
   return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose}></div>
-      <div className="fixed right-0 top-0 h-full w-full md:w-[700px] bg-white dark:bg-[#242b3d] shadow-2xl z-50 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="h-full flex flex-col">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-[#1a1f2e] shadow-2xl">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          
+          <div className="sticky top-0 z-10 bg-zinc-600 px-6 py-4 shadow-lg">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {mode === 'edit' ? 'Editează bon Refuzat' : 'Adaugă bon Refuzat'}
+              <h2 className="text-xl font-bold text-white">
+                {mode === 'edit' ? '✏️ Editează Tichet Respins' : '➕ Adaugă Tichet Respins'}
               </h2>
-              <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Tichet <span className="text-red-500">*</span></label>
-                <input type="text" name="ticket_number" value={formData.ticket_number} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.ticket_number ? 'border-red-500' : 'border-gray-300'}`} />
+          {error && (
+            <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                📋 Date Bază
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tichet *</label>
+                  <input type="text" name="ticket_number" value={formData.ticket_number} onChange={handleChange} className={inputClass} placeholder="ex: REJ-001" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Data *</label>
+                  <input type="date" name="ticket_date" value={formData.ticket_date} onChange={handleChange} className={inputClass} />
+                </div>
               </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                🏢 Instituții
+              </h3>
+              
               <div>
-                <label className="block text-sm font-medium mb-2">Data <span className="text-red-500">*</span></label>
-                <input type="date" name="ticket_date" value={formData.ticket_date} onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg ${errors.ticket_date ? 'border-red-500' : 'border-gray-300'}`} />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Sector *</label>
+                <select name="sector_id" value={formData.sector_id} onChange={handleChange} className={inputClass}>
+                  <option value="">Selectează sector...</option>
+                  {sectors.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Furnizor (Colector) *</label>
+                  <select name="supplier_id" value={formData.supplier_id} onChange={handleChange} className={inputClass}>
+                    <option value="">Selectează furnizor...</option>
+                    {suppliers.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Prestator (Operator TMB) *</label>
+                  <select name="operator_id" value={formData.operator_id} onChange={handleChange} className={inputClass}>
+                    <option value="">Selectează operator...</option>
+                    {operators.map(op => (<option key={op.id} value={op.id}>{op.name}</option>))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Sector <span className="text-red-500">*</span></label>
-              <select name="sector_id" value={formData.sector_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.sector_id ? 'border-red-500' : 'border-gray-300'}`}>
-                <option value="">Selectează</option>
-                {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                ♻️ Deșeu & Transport
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cod Deșeu *</label>
+                  <select name="waste_code_id" value={formData.waste_code_id} onChange={handleChange} className={inputClass}>
+                    <option value="">Selectează cod...</option>
+                    {wasteCodes.map(wc => (<option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nr. Auto *</label>
+                  <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleChange} className={inputClass} placeholder="ex: B-123-ABC" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tip Generator</label>
+                <select name="generator_type" value={formData.generator_type} onChange={handleChange} className={inputClass}>
+                  <option value="CASNIC">CASNIC</option>
+                  <option value="NON-CASNIC">NON-CASNIC</option>
+                  <option value="CASNIC / NON-CASNIC">CASNIC / NON-CASNIC</option>
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Furnizor (Colector) <span className="text-red-500">*</span></label>
-              <select name="supplier_id" value={formData.supplier_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.supplier_id ? 'border-red-500' : 'border-gray-300'}`}>
-                <option value="">Selectează</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                ⚠️ Detalii Refuz
+              </h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-400 mb-2 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-zinc-500"></span>
+                  Cantitate Refuzată (kg) *
+                </label>
+                <input
+                  type="number"
+                  name="rejected_quantity_kg"
+                  value={formData.rejected_quantity_kg}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all"
+                  placeholder="0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Motiv Refuz *</label>
+                <textarea
+                  name="rejection_reason"
+                  value={formData.rejection_reason}
+                  onChange={handleChange}
+                  rows={3}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Detalii despre motivul refuzului..."
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Prestator (Operator TMB) <span className="text-red-500">*</span></label>
-              <select name="operator_id" value={formData.operator_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.operator_id ? 'border-red-500' : 'border-gray-300'}`}>
-                <option value="">Selectează</option>
-                {operators.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Cod deșeu <span className="text-red-500">*</span></label>
-              <select name="waste_code_id" value={formData.waste_code_id} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.waste_code_id ? 'border-red-500' : 'border-gray-300'}`}>
-                <option value="">Selectează</option>
-                {wasteCodes.map(wc => <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Nr. Auto <span className="text-red-500">*</span></label>
-              <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.vehicle_number ? 'border-red-500' : 'border-gray-300'}`} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Tip generator</label>
-              <select name="generator_type" value={formData.generator_type} onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg border-gray-300">
-                <option value="CASNIC">CASNIC</option>
-                <option value="NON-CASNIC">NON-CASNIC</option>
-                <option value="CASNIC / NON-CASNIC">CASNIC / NON-CASNIC</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Cantitate refuzată (kg) <span className="text-red-500">*</span></label>
-              <input type="number" name="rejected_quantity_kg" value={formData.rejected_quantity_kg} onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg ${errors.rejected_quantity_kg ? 'border-red-500' : 'border-gray-300'}`} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Motiv refuz</label>
-              <textarea name="rejection_reason" value={formData.rejection_reason} onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg border-gray-300" rows="3"
-                placeholder="Detalii despre motivul refuzului..."></textarea>
-            </div>
           </div>
 
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="sticky bottom-0 bg-white dark:bg-[#242b3d] border-t border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="flex gap-3">
-              <button type="submit" disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg">
-                {loading ? 'Se salvează...' : 'Salvează'}
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-6 py-2.5 bg-zinc-600 hover:bg-zinc-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Salvare...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    {mode === 'edit' ? 'Actualizează' : 'Salvează'}
+                  </>
+                )}
               </button>
-              <button type="button" onClick={onClose} disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">
+
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50 transition-colors"
+              >
                 Anulează
               </button>
             </div>
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 };
 
