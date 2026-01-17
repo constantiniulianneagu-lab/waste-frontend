@@ -610,10 +610,13 @@ const ReportsLandfill = () => {
                       </td>
                     </tr>
 
+                    {/* EXPANDED ROW - TOATE DATELE DIN DB */}
                     {expandedRows.has(ticket.id) && (
-                      <tr className="bg-gray-50 dark:bg-gray-800/30">
+                      <tr className="bg-amber-50/50 dark:bg-amber-900/10">
                         <td colSpan="9" className="px-4 py-4">
-                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-4">
+                            
+                            {/* Date Bază */}
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet Cântar:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number}</p>
@@ -626,53 +629,72 @@ const ReportsLandfill = () => {
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Ora:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_time || 'N/A'}</p>
                             </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
+                            </div>
 
+                            {/* Instituții */}
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Furnizor Deșeuri:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.supplier_name || 'N/A'}</p>
                             </div>
                             <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator Depozitar:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.operator_name || 'N/A'}</p>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Operator Depozit:</span>
+                              <p className="font-medium text-amber-700 dark:text-amber-400">ECOSUD SA</p>
                             </div>
                             <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență:</span>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Proveniență (Sector):</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.sector_name || 'N/A'}</p>
-                            </div>
-
-                            <div className="text-left col-span-2">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod deșeu complet:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
                             </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tip Generator:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.generator_type || 'N/A'}</p>
                             </div>
 
-                            <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
-                            </div>
-                            <div className="text-left">
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cantitate (tone):</span>
-                              <p className="font-bold text-amber-700 dark:text-amber-400">{formatNumberRO(ticket.net_weight_tons)} t</p>
+                            {/* Deșeu */}
+                            <div className="text-left col-span-2">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cod Deșeu:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">{ticket.waste_code} - {ticket.waste_description}</p>
                             </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tip Contract:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.contract_type || 'N/A'}</p>
                             </div>
-
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Operație:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.operation_type || 'N/A'}</p>
                             </div>
+
+                            {/* CANTITĂȚI - BRUT, TARĂ, NET */}
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Greutate Brut:</span>
+                              <p className="font-semibold text-gray-900 dark:text-white">
+                                {formatNumberRO(ticket.gross_weight_tons || (ticket.gross_weight_kg / 1000))} t
+                              </p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Greutate Tară:</span>
+                              <p className="font-semibold text-gray-900 dark:text-white">
+                                {formatNumberRO(ticket.tare_weight_tons || (ticket.tare_weight_kg / 1000))} t
+                              </p>
+                            </div>
+                            <div className="text-left">
+                              <span className="text-amber-700 dark:text-amber-400 block mb-1 font-medium">Greutate Net:</span>
+                              <p className="font-bold text-amber-700 dark:text-amber-400 text-lg">
+                                {formatNumberRO(ticket.net_weight_tons)} t
+                              </p>
+                            </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{new Date(ticket.created_at).toLocaleString('ro-RO')}</p>
+                              <p className="font-medium text-gray-900 dark:text-white text-xs">
+                                {new Date(ticket.created_at).toLocaleString('ro-RO')}
+                              </p>
                             </div>
+
                           </div>
 
-                          <div className="flex gap-2 mt-4 justify-end">
+                          <div className="flex gap-2 mt-4 justify-end border-t border-amber-200 dark:border-amber-800/30 pt-4">
                             <button
                               onClick={() => handleEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
