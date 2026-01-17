@@ -1,6 +1,8 @@
 // src/components/reports/DisposalReportView.jsx
 // Schema de culori: Stone (familie unică) - Instituțional Modern
 import React from 'react';
+import { Plus } from 'lucide-react';
+import ExportDropdown from './ExportDropdown';
 
 const DisposalReportView = ({
   loading,
@@ -214,30 +216,14 @@ const DisposalReportView = ({
                 onClick={onCreate}
                 className="px-4 py-2 text-sm font-medium bg-stone-600 hover:bg-stone-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus className="w-4 h-4" />
                 Adaugă tichet
               </button>
-              <button
-                onClick={onExport}
+              <ExportDropdown
+                onExport={onExport}
                 disabled={exporting || !tickets || tickets.length === 0}
-                className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exporting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Se exportă...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Export date
-                  </>
-                )}
-              </button>
+                loading={exporting}
+              />
             </div>
           </div>
         </div>
