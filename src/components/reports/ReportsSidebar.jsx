@@ -1,12 +1,14 @@
 // src/components/reports/ReportsSidebar.jsx
 /**
  * ============================================================================
- * REPORTS SIDEBAR (LANDFILL) - TERMINOLOGIE CORECTĂ
- * Operator Depozit = TEXT FIX (ECOSUD SA) - NU se salvează în DB
+ * REPORTS SIDEBAR - LANDFILL (DEPOZITARE)
+ * ============================================================================
+ * Schema de culori: Amber - Instituțional Domolit
  * ============================================================================
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { X, Save, AlertCircle } from 'lucide-react';
 import { createLandfillTicket, updateLandfillTicket } from '../../services/reportsService';
 
 const toNumber = (v) => {
@@ -14,30 +16,12 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : NaN;
 };
 
-const isUuid = (v) => {
-  if (!v || typeof v !== 'string') return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
-};
-
-const kgToTonsStr = (kg) => {
-  if (kg === null || kg === undefined || kg === '') return '';
-  const n = toNumber(kg);
-  if (!Number.isFinite(n)) return '';
-  return (n / 1000).toFixed(2);
-};
-
-const tonsStrToKgInt = (tonsStr) => {
-  const t = toNumber(tonsStr);
-  if (!Number.isFinite(t)) return NaN;
-  return Math.round(t * 1000);
-};
-
 const ReportsSidebar = ({
   isOpen,
   mode,
   ticket,
   wasteCodes,
-  operators, // NOTĂ: aici folosești lista de instituții pentru "Furnizor"
+  operators,
   sectors,
   onClose,
   onSuccess
@@ -45,200 +29,107 @@ const ReportsSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [originalKg, setOriginalKg] = useState({
-    gross: null,
-    tare: null,
-    net: null
-  });
+  const landfillOperators = operators?.filter(o => o.type === 'LANDFILL_OPERATOR') || [];
 
   const [formData, setFormData] = useState({
     ticket_number: '',
     ticket_date: new Date().toISOString().split('T')[0],
     ticket_time: new Date().toTimeString().slice(0, 5),
-
     supplier_id: '',
+    operator_id: '',
     waste_code_id: '',
     sector_id: '',
-
     generator_type: '',
-    vehicle_number: '',
-
-    gross_weight_tons: '',
-    tare_weight_tons: '',
-    net_weight_tons: '',
-
     contract_type: '',
-    operation_type: ''
+    operation_type: '',
+    vehicle_number: '',
+    net_weight_tons: '',
   });
 
-  // Pre-populate on edit; reset on create
   useEffect(() => {
+    if (!isOpen) return;
+
     if (mode === 'edit' && ticket) {
-      const ticketDate = ticket.ticket_date
-        ? String(ticket.ticket_date).slice(0, 10)
-        : new Date().toISOString().split('T')[0];
-
-      const origGrossKg = ticket.gross_weight_kg ?? null;
-      const origTareKg = ticket.tare_weight_kg ?? null;
-      const origNetKg = ticket.net_weight_kg ?? null;
-
-      setOriginalKg({
-        gross: origGrossKg,
-        tare: origTareKg,
-        net: origNetKg
-      });
-
-      const grossTons =
-        ticket.gross_weight_tons != null && ticket.gross_weight_tons !== ''
-          ? Number(ticket.gross_weight_tons).toFixed(2)
-          : kgToTonsStr(origGrossKg);
-
-      const tareTons =
-        ticket.tare_weight_tons != null && ticket.tare_weight_tons !== ''
-          ? Number(ticket.tare_weight_tons).toFixed(2)
-          : kgToTonsStr(origTareKg);
-
-      const netTons =
-        ticket.net_weight_tons != null && ticket.net_weight_tons !== ''
-          ? Number(ticket.net_weight_tons).toFixed(2)
-          : (() => {
-              const g = toNumber(grossTons);
-              const t = toNumber(tareTons);
-              if (Number.isFinite(g) && Number.isFinite(t) && g >= t) return (g - t).toFixed(2);
-              return '';
-            })();
-
       setFormData({
         ticket_number: ticket.ticket_number || '',
-        ticket_date: ticketDate,
-        ticket_time: ticket.ticket_time || '',
-
-        supplier_id: ticket.supplier_id ?? '',
-        waste_code_id: ticket.waste_code_id ?? '',
-        sector_id: ticket.sector_id ?? '',
-
+        ticket_date: ticket.ticket_date || new Date().toISOString().split('T')[0],
+        ticket_time: ticket.ticket_time || new Date().toTimeString().slice(0, 5),
+        supplier_id: ticket.supplier_id || '',
+        operator_id: ticket.operator_id || '',
+        waste_code_id: ticket.waste_code_id || '',
+        sector_id: ticket.sector_id || '',
         generator_type: ticket.generator_type || '',
-        vehicle_number: ticket.vehicle_number || '',
-
-        gross_weight_tons: grossTons || '',
-        tare_weight_tons: tareTons || '',
-        net_weight_tons: netTons || '',
-
         contract_type: ticket.contract_type || '',
-        operation_type: ticket.operation_type || ''
+        operation_type: ticket.operation_type || '',
+        vehicle_number: ticket.vehicle_number || '',
+        net_weight_tons: ticket.net_weight_tons ? ticket.net_weight_tons.toString() : '',
       });
-    } else {
-      setOriginalKg({ gross: null, tare: null, net: null });
-
+      setError(null);
+    } else if (mode === 'create') {
       setFormData({
         ticket_number: '',
         ticket_date: new Date().toISOString().split('T')[0],
         ticket_time: new Date().toTimeString().slice(0, 5),
-
         supplier_id: '',
+        operator_id: '',
         waste_code_id: '',
         sector_id: '',
-
         generator_type: '',
-        vehicle_number: '',
-
-        gross_weight_tons: '',
-        tare_weight_tons: '',
-        net_weight_tons: '',
-
         contract_type: '',
-        operation_type: ''
+        operation_type: '',
+        vehicle_number: '',
+        net_weight_tons: '',
       });
+      setError(null);
     }
+  }, [isOpen, mode, ticket]);
 
-    setError(null);
-  }, [mode, ticket, isOpen]);
-
-  // auto-calc net tons
-  useEffect(() => {
-    const gross = toNumber(formData.gross_weight_tons);
-    const tare = toNumber(formData.tare_weight_tons);
-
-    if (Number.isFinite(gross) && Number.isFinite(tare) && gross >= tare) {
-      const net = gross - tare;
-      setFormData((prev) => ({ ...prev, net_weight_tons: net.toFixed(2) }));
-    }
-  }, [formData.gross_weight_tons, formData.tare_weight_tons]);
-
-  // current kg (derived from current tons inputs)
-  const currentKg = useMemo(() => {
-    const grossKg = tonsStrToKgInt(formData.gross_weight_tons);
-    const tareKg = tonsStrToKgInt(formData.tare_weight_tons);
-    const netKg =
-      Number.isFinite(grossKg) && Number.isFinite(tareKg) && grossKg >= tareKg
-        ? grossKg - tareKg
-        : NaN;
-
-    return { gross: grossKg, tare: tareKg, net: netKg };
-  }, [formData.gross_weight_tons, formData.tare_weight_tons]);
-
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
     const errors = [];
-
-    if (!formData.ticket_number?.trim()) errors.push('Număr tichet lipsă');
-    if (!formData.ticket_date) errors.push('Data lipsă');
-    if (!formData.ticket_time) errors.push('Ora lipsă');
-    if (!formData.supplier_id) errors.push('Furnizor lipsă');
-    if (!formData.waste_code_id) errors.push('Cod deșeu lipsă');
-    if (!formData.sector_id) errors.push('Sector lipsă');
-
-    if (formData.sector_id && !isUuid(formData.sector_id)) {
-      errors.push(`Sector ID invalid`);
-    }
-    if (formData.waste_code_id && !isUuid(formData.waste_code_id)) {
-      errors.push(`Waste Code ID invalid`);
-    }
-
-    if (!formData.vehicle_number?.trim()) errors.push('Număr auto lipsă');
-    if (!formData.generator_type?.trim()) errors.push('Generator lipsă');
-    if (!formData.operation_type?.trim()) errors.push('Operație lipsă');
-    if (!formData.contract_type?.trim()) errors.push('Tip contract lipsă');
-    if (!Number.isFinite(currentKg.gross) || currentKg.gross <= 0) errors.push('Tone brut invalid');
-    if (!Number.isFinite(currentKg.tare) || currentKg.tare < 0) errors.push('Tone tară invalid');
-    if (currentKg.gross <= currentKg.tare) errors.push('Brut trebuie > Tară');
-
+    if (!formData.ticket_number?.trim()) errors.push('Număr tichet cântar este obligatoriu');
+    if (!formData.ticket_date) errors.push('Data este obligatorie');
+    if (!formData.supplier_id) errors.push('Furnizor este obligatoriu');
+    if (!formData.operator_id) errors.push('Operator depozit este obligatoriu');
+    if (!formData.waste_code_id) errors.push('Cod deșeu este obligatoriu');
+    if (!formData.sector_id) errors.push('Proveniența este obligatorie');
+    if (!formData.vehicle_number?.trim()) errors.push('Număr auto este obligatoriu');
+    const weight = toNumber(formData.net_weight_tons);
+    if (!Number.isFinite(weight) || weight <= 0) errors.push('Cantitatea trebuie să fie un număr pozitiv');
     return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setError(validationErrors.join(', '));
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setError(errors.join('; '));
       return;
     }
 
-    const payload = {
-      ticket_number: formData.ticket_number.trim(),
-      ticket_date: formData.ticket_date,
-      ticket_time: formData.ticket_time,
-
-      supplier_id: parseInt(formData.supplier_id, 10),
-      waste_code_id: formData.waste_code_id,
-      sector_id: formData.sector_id,
-
-      vehicle_number: formData.vehicle_number.trim(),
-      generator_type: formData.generator_type.trim(),
-      operation_type: formData.operation_type.trim(),
-      contract_type: formData.contract_type.trim(),
-
-      gross_weight_kg: currentKg.gross,
-      tare_weight_kg: currentKg.tare
-    };
+    setLoading(true);
+    setError(null);
 
     try {
-      setLoading(true);
+      const payload = {
+        ticket_number: formData.ticket_number.trim(),
+        ticket_date: formData.ticket_date,
+        ticket_time: formData.ticket_time,
+        supplier_id: formData.supplier_id,
+        operator_id: formData.operator_id,
+        waste_code_id: formData.waste_code_id,
+        sector_id: formData.sector_id,
+        generator_type: formData.generator_type || null,
+        contract_type: formData.contract_type || null,
+        operation_type: formData.operation_type || null,
+        vehicle_number: formData.vehicle_number.trim(),
+        net_weight_kg: Math.round(toNumber(formData.net_weight_tons) * 1000),
+      };
+
       let response;
       if (mode === 'edit' && ticket?.id) {
         response = await updateLandfillTicket(ticket.id, payload);
@@ -246,19 +137,15 @@ const ReportsSidebar = ({
         response = await createLandfillTicket(payload);
       }
 
-      if (response?.success) {
-        onSuccess?.();
-        onClose();
+      if (response.success) {
+        alert(mode === 'edit' ? 'Tichet actualizat cu succes!' : 'Tichet creat cu succes!');
+        onSuccess();
       } else {
-        setError(response?.message || 'Eroare la salvare');
+        throw new Error(response.message || 'Operație eșuată');
       }
     } catch (err) {
-      const errorMessage =
-        err?.message ||
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        'Eroare necunoscută';
-      setError(errorMessage);
+      console.error('❌ Landfill Submit error:', err);
+      setError(err.message || 'Eroare la salvare');
     } finally {
       setLoading(false);
     }
@@ -266,294 +153,279 @@ const ReportsSidebar = ({
 
   if (!isOpen) return null;
 
+  // Clase comune pentru input-uri - tema AMBER
+  const inputClass = "w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all";
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-[#1a1f2e] shadow-2xl">
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-white dark:bg-[#1a1f2e] shadow-2xl">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 shadow-lg">
+          
+          {/* Header - AMBER flat */}
+          <div className="sticky top-0 z-10 bg-amber-500 px-6 py-4 shadow-lg">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
-                {mode === 'edit' ? '✏️ Editează Tichet' : '➕ Adaugă Tichet'}
+                {mode === 'edit' ? '✏️ Editează Tichet Depozitare' : '➕ Adaugă Tichet Depozitare'}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg"
+                className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Error */}
+          {/* Error Alert */}
           {error && (
-            <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
 
-          {/* Form */}
+          {/* Form Body */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            {/* ═══════════════════════════════════════════════════════════════
-                📋 DATE BAZĂ - Tichet + Data + Ora PE 1 RÂND
-            ═══════════════════════════════════════════════════════════════ */}
+
+            {/* Section 1: Date Bază */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
                 📋 Date Bază
               </h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tichet Cântar <span className="text-red-500">*</span>
+                    Tichet Cântar *
                   </label>
                   <input
                     type="text"
+                    name="ticket_number"
                     value={formData.ticket_number}
-                    onChange={(e) => handleChange('ticket_number', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                    placeholder="ex: TICK-2024-001"
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="ex: DEP-001"
                   />
                 </div>
-                <div>
+
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Data <span className="text-red-500">*</span>
+                    Data *
                   </label>
                   <input
                     type="date"
+                    name="ticket_date"
                     value={formData.ticket_date}
-                    onChange={(e) => handleChange('ticket_date', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    onChange={handleChange}
+                    className={inputClass}
                   />
                 </div>
-                <div>
+
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Ora <span className="text-red-500">*</span>
+                    Ora
                   </label>
                   <input
                     type="time"
+                    name="ticket_time"
                     value={formData.ticket_time}
-                    onChange={(e) => handleChange('ticket_time', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    onChange={handleChange}
+                    className={inputClass}
                   />
                 </div>
               </div>
             </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-                🏢 INSTITUȚII - Furnizor + Operator Depozit (TEXT FIX)
-            ═══════════════════════════════════════════════════════════════ */}
+            {/* Section 2: Instituții */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
                 🏢 Instituții
               </h3>
-
-              <div className="grid grid-cols-2 gap-3">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Furnizor <span className="text-red-500">*</span>
+                    Furnizor Deșeuri *
                   </label>
                   <select
+                    name="supplier_id"
                     value={formData.supplier_id}
-                    onChange={(e) => handleChange('supplier_id', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    onChange={handleChange}
+                    className={inputClass}
                   >
-                    <option value="">Selectează furnizor</option>
-                    {operators.map((op) => (
-                      <option key={op.id} value={op.id}>
-                        {op.name}
-                      </option>
+                    <option value="">Selectează furnizor...</option>
+                    {operators?.filter(o => o.type === 'WASTE_COLLECTOR' || o.type === 'TMB_OPERATOR').map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Operator Depozit
+                    Operator Depozit *
                   </label>
-                  <div className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-                    ECO SUD SA
-                  </div>
+                  <select
+                    name="operator_id"
+                    value={formData.operator_id}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    <option value="">Selectează operator...</option>
+                    {landfillOperators?.map(o => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-                ♻️ DEȘEU & PROVENIENȚĂ - Cod deșeu + Sector + Generator
-            ═══════════════════════════════════════════════════════════════ */}
+            {/* Section 3: Deșeu & Proveniență */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
                 ♻️ Deșeu & Proveniență
               </h3>
-              <div className="grid grid-cols-3 gap-3">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Cod Deșeu <span className="text-red-500">*</span>
+                    Cod Deșeu *
                   </label>
                   <select
+                    name="waste_code_id"
                     value={formData.waste_code_id}
-                    onChange={(e) => handleChange('waste_code_id', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    onChange={handleChange}
+                    className={inputClass}
                   >
-                    <option value="">Selectează</option>
-                    {wasteCodes && wasteCodes.length > 0 ? (
-                      wasteCodes
-                        .filter((wc) => !wc.code.startsWith('15'))
-                        .map((wc) => (
-                          <option key={wc.id} value={wc.id}>
-                            {wc.code} - {wc.description?.substring(0, 30)}
-                          </option>
-                        ))
-                    ) : (
-                      <option disabled>Niciun cod</option>
-                    )}
+                    <option value="">Selectează cod...</option>
+                    {wasteCodes?.map(wc => (
+                      <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Sector <span className="text-red-500">*</span>
+                    Proveniență *
                   </label>
                   <select
+                    name="sector_id"
                     value={formData.sector_id}
-                    onChange={(e) => handleChange('sector_id', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    onChange={handleChange}
+                    className={inputClass}
                   >
-                    <option value="">Selectează</option>
-                    {sectors && sectors.length > 0 ? (
-                      sectors.map((sec) => (
-                        <option key={sec.id || sec.sector_id} value={sec.id || sec.sector_id}>
-                          Sectorul {sec.sector_number}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Niciun sector</option>
-                    )}
+                    <option value="">Selectează sector...</option>
+                    {sectors?.map(s => (
+                      <option key={s.id || s.sector_id} value={s.id || s.sector_id}>
+                        {s.sector_name || s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Tip Generator
+                  </label>
+                  <select
+                    name="generator_type"
+                    value={formData.generator_type}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    <option value="">Selectează tip...</option>
+                    <option value="CASNIC">CASNIC</option>
+                    <option value="NON-CASNIC">NON-CASNIC</option>
+                    <option value="CASNIC / NON-CASNIC">CASNIC / NON-CASNIC</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Generator <span className="text-red-500">*</span>
+                    Tip Contract
                   </label>
-                  <input
-                    type="text"
-                    value={formData.generator_type}
-                    onChange={(e) => handleChange('generator_type', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                    placeholder="CASNIC / NON-CASNIC"
-                  />
+                  <select
+                    name="contract_type"
+                    value={formData.contract_type}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    <option value="">Selectează...</option>
+                    <option value="ADIGIDMB">ADIGIDMB</option>
+                    <option value="COMERCIAL">COMERCIAL</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Operație
+                  </label>
+                  <select
+                    name="operation_type"
+                    value={formData.operation_type}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    <option value="">Selectează...</option>
+                    <option value="D1">D1 - Depozitare</option>
+                    <option value="D5">D5 - Depozitare special</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* ═══════════════════════════════════════════════════════════════
-                🚛 TRANSPORT & CANTITATE
-            ═══════════════════════════════════════════════════════════════ */}
+            {/* Section 4: Transport & Cantitate */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
                 🚛 Transport & Cantitate
               </h3>
-
-              {/* RÂND 1: Tone brut + Tone tară + Tone net */}
-              <div className="grid grid-cols-3 gap-3">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tone Brut <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.gross_weight_tons}
-                    onChange={(e) => handleChange('gross_weight_tons', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tone Tară <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.tare_weight_tons}
-                    onChange={(e) => handleChange('tare_weight_tons', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tone Net
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.net_weight_tons}
-                    readOnly
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* RÂND 2: Număr auto + Tip contract + Operație */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Număr Auto <span className="text-red-500">*</span>
+                    Număr Auto *
                   </label>
                   <input
                     type="text"
+                    name="vehicle_number"
                     value={formData.vehicle_number}
-                    onChange={(e) => handleChange('vehicle_number', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                    placeholder="ex: B 526 SDF"
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="ex: B-123-ABC"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tip Contract <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.contract_type}
-                    onChange={(e) => handleChange('contract_type', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Selectează</option>
-                    <option value="Taxa">Taxă</option>
-                    <option value="Tarif">Tarif</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Operație <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                    Cantitate (tone) *
                   </label>
                   <input
-                    type="text"
-                    value={formData.operation_type}
-                    onChange={(e) => handleChange('operation_type', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                    placeholder="ex: Depozitare"
+                    type="number"
+                    step="0.01"
+                    name="net_weight_tons"
+                    value={formData.net_weight_tons}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-amber-300 dark:border-amber-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    placeholder="0.00"
                   />
                 </div>
               </div>
             </div>
+
           </div>
 
-          {/* Footer */}
+          {/* Footer - AMBER */}
           <div className="sticky bottom-0 bg-white dark:bg-[#242b3d] border-t border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="flex gap-3">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -562,10 +434,8 @@ const ReportsSidebar = ({
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Salvează
+                    <Save className="w-4 h-4" />
+                    {mode === 'edit' ? 'Actualizează' : 'Salvează'}
                   </>
                 )}
               </button>
@@ -574,7 +444,7 @@ const ReportsSidebar = ({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50"
+                className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium disabled:opacity-50 transition-colors"
               >
                 Anulează
               </button>
