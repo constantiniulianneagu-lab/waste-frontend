@@ -33,7 +33,6 @@ const RecyclingReportView = ({
     );
   }
 
-  // ✅ MODIFICARE: Doar cantitate livrată (eliminăm acceptată și diferența)
   const delivered = summaryData?.total_delivered || 0;
 
   return (
@@ -42,7 +41,7 @@ const RecyclingReportView = ({
       {/* CARDURI - Design instituțional cu accent emerald */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* CARD 1 - PERIOADA ANALIZATĂ (model TMB) */}
+        {/* CARD 1 - PERIOADA ANALIZATĂ - DOAR CANTITATE LIVRATĂ */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -58,7 +57,7 @@ const RecyclingReportView = ({
           </div>
           
           <div className="p-4 flex flex-col justify-between flex-1">
-            {/* Info perioadă - ca la TMB */}
+            {/* Info perioadă */}
             <div className="space-y-1 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">An:</span>
@@ -78,11 +77,11 @@ const RecyclingReportView = ({
               </div>
             </div>
 
-            {/* ✅ MODIFICARE: Doar Cantitate livrată - MARE */}
-            <div className="text-center py-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate livrată</p>
+            {/* DOAR Cantitate livrată - MARE */}
+            <div className="text-center py-6">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Cantitate livrată</p>
               <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatNumberRO(delivered)} <span className="text-lg font-medium">t</span>
+                {formatNumberRO(delivered)} <span className="text-xl font-medium">t</span>
               </p>
             </div>
 
@@ -94,7 +93,7 @@ const RecyclingReportView = ({
           </div>
         </div>
 
-        {/* CARD 2 - FURNIZORI (cu breakdown pe coduri ca la TMB) */}
+        {/* CARD 2 - FURNIZORI (stil Landfill - chenare separate) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -116,32 +115,33 @@ const RecyclingReportView = ({
               summaryData.suppliers.map((supplier, idx) => {
                 const supplierTotal = supplier.total || 0;
                 return (
-                  <div key={idx} className="space-y-2">
-                    {/* Nume furnizor + total */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume furnizor + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {supplier.name}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+                      <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 ml-2">
                         {formatNumberRO(supplierTotal)} t
                       </span>
                     </div>
                     
-                    {/* ✅ MODIFICARE: Fiecare cod cu progress bar, cantitate și procent */}
+                    {/* Coduri cu progress bar */}
                     {supplier.codes && supplier.codes.length > 0 && (
-                      <div className="space-y-1.5 pl-2">
+                      <div className="space-y-2">
                         {supplier.codes.map((codeData, cIdx) => {
                           const codeQty = codeData.quantity || 0;
                           const codePercent = supplierTotal > 0 ? ((codeQty / supplierTotal) * 100).toFixed(1) : 0;
                           return (
-                            <div key={cIdx} className="space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-600 dark:text-gray-400">{codeData.code}</span>
-                                <span className="text-gray-900 dark:text-white font-medium">
-                                  {formatNumberRO(codeQty)} t ({codePercent}%)
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
                                 </span>
                               </div>
-                              {/* Progress bar */}
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
                                   className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
@@ -160,7 +160,7 @@ const RecyclingReportView = ({
           </div>
         </div>
 
-        {/* CARD 3 - RECICLATORI (cu breakdown pe coduri ca la TMB) */}
+        {/* CARD 3 - RECICLATORI (stil Landfill - chenare separate) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -182,32 +182,33 @@ const RecyclingReportView = ({
               summaryData.operators.map((operator, idx) => {
                 const operatorTotal = operator.total || 0;
                 return (
-                  <div key={idx} className="space-y-2">
-                    {/* Nume reciclator + total */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume reciclator + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {operator.name}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+                      <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 ml-2">
                         {formatNumberRO(operatorTotal)} t
                       </span>
                     </div>
                     
-                    {/* ✅ MODIFICARE: Fiecare cod cu progress bar, cantitate și procent */}
+                    {/* Coduri cu progress bar */}
                     {operator.codes && operator.codes.length > 0 && (
-                      <div className="space-y-1.5 pl-2">
+                      <div className="space-y-2">
                         {operator.codes.map((codeData, cIdx) => {
                           const codeQty = codeData.quantity || 0;
                           const codePercent = operatorTotal > 0 ? ((codeQty / operatorTotal) * 100).toFixed(1) : 0;
                           return (
-                            <div key={cIdx} className="space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-600 dark:text-gray-400">{codeData.code}</span>
-                                <span className="text-gray-900 dark:text-white font-medium">
-                                  {formatNumberRO(codeQty)} t ({codePercent}%)
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
                                 </span>
                               </div>
-                              {/* Progress bar */}
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
                                   className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
@@ -229,10 +230,9 @@ const RecyclingReportView = ({
 
       {/* TABEL TICHETE */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            {/* ✅ MODIFICARE: Titlu cu număr corect de tichete */}
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Tichete Reciclare ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-2">
@@ -264,6 +264,7 @@ const RecyclingReportView = ({
                 <th className="px-4 py-3 text-left">Furnizor</th>
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
                 <th className="px-4 py-3 text-right">Cant. Livrată</th>
+                <th className="px-4 py-3 text-right">Cant. Acceptată</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
@@ -271,7 +272,7 @@ const RecyclingReportView = ({
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {tickets.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan="9" className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     Nu există date pentru perioada selectată
                   </td>
                 </tr>
@@ -279,15 +280,19 @@ const RecyclingReportView = ({
                 tickets.map((ticket) => (
                   <React.Fragment key={ticket.id}>
                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.recipient_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.waste_code}</td>
-                      {/* ✅ MODIFICARE: Doar cantitate livrată */}
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{ticket.ticket_number || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{ticket.recipient_name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{ticket.supplier_name}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                          {ticket.waste_code}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-500 dark:text-emerald-500 whitespace-nowrap">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{ticket.sector_name}</td>
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
                         <button
                           onClick={() => onToggleExpand(ticket.id)}
                           className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -301,8 +306,8 @@ const RecyclingReportView = ({
 
                     {expandedRows.has(ticket.id) && (
                       <tr className="bg-gray-50 dark:bg-gray-800/30">
-                        <td colSpan="8" className="px-4 py-4">
-                          <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                        <td colSpan="9" className="px-4 py-4">
+                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</p>
@@ -335,13 +340,29 @@ const RecyclingReportView = ({
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
                             </div>
-                            {/* ✅ MODIFICARE: Doar cantitate livrată în detalii */}
+                            {/* Cantități */}
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Livrată:</span>
                               <p className="font-bold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
                             </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Acceptată:</span>
+                              <p className="font-bold text-emerald-500 dark:text-emerald-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
+                              <p className="font-bold text-slate-600 dark:text-slate-400">
+                                {formatNumberRO(ticket.difference_tons || (ticket.delivered_quantity_tons - ticket.accepted_quantity_tons))} t
+                                {ticket.delivered_quantity_tons > 0 && (
+                                  <span className="text-xs ml-1">
+                                    ({(((ticket.delivered_quantity_tons - ticket.accepted_quantity_tons) / ticket.delivered_quantity_tons) * 100).toFixed(2)}%)
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 justify-end">
+                          {/* Butoane - fără border-t */}
+                          <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -371,7 +392,6 @@ const RecyclingReportView = ({
           </table>
         </div>
 
-        {/* ✅ MODIFICARE: Footer cu paginare completă */}
         {pagination && pagination.total_pages > 0 && (
           <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">

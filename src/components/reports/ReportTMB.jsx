@@ -176,6 +176,11 @@ const ReportTMB = () => {
           ? (response.data.clients || [])
           : (response.data.operators || []);
         
+        // ✅ FIX: Găsim sectorul selectat din all_sectors după UUID
+        const allSectorsFromResponse = response.data.all_sectors || [];
+        const selectedSector = allSectorsFromResponse.find(s => s.sector_id === filters.sector_id);
+        const sectorName = selectedSector?.sector_name || 'București';
+        
         const summary = {
           total_quantity: response.data.summary?.total_tons || response.data.summary?.total_delivered || 0,
           total_delivered: response.data.summary?.total_delivered || 0,
@@ -185,12 +190,12 @@ const ReportTMB = () => {
             from: new Date(filters.from).toLocaleDateString('ro-RO'),
             to: new Date(filters.to).toLocaleDateString('ro-RO'),
           },
-          sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București',
+          sector: sectorName,
           period: {
             year: filters.year,
             date_from: new Date(filters.from).toLocaleDateString('ro-RO'),
             date_to: new Date(filters.to).toLocaleDateString('ro-RO'),
-            sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București'
+            sector: sectorName
           },
           suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
           operators: groupRowsByNameWithCodes(operatorsData),

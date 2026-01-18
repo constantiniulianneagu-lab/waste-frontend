@@ -113,7 +113,12 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
     const excelData = tickets.map(ticket => {
       const row = {};
       columns.forEach(col => {
-        const value = ticket[col.key];
+        // ✅ FIX: Pentru recycling, mapăm recipient_name la client_name
+        let value = ticket[col.key];
+        if (reportType === 'recycling' && col.key === 'client_name' && !value) {
+          value = ticket.recipient_name;
+        }
+        
         if (col.format === 'number') {
           row[col.header] = formatNumberRO(value);
         } else if (col.format === 'date') {
