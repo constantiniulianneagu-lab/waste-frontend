@@ -203,6 +203,7 @@ const ReportTMB = () => {
         setSummaryData(summary);
         setAvailableYears(response.data.available_years || [currentYear]);
         const allSectors = response.data.all_sectors || [];
+        console.log('🔵 all_sectors received from backend:', allSectors);
         setSectors(allSectors);
       } else {
         throw new Error(response.message || 'Failed to fetch reports');
