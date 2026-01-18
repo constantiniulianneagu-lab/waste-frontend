@@ -181,10 +181,19 @@ export const getRecyclingReports = async (filters) => {
       params.append('sector_id', filters.sector_id);
     }
 
+    console.log('🟢 getRecyclingReports sending params:', Object.fromEntries(params));
+
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/recycling?${params}`,
       headers
     );
+    
+    console.log('🟢 getRecyclingReports received response:', {
+      success: response.data.success,
+      total_tickets: response.data.data?.summary?.total_tickets,
+      items_count: response.data.data?.items?.length,
+      first_ticket: response.data.data?.items?.[0]
+    });
     
     return response.data;
   } catch (error) {
