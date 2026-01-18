@@ -33,7 +33,7 @@ const RecyclingSidebar = ({
   const [error, setError] = useState(null);
 
   const tmbOperators = (suppliers || []).filter(s => s.type === 'TMB_OPERATOR');
-  const recyclingOperators = (clients || []).filter(c => c.type === 'RECYCLING_OPERATOR');
+  const recyclingOperators = (clients || []).filter(c => c.type === 'RECYCLING_CLIENT');
 
   const [formData, setFormData] = useState({
     ticket_number: '',
