@@ -1,8 +1,6 @@
 // src/components/reports/RecyclingReportView.jsx
 // Schema de culori: Emerald (familie unică) - Instituțional Modern
 import React from 'react';
-import { Plus } from 'lucide-react';
-import ExportDropdown from './ExportDropdown';
 
 const RecyclingReportView = ({
   loading,
@@ -45,9 +43,8 @@ const RecyclingReportView = ({
       {/* CARDURI - Design instituțional cu accent emerald */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* CARD 1 - PERIOADA ANALIZATĂ */}
+        {/* CARD 1 - PERIOADA ANALIZATĂ (stil TMB) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
-          {/* Header flat cu border-left accent */}
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -62,55 +59,59 @@ const RecyclingReportView = ({
           </div>
           
           <div className="p-4 flex flex-col justify-between flex-1">
+            {/* Info perioadă - ca la TMB */}
             <div className="space-y-1 text-xs">
               <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">An:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.year || new Date().getFullYear()}</span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {summaryData?.date_range?.from || 'N/A'}
-                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.from || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Până la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {summaryData?.date_range?.to || 'N/A'}
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.to || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">UAT:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.sector || 'București'}</span>
+              </div>
+            </div>
+
+            {/* Cantitate livrată - MARE */}
+            <div className="text-center py-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate livrată</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                {formatNumberRO(delivered)} <span className="text-lg font-medium">t</span>
+              </p>
+            </div>
+
+            {/* Acceptată + Diferență - mai mic */}
+            <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-2 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Acceptată:</span>
+                <span className="text-sm font-semibold text-emerald-500 dark:text-emerald-400">
+                  {formatNumberRO(accepted)} t
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Diferență:</span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  {formatNumberRO(difference)} t ({differencePercent}%)
                 </span>
               </div>
             </div>
 
-            {/* Cantitate livrată - accent principal */}
-            <div className="text-center py-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate livrată</p>
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatNumberRO(delivered)} <span className="text-base font-medium">t</span>
-              </p>
-            </div>
-
-            {/* Cantitate acceptată - accent secundar */}
-            <div className="text-center py-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate acceptată</p>
-              <p className="text-3xl font-bold text-emerald-500 dark:text-emerald-500">
-                {formatNumberRO(accepted)} <span className="text-base font-medium">t</span>
-              </p>
-            </div>
-
-            {/* Diferență - neutru, informativ */}
-            <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-2 text-center">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Diferență</p>
-              <p className="text-xl font-bold text-slate-600 dark:text-slate-400">
-                {formatNumberRO(difference)} t <span className="text-xs font-medium">({differencePercent}%)</span>
-              </p>
-            </div>
-
+            {/* Total tichete */}
             <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
               <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                {summaryData?.total_tickets || 0}
-              </span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
           </div>
         </div>
 
-        {/* CARD 2 - FURNIZORI */}
+        {/* CARD 2 - FURNIZORI (cu breakdown pe coduri ca la TMB) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -129,57 +130,53 @@ const RecyclingReportView = ({
             {(summaryData?.suppliers || []).length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
             ) : (
-              <div className="space-y-3">
-                {groupRowsByNameWithCodes(summaryData?.suppliers || []).slice(0, 10).map((supplier, idx) => {
-                  const percentage = delivered > 0 ? ((supplier.total / delivered) * 100).toFixed(1) : '0.0';
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">
-                          {supplier.name}
-                        </p>
-                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-2">
-                          {formatNumberRO(supplier.total)} t
-                        </span>
-                      </div>
-
-                      {supplier.codes && supplier.codes.length > 0 && (
-                        <div className="space-y-2">
-                          {supplier.codes.map((code, codeIdx) => {
-                            const codePercentage = delivered > 0 
-                              ? ((code.quantity / delivered) * 100).toFixed(1)
-                              : '0.0';
-                            return (
-                              <div key={codeIdx}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">
-                                    {code.code}
-                                  </span>
-                                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                    {codePercentage}%
-                                  </span>
-                                </div>
-                                {/* Progress bar flat - fără gradient */}
-                                <div className="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-1.5">
-                                  <div 
-                                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                                    style={{ width: `${codePercentage}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+              <div className="space-y-4">
+                {(summaryData?.suppliers || []).slice(0, 10).map((supplier, idx) => (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+                        {supplier.name}
+                      </p>
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
+                        {formatNumberRO(supplier.total)} t
+                      </span>
                     </div>
-                  );
-                })}
+
+                    {supplier.codes && supplier.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {supplier.codes.slice(0, 3).map((code, codeIdx) => {
+                          const codePercentage = delivered > 0 
+                            ? ((code.quantity / delivered) * 100).toFixed(1)
+                            : '0.0';
+                          return (
+                            <div key={codeIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                  {code.code}
+                                </span>
+                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                  {codePercentage}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(parseFloat(codePercentage), 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* CARD 3 - OPERATORI RECICLARE */}
+        {/* CARD 3 - OPERATORI RECICLARE (cu breakdown pe coduri) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -198,46 +195,47 @@ const RecyclingReportView = ({
             {(summaryData?.clients || []).length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există operatori</p>
             ) : (
-              <div className="space-y-3">
-                {groupRowsByNameWithCodes(summaryData?.clients || []).slice(0, 10).map((client, idx) => {
-                  const percentage = accepted > 0 ? ((client.total / accepted) * 100).toFixed(1) : '0.0';
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">
-                          {client.name}
-                        </p>
-                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-2">
-                          {formatNumberRO(client.total)} t
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total:</span>
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          {percentage}%
-                        </span>
-                      </div>
-                      {/* Progress bar flat */}
-                      <div className="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-1.5">
-                        <div 
-                          className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-
-                      {client.codes && client.codes.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {client.codes.map((code, cIdx) => (
-                            <span key={cIdx} className="text-xs px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded border border-emerald-200 dark:border-emerald-800">
-                              {code.code}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+              <div className="space-y-4">
+                {(summaryData?.clients || []).slice(0, 10).map((client, idx) => (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+                        {client.name}
+                      </p>
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
+                        {formatNumberRO(client.total)} t
+                      </span>
                     </div>
-                  );
-                })}
+
+                    {client.codes && client.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {client.codes.slice(0, 3).map((code, codeIdx) => {
+                          const codePercentage = accepted > 0 
+                            ? ((code.quantity / accepted) * 100).toFixed(1)
+                            : '0.0';
+                          return (
+                            <div key={codeIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                  {code.code}
+                                </span>
+                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                  {codePercentage}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(parseFloat(codePercentage), 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -257,14 +255,30 @@ const RecyclingReportView = ({
                 onClick={onCreate}
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
                 Adaugă tichet
               </button>
-              <ExportDropdown
-                onExport={onExport}
+              <button
+                onClick={onExport}
                 disabled={exporting || !tickets || tickets.length === 0}
-                loading={exporting}
-              />
+                className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Se exportă...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export date
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -368,7 +382,7 @@ const RecyclingReportView = ({
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2 mt-4 justify-end">
+                          <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 justify-end">
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
