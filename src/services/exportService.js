@@ -133,9 +133,19 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
     // Creează workbook
     const wb = XLSX.utils.book_new();
 
+    // ✅ Titluri specifice pentru fiecare tip de raport
+    const reportTitles = {
+      tmb: 'RAPORT DEȘEURI - Deșeuri trimise la tratare mecano-biologică',
+      recycling: 'RAPORT DEȘEURI - Deșeuri trimise la reciclare',
+      recovery: 'RAPORT DEȘEURI - Deșeuri trimise la valorificare',
+      disposal: 'RAPORT DEȘEURI - Deșeuri trimise la eliminare',
+      rejected: 'RAPORT DEȘEURI - Deșeuri respinse',
+      landfill: 'RAPORT DEȘEURI - Depozitare'
+    };
+
     // Sheet 1: Summary
     const summaryData_array = [
-      ['RAPORT DEȘEURI'],
+      [reportTitles[reportType] || 'RAPORT DEȘEURI'],
       [''],
       ['Perioada analizată'],
       ['An:', filters.year || ''],
@@ -143,7 +153,7 @@ export const exportToExcel = (tickets, summaryData, filters, reportType = 'landf
       ['Până la:', formatDateRO(filters.to) || ''],
       ['Locație:', getLocationName(filters, sectors, summaryData)],
       [''],
-      ['Total cantitate:', `${formatNumberRO(summaryData?.total_quantity || 0)} tone`],
+      ['Total cantitate:', `${formatNumberRO(summaryData?.total_quantity || summaryData?.total_delivered || 0)} tone`],
       ['Total tichete:', summaryData?.total_tickets || tickets.length],
       [''],
       ['Generat la:', new Date().toLocaleString('ro-RO')]
@@ -266,7 +276,7 @@ doc.setFontSize(10);
       recycling: (t) => [
         t.ticket_number,
         formatDateRO(t.ticket_date),
-        t.client_name,
+        t.recipient_name || t.client_name, // ✅ FIX: folosim recipient_name
         t.supplier_name,
         t.waste_code,
         t.vehicle_number,

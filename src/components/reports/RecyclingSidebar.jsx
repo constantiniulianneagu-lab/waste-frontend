@@ -32,8 +32,8 @@ const RecyclingSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const tmbOperators = (suppliers || []).filter(s => s.type === 'TMB_OPERATOR');
-  const recyclingOperators = (clients || []).filter(c => c.type === 'RECYCLING_CLIENT');
+  const tmbOperators = suppliers || [];
+  const recyclingOperators = clients || [];
 
   const [formData, setFormData] = useState({
     ticket_number: '',
@@ -304,8 +304,14 @@ const RecyclingSidebar = ({
                     className={inputClass}
                   >
                     <option value="">Selectează cod...</option>
-                    {wasteCodes?.map(wc => (
-                      <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>
+                    {wasteCodes?.filter(wc => 
+                      wc.code.startsWith('15') || 
+                      wc.code.startsWith('16') || 
+                      wc.code.startsWith('19')
+                    ).map(wc => (
+                      <option key={wc.id} value={wc.id}>
+                        {wc.code} - {wc.description?.substring(0, 30)}
+                      </option>
                     ))}
                   </select>
                 </div>

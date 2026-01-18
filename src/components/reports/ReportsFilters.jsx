@@ -88,7 +88,9 @@ const ReportsFilters = ({
       year: localFilters.year,
       from: localFilters.from,
       to: localFilters.to,
-      sector_id: localFilters.sector_id || null, // ✅ păstrează UUID-ul
+      sector_id: localFilters.sector_id || null,
+      page: 1, // ✅ Reset la prima pagină
+      per_page: localFilters.per_page || 10,
     };
   
     console.log('🔄 Applying filters:', cleanFilters);
