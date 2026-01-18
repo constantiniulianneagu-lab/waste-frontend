@@ -175,9 +175,7 @@ const ReportsFilters = ({
             type="date"
             value={localFilters.from}
             onChange={(e) => {
-              const newFilters = { ...localFilters, from: e.target.value };
-              setLocalFilters(newFilters);
-              onFilterChange(newFilters); // ✅ AUTO-APPLY
+              setLocalFilters({ ...localFilters, from: e.target.value });
             }}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
             disabled={loading}
@@ -193,9 +191,7 @@ const ReportsFilters = ({
             type="date"
             value={localFilters.to}
             onChange={(e) => {
-              const newFilters = { ...localFilters, to: e.target.value };
-              setLocalFilters(newFilters);
-              onFilterChange(newFilters); // ✅ AUTO-APPLY
+              setLocalFilters({ ...localFilters, to: e.target.value });
             }}
             className="w-full h-[42px] px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:saturate-[500%] [&::-webkit-calendar-picker-indicator]:hue-rotate-[120deg]"
             disabled={loading}
