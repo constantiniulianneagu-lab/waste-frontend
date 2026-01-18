@@ -122,11 +122,6 @@ const ReportsFilters = ({
 
   const handleSectorChange = (e) => {
     const value = e.target.value;
-    console.log('🔵 ReportsFilters - handleSectorChange:', {
-      rawValue: value,
-      selectedSector: sectors.find(s => (s.sector_id || s.id) === value)
-    });
-    
     const newFilters = {
       ...localFilters,
       sector_id: value === "" ? null : value, // UUID sau null
@@ -142,9 +137,6 @@ const ReportsFilters = ({
   // ========================================================================
 
   const sortedSectors = [...sectors].sort((a, b) => a.sector_number - b.sector_number);
-  
-  console.log('🔵 ReportsFilters - sectors received:', sectors);
-  console.log('🔵 ReportsFilters - sortedSectors:', sortedSectors);
 
   // ========================================================================
   // RENDER
@@ -221,19 +213,11 @@ const ReportsFilters = ({
             disabled={loading}
           >
             <option value="">București</option>
-            {sortedSectors.map((sector, idx) => {
-              console.log(`🔵 Sector ${idx}:`, {
-                sector_id: sector.sector_id,
-                id: sector.id,
-                sector_number: sector.sector_number,
-                using_value: sector.sector_id || sector.id
-              });
-              return (
-                <option key={sector.sector_id} value={sector.sector_id}>
-                  Sector {sector.sector_number}
-                </option>
-              );
-            })}
+            {sortedSectors.map((sector) => (
+              <option key={sector.sector_id} value={sector.sector_id}>
+                Sector {sector.sector_number}
+              </option>
+            ))}
           </select>
         </div>
 
