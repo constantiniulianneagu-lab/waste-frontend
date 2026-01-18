@@ -32,8 +32,9 @@ const RecyclingSidebar = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const tmbOperators = suppliers || [];
-  const recyclingOperators = clients || [];
+  // ✅ Filtrare corectă pe bază de type
+  const tmbOperators = (suppliers || []).filter(s => s.type === 'TMB_OPERATOR');
+  const recyclingClients = (clients || []).filter(c => c.type === 'RECYCLING_CLIENT');
 
   const [formData, setFormData] = useState({
     ticket_number: '',
@@ -278,7 +279,7 @@ const RecyclingSidebar = ({
                     className={inputClass}
                   >
                     <option value="">Selectează operator...</option>
-                    {recyclingOperators?.map(c => (
+                    {recyclingClients?.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
