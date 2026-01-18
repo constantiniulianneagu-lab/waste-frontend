@@ -192,7 +192,9 @@ export const getRecyclingReports = async (filters) => {
       success: response.data.success,
       total_tickets: response.data.data?.summary?.total_tickets,
       items_count: response.data.data?.items?.length,
-      first_ticket: response.data.data?.items?.[0]
+      first_ticket_number: response.data.data?.items?.[0]?.ticket_number,
+      first_ticket_sector: response.data.data?.items?.[0]?.sector_name,
+      all_ticket_numbers: response.data.data?.items?.map(t => `${t.ticket_number} (${t.sector_name})`)
     });
     
     return response.data;
