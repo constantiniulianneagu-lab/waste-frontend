@@ -170,9 +170,22 @@ const ReportTMB = () => {
           total_pages: Number(paginationData.totalPages || paginationData.total_pages || 1),
           total_count: Number(paginationData.total || paginationData.total_records || 0),
         });
+        
+        // ✅ FIX: Pentru recycling, mapăm clients -> operators
+        const operatorsData = activeTab === 'recycling' 
+          ? (response.data.clients || [])
+          : (response.data.operators || []);
+        
         const summary = {
-          total_quantity: response.data.summary?.total_tons || 0,
+          total_quantity: response.data.summary?.total_tons || response.data.summary?.total_delivered || 0,
+          total_delivered: response.data.summary?.total_delivered || 0,
           total_tickets: response.data.summary?.total_tickets || ticketsList.length,
+          year: filters.year,
+          date_range: {
+            from: new Date(filters.from).toLocaleDateString('ro-RO'),
+            to: new Date(filters.to).toLocaleDateString('ro-RO'),
+          },
+          sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București',
           period: {
             year: filters.year,
             date_from: new Date(filters.from).toLocaleDateString('ro-RO'),
@@ -180,7 +193,7 @@ const ReportTMB = () => {
             sector: sectors.find(s => s.sector_number === filters.sector_id)?.sector_name || 'București'
           },
           suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
-          operators: groupRowsByNameWithCodes(response.data.operators || []),
+          operators: groupRowsByNameWithCodes(operatorsData),
         };
         setSummaryData(summary);
         setAvailableYears(response.data.available_years || [currentYear]);

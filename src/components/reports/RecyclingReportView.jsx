@@ -1,6 +1,7 @@
 // src/components/reports/RecyclingReportView.jsx
 // Schema de culori: Emerald (familie unică) - Instituțional Modern
 import React from 'react';
+import ExportDropdown from './ExportDropdown';
 
 const RecyclingReportView = ({
   loading,
@@ -32,10 +33,8 @@ const RecyclingReportView = ({
     );
   }
 
+  // ✅ MODIFICARE: Doar cantitate livrată (eliminăm acceptată și diferența)
   const delivered = summaryData?.total_delivered || 0;
-  const accepted = summaryData?.total_accepted || 0;
-  const difference = delivered - accepted;
-  const differencePercent = delivered > 0 ? ((difference / delivered) * 100).toFixed(2) : 0;
 
   return (
     <div className="space-y-6">
@@ -43,7 +42,7 @@ const RecyclingReportView = ({
       {/* CARDURI - Design instituțional cu accent emerald */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* CARD 1 - PERIOADA ANALIZATĂ (stil TMB) */}
+        {/* CARD 1 - PERIOADA ANALIZATĂ (model TMB) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
@@ -79,28 +78,12 @@ const RecyclingReportView = ({
               </div>
             </div>
 
-            {/* Cantitate livrată - MARE */}
-            <div className="text-center py-2">
+            {/* ✅ MODIFICARE: Doar Cantitate livrată - MARE */}
+            <div className="text-center py-4">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate livrată</p>
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+              <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">
                 {formatNumberRO(delivered)} <span className="text-lg font-medium">t</span>
               </p>
-            </div>
-
-            {/* Acceptată + Diferență - mai mic */}
-            <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-2 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Acceptată:</span>
-                <span className="text-sm font-semibold text-emerald-500 dark:text-emerald-400">
-                  {formatNumberRO(accepted)} t
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Diferență:</span>
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  {formatNumberRO(difference)} t ({differencePercent}%)
-                </span>
-              </div>
             </div>
 
             {/* Total tichete */}
@@ -126,43 +109,44 @@ const RecyclingReportView = ({
             </div>
           </div>
           
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.suppliers || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.suppliers || summaryData.suppliers.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există furnizori</p>
             ) : (
-              <div className="space-y-4">
-                {(summaryData?.suppliers || []).slice(0, 10).map((supplier, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
+              summaryData.suppliers.map((supplier, idx) => {
+                const supplierTotal = supplier.total || 0;
+                return (
+                  <div key={idx} className="space-y-2">
+                    {/* Nume furnizor + total */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
                         {supplier.name}
-                      </p>
-                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                        {formatNumberRO(supplier.total)} t
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+                        {formatNumberRO(supplierTotal)} t
                       </span>
                     </div>
-
+                    
+                    {/* ✅ MODIFICARE: Fiecare cod cu progress bar, cantitate și procent */}
                     {supplier.codes && supplier.codes.length > 0 && (
-                      <div className="space-y-2">
-                        {supplier.codes.slice(0, 3).map((code, codeIdx) => {
-                          const codePercentage = delivered > 0 
-                            ? ((code.quantity / delivered) * 100).toFixed(1)
-                            : '0.0';
+                      <div className="space-y-1.5 pl-2">
+                        {supplier.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = supplierTotal > 0 ? ((codeQty / supplierTotal) * 100).toFixed(1) : 0;
                           return (
-                            <div key={codeIdx}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  {code.code}
-                                </span>
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                  {codePercentage}%
+                            <div key={cIdx} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">{codeData.code}</span>
+                                <span className="text-gray-900 dark:text-white font-medium">
+                                  {formatNumberRO(codeQty)} t ({codePercent}%)
                                 </span>
                               </div>
-                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              {/* Progress bar */}
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
-                                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${Math.min(parseFloat(codePercentage), 100)}%` }}
-                                ></div>
+                                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
                               </div>
                             </div>
                           );
@@ -170,64 +154,65 @@ const RecyclingReportView = ({
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* CARD 3 - OPERATORI RECICLARE (cu breakdown pe coduri) */}
+        {/* CARD 3 - RECICLATORI (cu breakdown pe coduri ca la TMB) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-emerald-200 dark:border-emerald-800/50 overflow-hidden h-[320px] flex flex-col">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Operatori Reciclare</h3>
+                <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Reciclatori</h3>
               </div>
             </div>
           </div>
           
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.clients || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există operatori</p>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.operators || summaryData.operators.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există reciclatori</p>
             ) : (
-              <div className="space-y-4">
-                {(summaryData?.clients || []).slice(0, 10).map((client, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white truncate flex-1">
-                        {client.name}
-                      </p>
-                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                        {formatNumberRO(client.total)} t
+              summaryData.operators.map((operator, idx) => {
+                const operatorTotal = operator.total || 0;
+                return (
+                  <div key={idx} className="space-y-2">
+                    {/* Nume reciclator + total */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                        {operator.name}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+                        {formatNumberRO(operatorTotal)} t
                       </span>
                     </div>
-
-                    {client.codes && client.codes.length > 0 && (
-                      <div className="space-y-2">
-                        {client.codes.slice(0, 3).map((code, codeIdx) => {
-                          const codePercentage = accepted > 0 
-                            ? ((code.quantity / accepted) * 100).toFixed(1)
-                            : '0.0';
+                    
+                    {/* ✅ MODIFICARE: Fiecare cod cu progress bar, cantitate și procent */}
+                    {operator.codes && operator.codes.length > 0 && (
+                      <div className="space-y-1.5 pl-2">
+                        {operator.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = operatorTotal > 0 ? ((codeQty / operatorTotal) * 100).toFixed(1) : 0;
                           return (
-                            <div key={codeIdx}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  {code.code}
-                                </span>
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                  {codePercentage}%
+                            <div key={cIdx} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">{codeData.code}</span>
+                                <span className="text-gray-900 dark:text-white font-medium">
+                                  {formatNumberRO(codeQty)} t ({codePercent}%)
                                 </span>
                               </div>
-                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              {/* Progress bar */}
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
-                                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${Math.min(parseFloat(codePercentage), 100)}%` }}
-                                ></div>
+                                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
                               </div>
                             </div>
                           );
@@ -235,22 +220,22 @@ const RecyclingReportView = ({
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
+                );
+              })
             )}
           </div>
         </div>
       </div>
 
-      {/* TABEL */}
+      {/* TABEL TICHETE */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {/* HEADER CU BUTOANE */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete Reciclare ({pagination?.total || 0})
+            {/* ✅ MODIFICARE: Titlu cu număr corect de tichete */}
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Tichete Reciclare ({pagination?.total_count || 0})
             </h3>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={onCreate}
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
@@ -260,25 +245,11 @@ const RecyclingReportView = ({
                 </svg>
                 Adaugă tichet
               </button>
-              <button
-                onClick={onExport}
+              <ExportDropdown
+                onExport={onExport}
                 disabled={exporting || !tickets || tickets.length === 0}
-                className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exporting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Se exportă...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Export date
-                  </>
-                )}
-              </button>
+                loading={exporting}
+              />
             </div>
           </div>
         </div>
@@ -293,7 +264,6 @@ const RecyclingReportView = ({
                 <th className="px-4 py-3 text-left">Furnizor</th>
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
                 <th className="px-4 py-3 text-right">Cant. Livrată</th>
-                <th className="px-4 py-3 text-right">Cant. Acceptată</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
@@ -301,7 +271,7 @@ const RecyclingReportView = ({
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {tickets.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan="8" className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     Nu există date pentru perioada selectată
                   </td>
                 </tr>
@@ -314,9 +284,8 @@ const RecyclingReportView = ({
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.recipient_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.waste_code}</td>
-                      {/* Cantități colorate - accent emerald */}
+                      {/* ✅ MODIFICARE: Doar cantitate livrată */}
                       <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-500 dark:text-emerald-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -332,7 +301,7 @@ const RecyclingReportView = ({
 
                     {expandedRows.has(ticket.id) && (
                       <tr className="bg-gray-50 dark:bg-gray-800/30">
-                        <td colSpan="9" className="px-4 py-4">
+                        <td colSpan="8" className="px-4 py-4">
                           <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet:</span>
@@ -366,20 +335,10 @@ const RecyclingReportView = ({
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Nr. Auto:</span>
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
                             </div>
-                            {/* Cantități în detalii - păstrăm accentul emerald dar cu etichete neutre */}
+                            {/* ✅ MODIFICARE: Doar cantitate livrată în detalii */}
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Livrată:</span>
                               <p className="font-bold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Acceptată:</span>
-                              <p className="font-bold text-emerald-500 dark:text-emerald-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
-                              <p className="font-bold text-slate-600 dark:text-slate-400">
-                                {formatNumberRO(ticket.difference_tons)} t ({ticket.delivered_quantity_tons > 0 ? ((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2) : 0}%)
-                              </p>
                             </div>
                           </div>
                           <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 justify-end">
@@ -412,12 +371,19 @@ const RecyclingReportView = ({
           </table>
         </div>
 
-        {pagination && pagination.totalPages > 0 && (
+        {/* ✅ MODIFICARE: Footer cu paginare completă */}
+        {pagination && pagination.total_pages > 0 && (
           <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.totalPages}</p>
-                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pagina {pagination.page} din {pagination.total_pages}
+                </p>
+                <select 
+                  value={filters.per_page} 
+                  onChange={(e) => onPerPageChange(parseInt(e.target.value))} 
+                  className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                >
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
                   <option value="50">50 / pagină</option>
@@ -425,8 +391,20 @@ const RecyclingReportView = ({
                 </select>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => onPageChange(pagination.page - 1)} disabled={pagination.page === 1} className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Anterior</button>
-                <button onClick={() => onPageChange(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Următorul</button>
+                <button 
+                  onClick={() => onPageChange(pagination.page - 1)} 
+                  disabled={pagination.page === 1} 
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={() => onPageChange(pagination.page + 1)} 
+                  disabled={pagination.page === pagination.total_pages} 
+                  className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Următorul
+                </button>
               </div>
             </div>
           </div>

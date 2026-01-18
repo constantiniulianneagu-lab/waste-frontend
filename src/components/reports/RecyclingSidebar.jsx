@@ -4,6 +4,8 @@
  * RECYCLING SIDEBAR - ADD/EDIT TICKETS
  * ============================================================================
  * Schema de culori: Emerald - Instituțional Modern
+ * ✅ MODIFICAT: Eliminată cantitatea acceptată, doar cantitatea livrată
+ * ✅ MODIFICAT: Uniformizare fonturi - fără bold pe label-uri cantitate
  * ============================================================================
  */
 
@@ -43,7 +45,6 @@ const RecyclingSidebar = ({
     sector_id: '',
     vehicle_number: '',
     delivered_quantity_tons: '',
-    accepted_quantity_tons: '',
     stock_month: '',
     notes: '',
   });
@@ -62,7 +63,6 @@ const RecyclingSidebar = ({
         sector_id: ticket.sector_id || '',
         vehicle_number: ticket.vehicle_number || '',
         delivered_quantity_tons: ticket.delivered_quantity_tons ? ticket.delivered_quantity_tons.toString() : '',
-        accepted_quantity_tons: ticket.accepted_quantity_tons ? ticket.accepted_quantity_tons.toString() : '',
         stock_month: ticket.stock_month || '',
         notes: ticket.notes || '',
       });
@@ -78,7 +78,6 @@ const RecyclingSidebar = ({
         sector_id: '',
         vehicle_number: '',
         delivered_quantity_tons: '',
-        accepted_quantity_tons: '',
         stock_month: '',
         notes: '',
       });
@@ -100,8 +99,6 @@ const RecyclingSidebar = ({
     if (!formData.sector_id) errors.push('Proveniența este obligatorie');
     const delivered = toNumber(formData.delivered_quantity_tons);
     if (!Number.isFinite(delivered) || delivered <= 0) errors.push('Cantitate livrată trebuie să fie un număr > 0');
-    const accepted = toNumber(formData.accepted_quantity_tons);
-    if (!Number.isFinite(accepted) || accepted < 0) errors.push('Cantitate acceptată trebuie să fie un număr >= 0');
     return errors;
   };
 
@@ -127,7 +124,6 @@ const RecyclingSidebar = ({
         sector_id: formData.sector_id,
         vehicle_number: formData.vehicle_number?.trim() || null,
         delivered_quantity_kg: Math.round(toNumber(formData.delivered_quantity_tons) * 1000),
-        accepted_quantity_kg: Math.round(toNumber(formData.accepted_quantity_tons) * 1000),
         stock_month: formData.stock_month?.trim() || null,
         notes: formData.notes?.trim() || null,
       };
@@ -209,7 +205,7 @@ const RecyclingSidebar = ({
                     value={formData.ticket_number}
                     onChange={handleChange}
                     className={inputClass}
-                    placeholder="ex: REC-001"
+                    placeholder="ex: 12345"
                   />
                 </div>
 
@@ -241,10 +237,10 @@ const RecyclingSidebar = ({
               </div>
             </div>
 
-            {/* Section 2: Instituții */}
+            {/* Section 2: Parteneri */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
-                🏢 Instituții
+                👥 Parteneri
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
@@ -336,9 +332,9 @@ const RecyclingSidebar = ({
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
+                {/* ✅ MODIFICARE: Doar cantitate livrată, font uniform fără bold extra */}
                 <div>
-                  <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Cantitate Livrată (tone) *
                   </label>
                   <input
@@ -347,29 +343,11 @@ const RecyclingSidebar = ({
                     name="delivered_quantity_tons"
                     value={formData.delivered_quantity_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-emerald-300 dark:border-emerald-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-emerald-300 dark:border-emerald-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-gray-900 dark:text-white"
                     placeholder="0.00"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
-                    Cantitate Acceptată (tone) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="accepted_quantity_tons"
-                    value={formData.accepted_quantity_tons}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-emerald-300 dark:border-emerald-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Număr Auto
@@ -383,7 +361,9 @@ const RecyclingSidebar = ({
                     placeholder="ex: B-123-ABC"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Luna Stoc
