@@ -329,7 +329,7 @@ const RecyclingSidebar = ({
                   >
                     <option value="">Selectează sector...</option>
                     {sectors?.map(s => (
-                      <option key={s.id || s.sector_id} value={s.id || s.sector_id}>
+                      <option key={s.sector_id || s.id} value={s.sector_id || s.id}>
                         {s.sector_name || s.name}
                       </option>
                     ))}
