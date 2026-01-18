@@ -131,7 +131,7 @@ const RecyclingSidebar = ({
         vehicle_number: formData.vehicle_number?.trim() || null,
         delivered_quantity_kg: Math.round(toNumber(formData.delivered_quantity_tons) * 1000),
         accepted_quantity_kg: Math.round(toNumber(formData.accepted_quantity_tons) * 1000),
-        stock_month: formData.stock_month?.trim() || null,
+        stock_month: formData.stock_month?.trim() ? `${formData.stock_month}-01` : null, // ✅ FIX: adaugă -01 pentru prima zi
         notes: formData.notes?.trim() || null,
       };
 
@@ -398,7 +398,7 @@ const RecyclingSidebar = ({
                     Luna Stoc
                   </label>
                   <input
-                    type="text"
+                    type="month"
                     name="stock_month"
                     value={formData.stock_month}
                     onChange={handleChange}
