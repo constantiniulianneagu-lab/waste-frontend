@@ -19,6 +19,7 @@ const RecoveryReportView = ({
   onCreate,
   exporting,
   filters,
+  sectors,
   formatNumberRO,
   groupRowsByNameWithCodes
 }) => {
@@ -38,6 +39,13 @@ const RecoveryReportView = ({
   const accepted = summaryData?.total_accepted || 0;
   const difference = delivered - accepted;
   const differencePercent = delivered > 0 ? ((difference / delivered) * 100).toFixed(2) : 0;
+
+  // Obținere nume UAT din sectors
+  const getUatName = () => {
+    if (!filters?.sector_id) return 'Toate';
+    const sector = sectors?.find(s => s.sector_id === filters.sector_id || s.id === filters.sector_id);
+    return sector ? (sector.sector_name || sector.name) : 'Toate';
+  };
 
   return (
     <div className="space-y-6">
@@ -75,7 +83,7 @@ const RecoveryReportView = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{filters?.uat_name || summaryData?.uat_name || 'Toate'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{getUatName()}</span>
               </div>
             </div>
             
@@ -165,54 +173,61 @@ const RecoveryReportView = ({
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există operatori</p>
             ) : (
               <div className="space-y-3">
-                {summaryData.clients.slice(0, 10).map((client, idx) => {
-                  // Grupare furnizori pentru acest operator din tickets
-                  const operatorTickets = (tickets || []).filter(t => t.recipient_id === client.id);
-                  const supplierBreakdown = {};
+                {(() => {
+                  // Grupare clients by name
+                  const clientsGrouped = groupRowsByNameWithCodes(summaryData.clients || []);
                   
-                  operatorTickets.forEach(ticket => {
-                    const supplierId = ticket.supplier_id;
-                    const supplierName = ticket.supplier_name;
-                    const quantity = ticket.delivered_quantity_tons || 0;
+                  return clientsGrouped.slice(0, 10).map((client, idx) => {
+                    // Grupare furnizori pentru acest operator din tickets
+                    const operatorTickets = (tickets || []).filter(t => 
+                      t.recipient_name === client.name
+                    );
+                    const supplierBreakdown = {};
                     
-                    if (!supplierBreakdown[supplierId]) {
-                      supplierBreakdown[supplierId] = {
-                        name: supplierName,
-                        total: 0
-                      };
-                    }
-                    supplierBreakdown[supplierId].total += quantity;
-                  });
-                  
-                  const suppliers = Object.values(supplierBreakdown).sort((a, b) => b.total - a.total);
-                  
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{client.name}</p>
-                        <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(client.total)} t</span>
-                      </div>
-                      {suppliers.length > 0 && (
-                        <div className="space-y-2">
-                          {suppliers.map((supplier, sIdx) => {
-                            const supplierPercentage = client.total > 0 ? ((supplier.total / client.total) * 100).toFixed(1) : '0.0';
-                            return (
-                              <div key={sIdx}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{supplier.name}</span>
-                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(supplier.total)} t <span className="text-gray-600 dark:text-gray-400">({supplierPercentage}%)</span></span>
-                                </div>
-                                <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
-                                  <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${supplierPercentage}%`}}></div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                    operatorTickets.forEach(ticket => {
+                      const supplierId = ticket.supplier_id;
+                      const supplierName = ticket.supplier_name;
+                      const quantity = ticket.delivered_quantity_tons || 0;
+                      
+                      if (!supplierBreakdown[supplierId]) {
+                        supplierBreakdown[supplierId] = {
+                          name: supplierName,
+                          total: 0
+                        };
+                      }
+                      supplierBreakdown[supplierId].total += quantity;
+                    });
+                    
+                    const suppliers = Object.values(supplierBreakdown).sort((a, b) => b.total - a.total);
+                    
+                    return (
+                      <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{client.name}</p>
+                          <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(client.total)} t</span>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {suppliers.length > 0 && (
+                          <div className="space-y-2">
+                            {suppliers.map((supplier, sIdx) => {
+                              const supplierPercentage = client.total > 0 ? ((supplier.total / client.total) * 100).toFixed(1) : '0.0';
+                              return (
+                                <div key={sIdx}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{supplier.name}</span>
+                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(supplier.total)} t <span className="text-gray-600 dark:text-gray-400">({supplierPercentage}%)</span></span>
+                                  </div>
+                                  <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
+                                    <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${supplierPercentage}%`}}></div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>
