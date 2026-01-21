@@ -252,7 +252,7 @@ const RecoverySidebar = ({
                     className={inputClass}
                   >
                     <option value="">Selectează furnizor...</option>
-                    {suppliers?.map(s => (
+                    {suppliers?.filter(s => s.type === 'TMB_OPERATOR').map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
@@ -269,7 +269,7 @@ const RecoverySidebar = ({
                     className={inputClass}
                   >
                     <option value="">Selectează operator...</option>
-                    {clients?.map(c => (
+                    {clients?.filter(c => c.type === 'RECOVERY_CLIENT').map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
@@ -295,7 +295,7 @@ const RecoverySidebar = ({
                     className={inputClass}
                   >
                     <option value="">Selectează cod...</option>
-                    {wasteCodes?.map(wc => (
+                    {wasteCodes?.filter(wc => wc.code?.startsWith('19')).map(wc => (
                       <option key={wc.id} value={wc.id}>{wc.code} - {wc.description}</option>
                     ))}
                   </select>
@@ -330,8 +330,7 @@ const RecoverySidebar = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-teal-700 dark:text-teal-400 mb-2 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-teal-500"></span>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Cantitate Livrată (tone) *
                   </label>
                   <input
@@ -340,14 +339,13 @@ const RecoverySidebar = ({
                     name="delivered_quantity_tons"
                     value={formData.delivered_quantity_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-teal-300 dark:border-teal-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    className={inputClass}
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-teal-700 dark:text-teal-400 mb-2 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-teal-400"></span>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Cantitate Acceptată (tone) *
                   </label>
                   <input
@@ -356,7 +354,7 @@ const RecoverySidebar = ({
                     name="accepted_quantity_tons"
                     value={formData.accepted_quantity_tons}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border-2 border-teal-300 dark:border-teal-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                    className={inputClass}
                     placeholder="0.00"
                   />
                 </div>
