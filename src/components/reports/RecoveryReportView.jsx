@@ -61,12 +61,10 @@ const RecoveryReportView = ({
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
             <div className="space-y-1 text-xs mb-4">
-              {filters?.year && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">An:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{filters.year}</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">An:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || summaryData?.date_range?.from?.split('-')[0] || new Date().getFullYear()}</span>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.from || 'N/A'}</span>
@@ -75,12 +73,10 @@ const RecoveryReportView = ({
                 <span className="text-gray-500 dark:text-gray-400">Până la:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.to || 'N/A'}</span>
               </div>
-              {filters?.uat_name && (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{filters.uat_name}</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">UAT:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{filters?.uat_name || summaryData?.uat_name || 'Toate'}</span>
+              </div>
             </div>
             
             <div className="text-center py-4 flex-1 flex flex-col justify-center">
@@ -120,7 +116,7 @@ const RecoveryReportView = ({
                   const supplierTotal = supplier.total;
                   return (
                     <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-3">
                         <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{supplier.name}</p>
                         <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(supplier.total)} t</span>
                       </div>
@@ -131,8 +127,8 @@ const RecoveryReportView = ({
                             return (
                               <div key={codeIdx}>
                                 <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">{code.code}</span>
-                                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{codePercentage}%</span>
+                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{code.code}</span>
+                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(code.quantity)} t <span className="text-gray-600 dark:text-gray-400">({codePercentage}%)</span></span>
                                 </div>
                                 <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
                                   <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${codePercentage}%`}}></div>
@@ -192,19 +188,19 @@ const RecoveryReportView = ({
                   
                   return (
                     <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-3">
                         <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{client.name}</p>
                         <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(client.total)} t</span>
                       </div>
                       {suppliers.length > 0 && (
-                        <div className="space-y-2 mt-2">
+                        <div className="space-y-2">
                           {suppliers.map((supplier, sIdx) => {
                             const supplierPercentage = client.total > 0 ? ((supplier.total / client.total) * 100).toFixed(1) : '0.0';
                             return (
                               <div key={sIdx}>
                                 <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">{supplier.name}</span>
-                                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{formatNumberRO(supplier.total)} t ({supplierPercentage}%)</span>
+                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{supplier.name}</span>
+                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(supplier.total)} t <span className="text-gray-600 dark:text-gray-400">({supplierPercentage}%)</span></span>
                                 </div>
                                 <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
                                   <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${supplierPercentage}%`}}></div>
@@ -337,6 +333,19 @@ const RecoveryReportView = ({
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
                               <p className="font-bold text-slate-600 dark:text-slate-400">
                                 {formatNumberRO(ticket.difference_tons)} t ({ticket.delivered_quantity_tons > 0 ? ((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2) : 0}%)
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {ticket.created_at ? new Date(ticket.created_at).toLocaleString('ro-RO', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit'
+                                }) : 'N/A'}
                               </p>
                             </div>
                           </div>
