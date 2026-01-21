@@ -115,41 +115,55 @@ const RecoveryReportView = ({
               </div>
             </div>
           </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.suppliers || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.suppliers || summaryData.suppliers.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există furnizori</p>
             ) : (
-              <div className="space-y-3">
-                {groupRowsByNameWithCodes(summaryData?.suppliers || []).slice(0, 10).map((supplier, idx) => {
-                  const supplierTotal = supplier.total;
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{supplier.name}</p>
-                        <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(supplier.total)} t</span>
-                      </div>
-                      {supplier.codes && supplier.codes.length > 0 && (
-                        <div className="space-y-2">
-                          {supplier.codes.map((code, codeIdx) => {
-                            const codePercentage = supplierTotal > 0 ? ((code.quantity / supplierTotal) * 100).toFixed(1) : '0.0';
-                            return (
-                              <div key={codeIdx}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{code.code}</span>
-                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(code.quantity)} t <span className="text-gray-600 dark:text-gray-400">({codePercentage}%)</span></span>
-                                </div>
-                                <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
-                                  <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${codePercentage}%`}}></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+              summaryData.suppliers.map((supplier, idx) => {
+                const supplierTotal = supplier.total || 0;
+                return (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume furnizor + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {supplier.name}
+                      </span>
+                      <span className="text-base font-bold text-teal-600 dark:text-teal-400 ml-2">
+                        {formatNumberRO(supplierTotal)} t
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    
+                    {/* Coduri cu progress bar */}
+                    {supplier.codes && supplier.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {supplier.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = supplierTotal > 0 ? ((codeQty / supplierTotal) * 100).toFixed(1) : 0;
+                          return (
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className="bg-teal-500 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -168,67 +182,55 @@ const RecoveryReportView = ({
               </div>
             </div>
           </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.clients || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există operatori</p>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.clients || summaryData.clients.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există operatori</p>
             ) : (
-              <div className="space-y-3">
-                {(() => {
-                  // Grupare clients by name
-                  const clientsGrouped = groupRowsByNameWithCodes(summaryData.clients || []);
-                  
-                  return clientsGrouped.slice(0, 10).map((client, idx) => {
-                    // Grupare furnizori pentru acest operator din tickets
-                    const operatorTickets = (tickets || []).filter(t => 
-                      t.recipient_name === client.name
-                    );
-                    const supplierBreakdown = {};
+              summaryData.clients.map((client, idx) => {
+                const clientTotal = client.total || 0;
+                return (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume operator valorificare + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {client.name}
+                      </span>
+                      <span className="text-base font-bold text-teal-600 dark:text-teal-400 ml-2">
+                        {formatNumberRO(clientTotal)} t
+                      </span>
+                    </div>
                     
-                    operatorTickets.forEach(ticket => {
-                      const supplierId = ticket.supplier_id;
-                      const supplierName = ticket.supplier_name;
-                      const quantity = ticket.delivered_quantity_tons || 0;
-                      
-                      if (!supplierBreakdown[supplierId]) {
-                        supplierBreakdown[supplierId] = {
-                          name: supplierName,
-                          total: 0
-                        };
-                      }
-                      supplierBreakdown[supplierId].total += quantity;
-                    });
-                    
-                    const suppliers = Object.values(supplierBreakdown).sort((a, b) => b.total - a.total);
-                    
-                    return (
-                      <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{client.name}</p>
-                          <span className="text-sm font-bold text-teal-600 dark:text-teal-400 ml-2">{formatNumberRO(client.total)} t</span>
-                        </div>
-                        {suppliers.length > 0 && (
-                          <div className="space-y-2">
-                            {suppliers.map((supplier, sIdx) => {
-                              const supplierPercentage = client.total > 0 ? ((supplier.total / client.total) * 100).toFixed(1) : '0.0';
-                              return (
-                                <div key={sIdx}>
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{supplier.name}</span>
-                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{formatNumberRO(supplier.total)} t <span className="text-gray-600 dark:text-gray-400">({supplierPercentage}%)</span></span>
-                                  </div>
-                                  <div className="w-full bg-teal-100 dark:bg-teal-900/30 rounded-full h-1.5">
-                                    <div className="bg-teal-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${supplierPercentage}%`}}></div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                    {/* Coduri deșeuri cu progress bar */}
+                    {client.codes && client.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {client.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = clientTotal > 0 ? ((codeQty / clientTotal) * 100).toFixed(1) : 0;
+                          return (
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className="bg-teal-500 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  });
-                })()}
-              </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
