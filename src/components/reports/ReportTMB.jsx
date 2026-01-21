@@ -176,6 +176,9 @@ const ReportTMB = () => {
           ? (response.data.clients || [])
           : (response.data.operators || []);
         
+        // ✅ FIX: Pentru recovery, adăugăm și clients
+        const clientsData = (response.data.clients || []);
+        
         // ✅ FIX: Găsim sectorul selectat din all_sectors după UUID
         const allSectorsFromResponse = response.data.all_sectors || [];
         const selectedSector = allSectorsFromResponse.find(s => s.sector_id === filters.sector_id);
@@ -184,11 +187,12 @@ const ReportTMB = () => {
         const summary = {
           total_quantity: response.data.summary?.total_tons || response.data.summary?.total_delivered || 0,
           total_delivered: response.data.summary?.total_delivered || 0,
+          total_accepted: response.data.summary?.total_accepted || 0,
           total_tickets: response.data.summary?.total_tickets || ticketsList.length,
           year: filters.year,
-          date_range: {
-            from: new Date(filters.from).toLocaleDateString('ro-RO'),
-            to: new Date(filters.to).toLocaleDateString('ro-RO'),
+          date_range: response.data.summary?.date_range || {
+            from: filters.from,
+            to: filters.to,
           },
           sector: sectorName,
           period: {
@@ -199,6 +203,7 @@ const ReportTMB = () => {
           },
           suppliers: groupRowsByNameWithCodes(response.data.suppliers || []),
           operators: groupRowsByNameWithCodes(operatorsData),
+          clients: groupRowsByNameWithCodes(clientsData),
         };
         setSummaryData(summary);
         setAvailableYears(response.data.available_years || [currentYear]);
