@@ -90,7 +90,7 @@ const RecoveryReportView = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{getUatName()}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.sector || 'București'}</span>
               </div>
             </div>
             
