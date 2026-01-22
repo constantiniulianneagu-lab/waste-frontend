@@ -415,7 +415,7 @@ const ReportTMB = () => {
     tmb: 'bg-slate-600 dark:bg-slate-500',
     recycling: 'bg-emerald-600 dark:bg-emerald-500',
     recovery: 'bg-rose-600 dark:bg-rose-500',
-    disposal: 'bg-stone-600 dark:bg-stone-500',
+    disposal: 'bg-amber-700 dark:bg-amber-600',
     rejected: 'bg-zinc-600 dark:bg-zinc-500'
   };
 
@@ -899,6 +899,7 @@ const ReportTMB = () => {
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
           filters={filters}
+          sectors={sectors}
           formatNumberRO={formatNumberRO}
           groupRowsByNameWithCodes={groupRowsByNameWithCodes}
         />
