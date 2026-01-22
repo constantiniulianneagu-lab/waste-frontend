@@ -3,7 +3,7 @@
  * ============================================================================
  * RECOVERY SIDEBAR - ADD/EDIT TICKETS
  * ============================================================================
- * Schema de culori: Teal - Instituțional Modern
+ * Schema de culori: Rose - Roșu-Cărămiziu Profesionist
  * ============================================================================
  */
 
@@ -149,7 +149,7 @@ const RecoverySidebar = ({
   if (!isOpen) return null;
 
   // Clase comune pentru input-uri - tema TEAL
-  const inputClass = "w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all";
+  const inputClass = "w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all";
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -159,7 +159,7 @@ const RecoverySidebar = ({
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           
           {/* Header - TEAL flat */}
-          <div className="sticky top-0 z-10 bg-teal-600 px-6 py-4 shadow-lg">
+          <div className="sticky top-0 z-10 bg-rose-600 px-6 py-4 shadow-lg">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
                 {mode === 'edit' ? '✏️ Editează Tichet Valorificare' : '➕ Adaugă Tichet Valorificare'}
@@ -399,7 +399,7 @@ const RecoverySidebar = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
