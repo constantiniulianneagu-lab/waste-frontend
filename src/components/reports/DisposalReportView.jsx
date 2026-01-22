@@ -40,18 +40,28 @@ const DisposalReportView = ({
   const difference = delivered - accepted;
   const differencePercent = delivered > 0 ? ((difference / delivered) * 100).toFixed(2) : 0;
 
+  // Formatare date în stil românesc (DD.MM.YYYY)
+  const formatDateRO = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) return dateStr;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('ro-RO', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
   // Obținere nume UAT din sectors
   const getUatName = () => {
-    if (!filters?.sector_id) return 'Toate';
+    if (!filters?.sector_id) return 'București';
     const sector = sectors?.find(s => s.sector_id === filters.sector_id || s.id === filters.sector_id);
-    if (!sector) return 'Toate';
+    if (!sector) return 'București';
     
-    // Dacă sector_name conține "Sector" înseamnă că e un sector din București
     const sectorName = sector.sector_name || sector.name;
-    if (sectorName && sectorName.includes('Sector')) {
-      return 'București';
-    }
-    return sectorName || 'Toate';
+    // Afișează numele sectorului selectat (ex: "Sector 1")
+    return sectorName || 'București';
   };
 
   return (
@@ -78,15 +88,15 @@ const DisposalReportView = ({
             <div className="space-y-1 text-xs mb-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">An:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || summaryData?.date_range?.from?.split('-')[0] || new Date().getFullYear()}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || new Date().getFullYear()}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.from || 'N/A'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{formatDateRO(filters?.from || summaryData?.date_range?.from)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Până la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.to || 'N/A'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{formatDateRO(filters?.to || summaryData?.date_range?.to)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>

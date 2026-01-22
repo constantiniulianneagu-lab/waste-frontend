@@ -40,18 +40,28 @@ const RecoveryReportView = ({
   const difference = delivered - accepted;
   const differencePercent = delivered > 0 ? ((difference / delivered) * 100).toFixed(2) : 0;
 
+  // Formatare date în stil românesc (DD.MM.YYYY)
+  const formatDateRO = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) return dateStr;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('ro-RO', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    });
+  };
+
   // Obținere nume UAT din sectors
   const getUatName = () => {
-    if (!filters?.sector_id) return 'Toate';
+    if (!filters?.sector_id) return 'București';
     const sector = sectors?.find(s => s.sector_id === filters.sector_id || s.id === filters.sector_id);
-    if (!sector) return 'Toate';
+    if (!sector) return 'București';
     
-    // Dacă sector_name conține "Sector" înseamnă că e un sector din București
     const sectorName = sector.sector_name || sector.name;
-    if (sectorName && sectorName.includes('Sector')) {
-      return 'București';
-    }
-    return sectorName || 'Toate';
+    // Afișează numele sectorului selectat (ex: "Sector 1")
+    return sectorName || 'București';
   };
 
   return (
@@ -78,19 +88,19 @@ const RecoveryReportView = ({
             <div className="space-y-1 text-xs mb-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">An:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || summaryData?.date_range?.from?.split('-')[0] || new Date().getFullYear()}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || new Date().getFullYear()}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.from || 'N/A'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{formatDateRO(filters?.from || summaryData?.date_range?.from)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Până la:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.to || 'N/A'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{formatDateRO(filters?.to || summaryData?.date_range?.to)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">UAT:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.sector || 'București'}</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{getUatName()}</span>
               </div>
             </div>
             
@@ -407,11 +417,11 @@ const RecoveryReportView = ({
           </table>
         </div>
         
-        {pagination && pagination.totalPages > 0 && (
+        {pagination && pagination.total_pages > 0 && (
           <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.totalPages}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.total_pages}</p>
                 <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors">
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
@@ -421,7 +431,7 @@ const RecoveryReportView = ({
               </div>
               <div className="flex gap-2">
                 <button onClick={() => onPageChange(pagination.page - 1)} disabled={pagination.page === 1} className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Anterior</button>
-                <button onClick={() => onPageChange(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Următorul</button>
+                <button onClick={() => onPageChange(pagination.page + 1)} disabled={pagination.page === pagination.total_pages} className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Următorul</button>
               </div>
             </div>
           </div>

@@ -843,6 +843,7 @@ const ReportTMB = () => {
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
           filters={filters}
+          sectors={sectors}
           formatNumberRO={formatNumberRO}
           groupRowsByNameWithCodes={groupRowsByNameWithCodes}
         />

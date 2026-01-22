@@ -171,8 +171,8 @@ export const getRecyclingReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: filters.page,
       limit: filters.per_page
     });
@@ -209,8 +209,8 @@ export const getRecoveryReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: filters.page,
       limit: filters.per_page
     });
@@ -289,8 +289,8 @@ export const getDisposalReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: filters.page,
       limit: filters.per_page
     });
@@ -316,8 +316,8 @@ export const getRejectedReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: filters.page,
       limit: filters.per_page
     });
@@ -476,8 +476,8 @@ export const exportRecyclingReports = async (filters) => {
     const headers = createAuthHeaders();
     const params = new URLSearchParams({
       year: filters.year,
-      start_date: filters.from,
-      end_date: filters.to,
+      from: filters.from,
+      to: filters.to,
       page: 1,
       limit: 100000 // Get ALL records for export
     });

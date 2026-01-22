@@ -59,9 +59,7 @@ const RejectedReportView = ({
     if (!sector) return 'București';
     
     const sectorName = sector.sector_name || sector.name;
-    if (sectorName && sectorName.includes('Sector')) {
-      return 'București';
-    }
+    // Afișează numele sectorului selectat (ex: "Sector 1")
     return sectorName || 'București';
   };
 
