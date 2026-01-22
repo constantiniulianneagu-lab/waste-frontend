@@ -276,8 +276,8 @@ const RecoveryReportView = ({
                 <th className="px-4 py-3 text-left">Client</th>
                 <th className="px-4 py-3 text-left">Furnizor</th>
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
-                <th className="px-4 py-3 text-right">Cant. Livrată</th>
-                <th className="px-4 py-3 text-right">Cant. Acceptată</th>
+                <th className="px-4 py-3 text-center">Cant. Livrată</th>
+                <th className="px-4 py-3 text-center">Cant. Acceptată</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
