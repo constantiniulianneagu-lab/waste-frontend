@@ -414,7 +414,7 @@ const ReportTMB = () => {
   const tabColors = {
     tmb: 'bg-slate-600 dark:bg-slate-500',
     recycling: 'bg-emerald-600 dark:bg-emerald-500',
-    recovery: 'bg-teal-600 dark:bg-teal-500',
+    recovery: 'bg-rose-600 dark:bg-rose-500',
     disposal: 'bg-stone-600 dark:bg-stone-500',
     rejected: 'bg-zinc-600 dark:bg-zinc-500'
   };
