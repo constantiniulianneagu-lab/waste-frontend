@@ -1,5 +1,5 @@
 // src/components/reports/DisposalReportView.jsx
-// Schema de culori: Stone (familie unică) - Instituțional Modern
+// Schema de culori: Amber (familie unică) - Maro Profesional
 import React from 'react';
 import { Plus } from 'lucide-react';
 import ExportDropdown from './ExportDropdown';
@@ -19,6 +19,7 @@ const DisposalReportView = ({
   onExport,
   exporting,
   filters,
+  sectors,
   formatNumberRO,
   groupRowsByNameWithCodes
 }) => {
@@ -27,7 +28,7 @@ const DisposalReportView = ({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-stone-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Se încarcă datele...</p>
         </div>
       </div>
@@ -39,6 +40,20 @@ const DisposalReportView = ({
   const difference = delivered - accepted;
   const differencePercent = delivered > 0 ? ((difference / delivered) * 100).toFixed(2) : 0;
 
+  // Obținere nume UAT din sectors
+  const getUatName = () => {
+    if (!filters?.sector_id) return 'Toate';
+    const sector = sectors?.find(s => s.sector_id === filters.sector_id || s.id === filters.sector_id);
+    if (!sector) return 'Toate';
+    
+    // Dacă sector_name conține "Sector" înseamnă că e un sector din București
+    const sectorName = sector.sector_name || sector.name;
+    if (sectorName && sectorName.includes('Sector')) {
+      return 'București';
+    }
+    return sectorName || 'Toate';
+  };
+
   return (
     <div className="space-y-6">
       
@@ -46,21 +61,25 @@ const DisposalReportView = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* CARD 1 - PERIOADA */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-stone-200 dark:border-stone-700/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-stone-50 dark:bg-stone-900/20 border-l-4 border-stone-500 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-600 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-300">Perioada analizată</h3>
+                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300">Perioada analizată</h3>
               </div>
             </div>
           </div>
           <div className="p-4 flex flex-col justify-between flex-1">
-            <div className="space-y-1 text-xs">
+            <div className="space-y-1 text-xs mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">An:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{filters?.year || summaryData?.date_range?.from?.split('-')[0] || new Date().getFullYear()}</span>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">De la:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.from || 'N/A'}</span>
@@ -69,136 +88,156 @@ const DisposalReportView = ({
                 <span className="text-gray-500 dark:text-gray-400">Până la:</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{summaryData?.date_range?.to || 'N/A'}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">UAT:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{getUatName()}</span>
+              </div>
             </div>
             
-            <div className="text-center py-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate livrată</p>
-              <p className="text-3xl font-bold text-stone-600 dark:text-stone-400">
-                {formatNumberRO(delivered)} <span className="text-base font-medium">t</span>
+            <div className="text-center py-4 flex-1 flex flex-col justify-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Cantitate livrată</p>
+              <p className="text-4xl font-bold text-amber-700 dark:text-amber-400">
+                {formatNumberRO(delivered)} <span className="text-lg font-medium">t</span>
               </p>
             </div>
             
-            <div className="text-center py-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cantitate acceptată</p>
-              <p className="text-3xl font-bold text-stone-500 dark:text-stone-500">
-                {formatNumberRO(accepted)} <span className="text-base font-medium">t</span>
-              </p>
-            </div>
-            
-            <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-2 text-center">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Diferență</p>
-              <p className="text-xl font-bold text-slate-600 dark:text-slate-400">
-                {formatNumberRO(difference)} t <span className="text-xs font-medium">({differencePercent}%)</span>
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total tichete:</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
           </div>
         </div>
 
-        {/* CARD 2 - FURNIZORI (Operatori TMB) */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-stone-200 dark:border-stone-700/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-stone-50 dark:bg-stone-900/20 border-l-4 border-stone-500 p-4">
+        {/* CARD 2 - FURNIZORI */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-600 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-300">Furnizori Deșeuri</h3>
+                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300">Furnizori</h3>
               </div>
             </div>
           </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.suppliers || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există furnizori</p>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.suppliers || summaryData.suppliers.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există furnizori</p>
             ) : (
-              <div className="space-y-3">
-                {groupRowsByNameWithCodes(summaryData?.suppliers || []).slice(0, 10).map((supplier, idx) => {
-                  const percentage = delivered > 0 ? ((supplier.total / delivered) * 100).toFixed(1) : '0.0';
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{supplier.name}</p>
-                        <span className="text-sm font-bold text-stone-600 dark:text-stone-400 ml-2">{formatNumberRO(supplier.total)} t</span>
-                      </div>
-                      {supplier.codes && supplier.codes.length > 0 && (
-                        <div className="space-y-2">
-                          {supplier.codes.map((code, codeIdx) => {
-                            const codePercentage = delivered > 0 ? ((code.quantity / delivered) * 100).toFixed(1) : '0.0';
-                            return (
-                              <div key={codeIdx}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs text-gray-600 dark:text-gray-400">{code.code}</span>
-                                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{codePercentage}%</span>
-                                </div>
-                                <div className="w-full bg-stone-100 dark:bg-stone-800/30 rounded-full h-1.5">
-                                  <div className="bg-stone-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${codePercentage}%`}}></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+              summaryData.suppliers.map((supplier, idx) => {
+                const supplierTotal = supplier.total || 0;
+                return (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume furnizor + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {supplier.name}
+                      </span>
+                      <span className="text-base font-bold text-amber-700 dark:text-amber-400 ml-2">
+                        {formatNumberRO(supplierTotal)} t
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    
+                    {/* Coduri cu progress bar */}
+                    {supplier.codes && supplier.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {supplier.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = supplierTotal > 0 ? ((codeQty / supplierTotal) * 100).toFixed(1) : 0;
+                          return (
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className="bg-amber-600 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
 
         {/* CARD 3 - OPERATORI DEPOZIT */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-stone-200 dark:border-stone-700/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-stone-50 dark:bg-stone-900/20 border-l-4 border-stone-500 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-amber-200 dark:border-amber-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-600 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-300">Operatori Depozit</h3>
+                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300">Operatori Depozit</h3>
               </div>
             </div>
           </div>
-          <div className="p-4 overflow-y-auto flex-1">
-            {(summaryData?.clients || []).length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nu există operatori</p>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {(!summaryData?.clients || summaryData.clients.length === 0) ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Nu există operatori</p>
             ) : (
-              <div className="space-y-3">
-                {groupRowsByNameWithCodes(summaryData?.clients || []).slice(0, 10).map((client, idx) => {
-                  const percentage = accepted > 0 ? ((client.total / accepted) * 100).toFixed(1) : '0.0';
-                  return (
-                    <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate flex-1">{client.name}</p>
-                        <span className="text-sm font-bold text-stone-600 dark:text-stone-400 ml-2">{formatNumberRO(client.total)} t</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Procent din total:</span>
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{percentage}%</span>
-                      </div>
-                      <div className="w-full bg-stone-100 dark:bg-stone-800/30 rounded-full h-1.5">
-                        <div className="bg-stone-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${percentage}%`}}></div>
-                      </div>
-                      {client.codes && client.codes.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {client.codes.map((code, cIdx) => (
-                            <span key={cIdx} className="text-xs px-2 py-0.5 bg-stone-50 dark:bg-stone-900/20 text-stone-700 dark:text-stone-400 rounded border border-stone-200 dark:border-stone-800">
-                              {code.code}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+              summaryData.clients.map((client, idx) => {
+                const clientTotal = client.total || 0;
+                return (
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    {/* Nume operator depozit + total - FONT MAI MARE */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {client.name}
+                      </span>
+                      <span className="text-base font-bold text-amber-700 dark:text-amber-400 ml-2">
+                        {formatNumberRO(clientTotal)} t
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    
+                    {/* Coduri deșeuri cu progress bar */}
+                    {client.codes && client.codes.length > 0 && (
+                      <div className="space-y-2">
+                        {client.codes.map((codeData, cIdx) => {
+                          const codeQty = codeData.quantity || 0;
+                          const codePercent = clientTotal > 0 ? ((codeQty / clientTotal) * 100).toFixed(1) : 0;
+                          return (
+                            <div key={cIdx}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {codeData.code}
+                                </span>
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className="bg-amber-600 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${codePercent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -209,12 +248,12 @@ const DisposalReportView = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete Eliminare ({pagination?.total || 0})
+              Tichete Eliminare ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
               <button
                 onClick={onCreate}
-                className="px-4 py-2 text-sm font-medium bg-stone-600 hover:bg-stone-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium bg-amber-700 hover:bg-amber-800 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Adaugă tichet
@@ -237,8 +276,8 @@ const DisposalReportView = ({
                 <th className="px-4 py-3 text-left">Furnizor</th>
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
                 <th className="px-4 py-3 text-left">Nr. Auto</th>
-                <th className="px-4 py-3 text-right">Cant. Livrată</th>
-                <th className="px-4 py-3 text-right">Cant. Acceptată</th>
+                <th className="px-4 py-3 text-center">Cant. Livrată</th>
+                <th className="px-4 py-3 text-center">Cant. Acceptată</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
@@ -257,10 +296,14 @@ const DisposalReportView = ({
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.waste_code}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                          {ticket.waste_code}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.vehicle_number || 'N/A'}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-stone-600 dark:text-stone-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-stone-500 dark:text-stone-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-center text-sm font-semibold text-amber-700 dark:text-amber-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-center text-sm font-semibold text-amber-600 dark:text-amber-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => onToggleExpand(ticket.id)} className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors">
@@ -308,16 +351,29 @@ const DisposalReportView = ({
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Livrată:</span>
-                              <p className="font-bold text-stone-600 dark:text-stone-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
+                              <p className="font-bold text-amber-700 dark:text-amber-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Acceptată:</span>
-                              <p className="font-bold text-stone-500 dark:text-stone-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
+                              <p className="font-bold text-amber-600 dark:text-amber-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
                               <p className="font-bold text-slate-600 dark:text-slate-400">
                                 {formatNumberRO(ticket.difference_tons)} t ({ticket.delivered_quantity_tons > 0 ? ((ticket.difference_tons / ticket.delivered_quantity_tons) * 100).toFixed(2) : 0}%)
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {ticket.created_at ? new Date(ticket.created_at).toLocaleString('ro-RO', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit'
+                                }) : 'N/A'}
                               </p>
                             </div>
                           </div>
@@ -356,7 +412,7 @@ const DisposalReportView = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.totalPages}</p>
-                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-colors">
+                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-600 focus:border-transparent transition-colors">
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
                   <option value="50">50 / pagină</option>
