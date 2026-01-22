@@ -587,3 +587,62 @@ export const deleteDisposalTicket = async (id) => {
     throw error;
   }
 };
+
+/**
+ * ============================================================================
+ * REJECTED TICKETS CRUD
+ * ============================================================================
+ */
+
+export const createRejectedTicket = async (ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/tickets/rejected`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error("❌ createRejectedTicket error:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Eroare la crearea tichetului refuzat"
+    };
+  }
+};
+
+export const updateRejectedTicket = async (id, ticketData) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.put(
+      `${API_BASE_URL}/tickets/rejected/${id}`,
+      ticketData,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error("❌ updateRejectedTicket error:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Eroare la actualizarea tichetului refuzat"
+    };
+  }
+};
+
+export const deleteRejectedTicket = async (id) => {
+  try {
+    const headers = createAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/tickets/rejected/${id}`,
+      headers
+    );
+    return response.data;
+  } catch (error) {
+    console.error("❌ deleteRejectedTicket error:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Eroare la ștergerea tichetului refuzat"
+    };
+  }
+};
