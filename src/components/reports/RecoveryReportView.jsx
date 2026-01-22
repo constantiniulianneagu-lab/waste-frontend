@@ -101,9 +101,9 @@ const RecoveryReportView = ({
               </p>
             </div>
             
-            <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total tichete:</span>
-              <span className="text-lg font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
+            <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
           </div>
         </div>
