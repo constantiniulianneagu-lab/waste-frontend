@@ -1,5 +1,5 @@
 // src/components/reports/RecoveryReportView.jsx
-// Schema de culori: Teal (familie unică) - Instituțional Modern
+// Schema de culori: Rose (familie unică) - Roșu-Cărămiziu Profesionist
 import React from 'react';
 import { Plus } from 'lucide-react';
 import ExportDropdown from './ExportDropdown';
@@ -28,7 +28,7 @@ const RecoveryReportView = ({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Se încarcă datele...</p>
         </div>
       </div>
@@ -44,7 +44,14 @@ const RecoveryReportView = ({
   const getUatName = () => {
     if (!filters?.sector_id) return 'Toate';
     const sector = sectors?.find(s => s.sector_id === filters.sector_id || s.id === filters.sector_id);
-    return sector ? (sector.sector_name || sector.name) : 'Toate';
+    if (!sector) return 'Toate';
+    
+    // Dacă sector_name conține "Sector" înseamnă că e un sector din București
+    const sectorName = sector.sector_name || sector.name;
+    if (sectorName && sectorName.includes('Sector')) {
+      return 'București';
+    }
+    return sectorName || 'Toate';
   };
 
   return (
@@ -54,16 +61,16 @@ const RecoveryReportView = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* CARD 1 - PERIOADA */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-teal-200 dark:border-teal-800/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-rose-200 dark:border-rose-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-rose-100 dark:bg-rose-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-300">Perioada analizată</h3>
+                <h3 className="text-sm font-semibold text-rose-800 dark:text-rose-300">Perioada analizată</h3>
               </div>
             </div>
           </div>
@@ -89,29 +96,29 @@ const RecoveryReportView = ({
             
             <div className="text-center py-4 flex-1 flex flex-col justify-center">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Cantitate livrată</p>
-              <p className="text-4xl font-bold text-teal-600 dark:text-teal-400">
+              <p className="text-4xl font-bold text-rose-600 dark:text-rose-400">
                 {formatNumberRO(delivered)} <span className="text-lg font-medium">t</span>
               </p>
             </div>
             
-            <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-gray-500 dark:text-gray-400">Total tichete:</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total tichete:</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{summaryData?.total_tickets || 0}</span>
             </div>
           </div>
         </div>
 
         {/* CARD 2 - FURNIZORI */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-teal-200 dark:border-teal-800/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-rose-200 dark:border-rose-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-rose-100 dark:bg-rose-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-300">Furnizori</h3>
+                <h3 className="text-sm font-semibold text-rose-800 dark:text-rose-300">Furnizori</h3>
               </div>
             </div>
           </div>
@@ -129,7 +136,7 @@ const RecoveryReportView = ({
                       <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {supplier.name}
                       </span>
-                      <span className="text-base font-bold text-teal-600 dark:text-teal-400 ml-2">
+                      <span className="text-base font-bold text-rose-600 dark:text-rose-400 ml-2">
                         {formatNumberRO(supplierTotal)} t
                       </span>
                     </div>
@@ -146,13 +153,13 @@ const RecoveryReportView = ({
                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                   {codeData.code}
                                 </span>
-                                <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
-                                  className="bg-teal-500 h-1.5 rounded-full transition-all duration-300"
+                                  className="bg-rose-500 h-1.5 rounded-full transition-all duration-300"
                                   style={{ width: `${codePercent}%` }}
                                 />
                               </div>
@@ -169,16 +176,16 @@ const RecoveryReportView = ({
         </div>
 
         {/* CARD 3 - OPERATORI VALORIFICARE */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-teal-200 dark:border-teal-800/50 overflow-hidden h-[320px] flex flex-col">
-          <div className="bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-rose-200 dark:border-rose-800/50 overflow-hidden h-[320px] flex flex-col">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-rose-100 dark:bg-rose-800/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-300">Operatori Valorificare</h3>
+                <h3 className="text-sm font-semibold text-rose-800 dark:text-rose-300">Operatori Valorificare</h3>
               </div>
             </div>
           </div>
@@ -196,7 +203,7 @@ const RecoveryReportView = ({
                       <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {client.name}
                       </span>
-                      <span className="text-base font-bold text-teal-600 dark:text-teal-400 ml-2">
+                      <span className="text-base font-bold text-rose-600 dark:text-rose-400 ml-2">
                         {formatNumberRO(clientTotal)} t
                       </span>
                     </div>
@@ -213,13 +220,13 @@ const RecoveryReportView = ({
                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                   {codeData.code}
                                 </span>
-                                <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                 <div 
-                                  className="bg-teal-500 h-1.5 rounded-full transition-all duration-300"
+                                  className="bg-rose-500 h-1.5 rounded-full transition-all duration-300"
                                   style={{ width: `${codePercent}%` }}
                                 />
                               </div>
@@ -241,12 +248,12 @@ const RecoveryReportView = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete Valorificare ({pagination?.total || 0})
+              Tichete Valorificare ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
               <button
                 onClick={onCreate}
-                className="px-4 py-2 text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Adaugă tichet
@@ -290,9 +297,13 @@ const RecoveryReportView = ({
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.recipient_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.waste_code}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-teal-600 dark:text-teal-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-teal-500 dark:text-teal-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                          {ticket.waste_code}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-rose-600 dark:text-rose-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-rose-500 dark:text-rose-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => onToggleExpand(ticket.id)} className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors">
@@ -340,11 +351,11 @@ const RecoveryReportView = ({
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Livrată:</span>
-                              <p className="font-bold text-teal-600 dark:text-teal-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
+                              <p className="font-bold text-rose-600 dark:text-rose-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Acceptată:</span>
-                              <p className="font-bold text-teal-500 dark:text-teal-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
+                              <p className="font-bold text-rose-500 dark:text-rose-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Diferență:</span>
@@ -401,7 +412,7 @@ const RecoveryReportView = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Pagina {pagination.page} din {pagination.totalPages}</p>
-                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors">
+                <select value={filters.per_page} onChange={(e) => onPerPageChange(parseInt(e.target.value))} className="px-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors">
                   <option value="10">10 / pagină</option>
                   <option value="20">20 / pagină</option>
                   <option value="50">50 / pagină</option>
