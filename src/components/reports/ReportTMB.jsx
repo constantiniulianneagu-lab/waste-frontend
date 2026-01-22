@@ -10,6 +10,7 @@ import RecoveryReportView from './RecoveryReportView';
 import DisposalSidebar from './DisposalSidebar';
 import DisposalReportView from './DisposalReportView';
 import RejectedSidebar from './RejectedSidebar';
+import RejectedReportView from './RejectedReportView';
 import ExportDropdown from './ExportDropdown';
 import { 
   getTmbReports, 
@@ -21,6 +22,7 @@ import {
   deleteRecyclingTicket,
   deleteRecoveryTicket,
   deleteDisposalTicket,
+  deleteRejectedTicket,
   getAuxiliaryData 
 } from '../../services/reportsService';
 import { handleExport } from '../../services/exportService';
@@ -275,6 +277,9 @@ const ReportTMB = () => {
         case 'disposal':
           response = await deleteDisposalTicket(ticketId);
           break;
+        case 'rejected':
+          response = await deleteRejectedTicket(ticketId);
+          break;
         default:
           throw new Error('Delete not implemented for this tab');
       }
@@ -376,7 +381,7 @@ const ReportTMB = () => {
     recycling: 'Deșeuri trimise la reciclare',
     recovery: 'Deșeuri trimise la valorificare',
     disposal: 'Deșeuri trimise la eliminare',
-    rejected: 'Deșeuri respinse',
+    rejected: 'Deșeuri refuzate/neacceptate',
   };
 
   if (loading) {
@@ -415,7 +420,7 @@ const ReportTMB = () => {
     tmb: 'bg-slate-600 dark:bg-slate-500',
     recycling: 'bg-emerald-600 dark:bg-emerald-500',
     recovery: 'bg-rose-600 dark:bg-rose-500',
-    disposal: 'bg-amber-700 dark:bg-amber-600',
+    disposal: 'bg-stone-600 dark:bg-stone-500',
     rejected: 'bg-zinc-600 dark:bg-zinc-500'
   };
 
@@ -877,6 +882,37 @@ const ReportTMB = () => {
       {/* DISPOSAL VIEW */}
       {activeTab === 'disposal' && (
         <DisposalReportView
+          loading={loading}
+          tickets={tickets}
+          summaryData={summaryData}
+          pagination={pagination}
+          expandedRows={expandedRows}
+          onToggleExpand={(id) => {
+            setExpandedRows(prev => {
+              const newSet = new Set();
+              if (!prev.has(id)) {
+                newSet.add(id);
+              }
+              return newSet;
+            });
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCreate={handleCreate}
+          onExport={handleExportClick}
+          exporting={exporting}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+          filters={filters}
+          sectors={sectors}
+          formatNumberRO={formatNumberRO}
+          groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+        />
+      )}
+
+      {/* REJECTED VIEW */}
+      {activeTab === 'rejected' && (
+        <RejectedReportView
           loading={loading}
           tickets={tickets}
           summaryData={summaryData}
