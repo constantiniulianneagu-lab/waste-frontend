@@ -302,8 +302,8 @@ const RecoveryReportView = ({
                           {ticket.waste_code}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-rose-600 dark:text-rose-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-rose-500 dark:text-rose-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-center text-sm font-semibold text-rose-600 dark:text-rose-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-center text-sm font-semibold text-rose-500 dark:text-rose-500">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => onToggleExpand(ticket.id)} className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors">
