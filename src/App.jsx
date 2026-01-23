@@ -18,7 +18,6 @@ import Institutions from "./Institutions";
 import ReportsMain from "./components/reports/ReportsMain";
 import ReportTMB from "./components/reports/ReportTMB";
 import UserProfile from "./components/UserProfile";
-import Sectors from "./Sectors";
 import SectorStatsOverview from "./pages/SectorStatsOverview";
 import SectorStatsDetail from "./pages/SectorStatsDetail";
 
@@ -135,16 +134,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["PLATFORM_ADMIN"]}>
                 <Institutions />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* SECTORS - fără REGULATOR_VIEWER */}
-          <Route
-            path="/sectors"
-            element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
-                <Sectors />
               </ProtectedRoute>
             }
           />

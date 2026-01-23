@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Recycle,
-  Layers,
   TrendingUp,
 } from "lucide-react";
 
@@ -57,15 +56,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         iconColor: "text-cyan-500 dark:text-cyan-400",
         hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
         visible: scopes.reports !== 'NONE',
-      },
-      {
-        title: "Sectoare",
-        icon: Layers,
-        path: "/sectors",
-        gradient: "from-blue-500 to-indigo-600",
-        iconColor: "text-blue-500 dark:text-blue-400",
-        hoverBg: "hover:bg-blue-50 dark:hover:bg-blue-500/10",
-        visible: scopes.sectors !== 'NONE',
       },
       {
         title: "Statistici Sectoare",
