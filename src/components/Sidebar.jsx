@@ -12,6 +12,7 @@ import {
   Users,
   Building2,
   FileText,
+  FileSignature,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -28,7 +29,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const getAllMenuItems = () => {
     // Get scopes from userAccess
     const scopes = user?.userAccess?.scopes || {};
-    
+
     const allItems = [
       {
         title: "Depozitare",
@@ -37,7 +38,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-emerald-500 to-teal-600",
         iconColor: "text-emerald-500 dark:text-emerald-400",
         hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
-        visible: scopes.landfill !== 'NONE',
+        visible: scopes.landfill !== "NONE",
       },
       {
         title: "Tratare Mecano-Biologică",
@@ -46,7 +47,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-lime-500 to-emerald-600",
         iconColor: "text-lime-500 dark:text-lime-400",
         hoverBg: "hover:bg-lime-50 dark:hover:bg-lime-500/10",
-        visible: scopes.tmb !== 'NONE',
+        visible: scopes.tmb !== "NONE",
       },
       {
         title: "Rapoarte",
@@ -55,8 +56,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-cyan-500 to-blue-600",
         iconColor: "text-cyan-500 dark:text-cyan-400",
         hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-500/10",
-        visible: scopes.reports !== 'NONE',
+        visible: scopes.reports !== "NONE",
       },
+
+      // ✅ NEW: CONTRACTE
+      {
+        title: "Contracte",
+        icon: FileSignature,
+        path: "/contracts",
+        gradient: "from-emerald-500 to-teal-600",
+        iconColor: "text-emerald-500 dark:text-emerald-400",
+        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
+        visible: scopes.contracts !== "NONE",
+      },
+
       {
         title: "Statistici Sectoare",
         icon: TrendingUp,
@@ -64,7 +77,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-emerald-500 to-teal-600",
         iconColor: "text-emerald-500 dark:text-emerald-400",
         hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
-        visible: scopes.sectors !== 'NONE',
+        visible: scopes.sectors !== "NONE",
       },
       {
         title: "Utilizatori",
@@ -73,7 +86,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-violet-500 to-purple-600",
         iconColor: "text-violet-500 dark:text-violet-400",
         hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-500/10",
-        visible: scopes.users !== 'NONE',
+        visible: scopes.users !== "NONE",
       },
       {
         title: "Instituții",
@@ -82,18 +95,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         gradient: "from-amber-500 to-orange-600",
         iconColor: "text-amber-500 dark:text-amber-400",
         hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
-        visible: scopes.institutions !== 'NONE',
+        visible: scopes.institutions !== "NONE",
       },
-      {
-        title: "Contracte",
-        icon: FileText,
-        path: "/contracts",
-        gradient: "from-emerald-500 to-teal-600",
-        iconColor: "text-emerald-500 dark:text-emerald-400",
-        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
-        visible: scopes.contracts !== "NONE",
-      },
-
     ];
 
     return allItems.filter((item) => item.visible);
@@ -101,7 +104,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = getAllMenuItems();
 
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <aside
@@ -172,11 +176,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
                 )}
 
-                <div className={`${!active && "group-hover:scale-110"} transition-transform duration-300`}>
-                  <Icon className={`w-5 h-5 ${active ? "text-white" : item.iconColor}`} />
+                <div
+                  className={`${
+                    !active && "group-hover:scale-110"
+                  } transition-transform duration-300`}
+                >
+                  <Icon
+                    className={`w-5 h-5 ${
+                      active ? "text-white" : item.iconColor
+                    }`}
+                  />
                 </div>
 
-                {!isCollapsed && <span className="text-sm font-semibold truncate">{item.title}</span>}
+                {!isCollapsed && (
+                  <span className="text-sm font-semibold truncate">
+                    {item.title}
+                  </span>
+                )}
 
                 {isCollapsed && (
                   <div
@@ -185,8 +201,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                              whitespace-nowrap shadow-2xl border border-gray-700/50"
                     style={{ zIndex: 9999 }}
                     onMouseEnter={(e) => {
-                      const parentRect = e.currentTarget.parentElement.getBoundingClientRect();
-                      e.currentTarget.style.top = `${parentRect.top + parentRect.height / 2 - 20}px`;
+                      const parentRect =
+                        e.currentTarget.parentElement.getBoundingClientRect();
+                      e.currentTarget.style.top = `${
+                        parentRect.top + parentRect.height / 2 - 20
+                      }px`;
                     }}
                   >
                     {item.title}
@@ -226,9 +245,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           `}
         >
           <div className="flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            {isCollapsed ? (
+              <ChevronRight className="w-5 h-5" />
+            ) : (
+              <ChevronLeft className="w-5 h-5" />
+            )}
           </div>
-          {!isCollapsed && <span className="text-sm font-semibold">Restrânge</span>}
+          {!isCollapsed && (
+            <span className="text-sm font-semibold">Restrânge</span>
+          )}
         </button>
       </div>
     </aside>
