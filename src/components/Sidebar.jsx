@@ -84,6 +84,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-500/10",
         visible: scopes.institutions !== 'NONE',
       },
+      {
+        title: "Contracte",
+        icon: FileText,
+        path: "/contracts",
+        gradient: "from-emerald-500 to-teal-600",
+        iconColor: "text-emerald-500 dark:text-emerald-400",
+        hoverBg: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10",
+        visible: scopes.contracts !== "NONE",
+      },
+
     ];
 
     return allItems.filter((item) => item.visible);
