@@ -3,28 +3,21 @@
  * ============================================================================
  * CONTRACTS MANAGEMENT PAGE
  * ============================================================================
+ * Design: Green/Teal theme
+ * Updated: 2025-01-25
  * 
- * Design: Green/Teal theme - waste management
- * Created: 2025-01-24
- * 
- * Features:
- * - CRUD pentru toate tipurile de contracte
- * - Filtrare după tip contract, instituție, sector, status
- * - Gestionare acte adiționale
- * - Upload PDF pentru contracte și acte
- * 
+ * Suport pentru: DISPOSAL, WASTE_COLLECTOR, TMB
  * ============================================================================
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FileText, Plus, RefreshCw, Filter } from 'lucide-react';
+import { FileText, Plus, RefreshCw } from 'lucide-react';
 
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 
-// Components
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
@@ -34,14 +27,12 @@ import ContractSidebar from '../components/contracts/ContractSidebar';
 const CONTRACT_TYPES = {
   DISPOSAL: 'DISPOSAL',
   WASTE_COLLECTOR: 'WASTE_COLLECTOR',
-  SORTING: 'SORTING',
   TMB: 'TMB',
 };
 
 const CONTRACT_TYPE_LABELS = {
   [CONTRACT_TYPES.DISPOSAL]: 'Depozitare',
   [CONTRACT_TYPES.WASTE_COLLECTOR]: 'Colectare',
-  [CONTRACT_TYPES.SORTING]: 'Sortare',
   [CONTRACT_TYPES.TMB]: 'TMB',
 };
 
@@ -56,30 +47,23 @@ const showToast = (message, type = 'success') => {
 };
 
 const ContractsPage = () => {
-  // ========================================================================
-  // AUTH & PERMISSIONS
-  // ========================================================================
   const { user } = useAuth();
   const permissions = usePermissions();
   const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
   
-  // URL params for filtering
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialInstitutionId = searchParams.get('institution');
-  const initialContractType = searchParams.get('type');
+  const initialContractType = searchParams.get('type') || 'DISPOSAL';
+  const initialSector = searchParams.get('sector') || '';
 
-  // ========================================================================
-  // STATE
-  // ========================================================================
+  // State
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filters
-  const [selectedContractType, setSelectedContractType] = useState(initialContractType || 'DISPOSAL');
-  const [selectedInstitution, setSelectedInstitution] = useState(initialInstitutionId || '');
-  const [selectedSector, setSelectedSector] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState(''); // '', 'active', 'inactive'
+  const [selectedContractType, setSelectedContractType] = useState(initialContractType);
+  const [selectedSector, setSelectedSector] = useState(initialSector);
+  const [selectedStatus, setSelectedStatus] = useState('');
 
   // Reference data
   const [institutions, setInstitutions] = useState([]);
@@ -100,30 +84,23 @@ const ContractsPage = () => {
   const [saving, setSaving] = useState(false);
 
   // Stats
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    byType: {},
-  });
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
 
-  // ========================================================================
-  // LOAD REFERENCE DATA
-  // ========================================================================
+  // Load reference data
   useEffect(() => {
     loadReferenceData();
   }, []);
 
   const loadReferenceData = async () => {
     try {
-      // Load institutions
-      const instResponse = await apiGet('/api/institutions', { limit: 500 });
+      const [instResponse, sectorsResponse] = await Promise.all([
+        apiGet('/api/institutions', { limit: 500 }),
+        apiGet('/api/sectors')
+      ]);
+      
       if (instResponse.success) {
         setInstitutions(instResponse.data?.institutions || []);
       }
-
-      // Load sectors
-      const sectorsResponse = await apiGet('/api/sectors');
       if (sectorsResponse.success) {
         setSectors(sectorsResponse.data || []);
       }
@@ -132,9 +109,7 @@ const ContractsPage = () => {
     }
   };
 
-  // ========================================================================
-  // LOAD CONTRACTS
-  // ========================================================================
+  // Load contracts
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
@@ -144,24 +119,13 @@ const ContractsPage = () => {
       // Different endpoints based on contract type
       switch (selectedContractType) {
         case CONTRACT_TYPES.DISPOSAL:
-          endpoint = selectedInstitution 
-            ? `/api/institutions/${selectedInstitution}/disposal-contracts`
-            : '/api/institutions/0/disposal-contracts'; // All disposal contracts
+          endpoint = '/api/institutions/0/disposal-contracts';
           break;
         case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = selectedInstitution 
-            ? `/api/institutions/${selectedInstitution}/waste-contracts`
-            : '/api/institutions/0/waste-contracts';
-          break;
-        case CONTRACT_TYPES.SORTING:
-          endpoint = selectedInstitution 
-            ? `/api/institutions/${selectedInstitution}/sorting-contracts`
-            : '/api/institutions/0/sorting-contracts';
+          endpoint = '/api/institutions/0/waste-contracts';
           break;
         case CONTRACT_TYPES.TMB:
-          endpoint = selectedInstitution 
-            ? `/api/institutions/${selectedInstitution}/tmb-contracts`
-            : '/api/institutions/0/tmb-contracts';
+          endpoint = '/api/institutions/0/tmb-contracts';
           break;
         default:
           endpoint = '/api/institutions/0/disposal-contracts';
@@ -191,7 +155,7 @@ const ContractsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedContractType, selectedInstitution, selectedSector, selectedStatus]);
+  }, [selectedContractType, selectedSector, selectedStatus]);
 
   useEffect(() => {
     loadContracts();
@@ -199,18 +163,10 @@ const ContractsPage = () => {
 
   const calculateStats = (data) => {
     const active = data.filter(c => c.is_active).length;
-    const inactive = data.length - active;
-
-    setStats({
-      total: data.length,
-      active,
-      inactive,
-    });
+    setStats({ total: data.length, active, inactive: data.length - active });
   };
 
-  // ========================================================================
-  // FILTERING & SORTING
-  // ========================================================================
+  // Filtering & Sorting
   const filteredContracts = useMemo(() => {
     return contracts.filter(contract => {
       if (searchQuery) {
@@ -218,7 +174,8 @@ const ContractsPage = () => {
         return (
           contract.contract_number?.toLowerCase().includes(query) ||
           contract.institution_name?.toLowerCase().includes(query) ||
-          contract.sector_name?.toLowerCase().includes(query)
+          contract.sector_name?.toLowerCase().includes(query) ||
+          contract.associate_name?.toLowerCase().includes(query)
         );
       }
       return true;
@@ -228,7 +185,6 @@ const ContractsPage = () => {
   const sortedContracts = useMemo(() => {
     return [...filteredContracts].sort((a, b) => {
       let aValue, bValue;
-
       switch (sortBy) {
         case 'contract_number':
           aValue = a.contract_number || '';
@@ -238,10 +194,6 @@ const ContractsPage = () => {
           aValue = a.contract_date_start || '';
           bValue = b.contract_date_start || '';
           break;
-        case 'institution_name':
-          aValue = a.institution_name || '';
-          bValue = b.institution_name || '';
-          break;
         case 'sector_number':
           aValue = a.sector_number || 0;
           bValue = b.sector_number || 0;
@@ -250,7 +202,6 @@ const ContractsPage = () => {
           aValue = a.contract_date_start || '';
           bValue = b.contract_date_start || '';
       }
-
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
@@ -263,48 +214,28 @@ const ContractsPage = () => {
     currentPage * itemsPerPage
   );
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedContractType, selectedInstitution, selectedSector, selectedStatus, searchQuery]);
+  }, [selectedContractType, selectedSector, selectedStatus, searchQuery]);
 
-  // ========================================================================
-  // HANDLERS
-  // ========================================================================
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-  };
+  // Handlers
+  const handleSearchChange = (value) => setSearchQuery(value);
 
   const handleContractTypeChange = (type) => {
     setSelectedContractType(type);
-    setSearchParams(prev => {
-      prev.set('type', type);
-      return prev;
-    });
-  };
-
-  const handleInstitutionChange = (institutionId) => {
-    setSelectedInstitution(institutionId);
-    if (institutionId) {
-      setSearchParams(prev => {
-        prev.set('institution', institutionId);
-        return prev;
-      });
-    } else {
-      setSearchParams(prev => {
-        prev.delete('institution');
-        return prev;
-      });
-    }
+    setSearchParams(prev => { prev.set('type', type); return prev; });
   };
 
   const handleSectorChange = (sectorId) => {
     setSelectedSector(sectorId);
+    if (sectorId) {
+      setSearchParams(prev => { prev.set('sector', sectorId); return prev; });
+    } else {
+      setSearchParams(prev => { prev.delete('sector'); return prev; });
+    }
   };
 
-  const handleStatusChange = (status) => {
-    setSelectedStatus(status);
-  };
+  const handleStatusChange = (status) => setSelectedStatus(status);
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -315,9 +246,7 @@ const ContractsPage = () => {
     }
   };
 
-  // ========================================================================
-  // SIDEBAR HANDLERS
-  // ========================================================================
+  // Sidebar handlers
   const handleAdd = () => {
     setSelectedContract(null);
     setSidebarMode('add');
@@ -352,20 +281,16 @@ const ContractsPage = () => {
     setSaving(true);
     try {
       let endpoint = '';
-      const institutionId = formData.institution_id || selectedInstitution;
-
+      
       switch (selectedContractType) {
         case CONTRACT_TYPES.DISPOSAL:
-          endpoint = `/api/institutions/${institutionId}/disposal-contracts`;
+          endpoint = `/api/institutions/${formData.institution_id || 0}/disposal-contracts`;
           break;
         case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = `/api/institutions/${institutionId}/waste-contracts`;
-          break;
-        case CONTRACT_TYPES.SORTING:
-          endpoint = `/api/institutions/${institutionId}/sorting-contracts`;
+          endpoint = `/api/institutions/${formData.institution_id || 0}/waste-contracts`;
           break;
         case CONTRACT_TYPES.TMB:
-          endpoint = `/api/institutions/${institutionId}/tmb-contracts`;
+          endpoint = `/api/institutions/0/tmb-contracts`;
           break;
       }
 
@@ -373,7 +298,8 @@ const ContractsPage = () => {
       if (sidebarMode === 'add') {
         response = await apiPost(endpoint, formData);
       } else {
-        response = await apiPut(`${endpoint}/${selectedContract.id}`, formData);
+        const contractId = selectedContract.id;
+        response = await apiPut(`${endpoint}/${contractId}`, formData);
       }
 
       if (response.success) {
@@ -395,20 +321,16 @@ const ContractsPage = () => {
     setSaving(true);
     try {
       let endpoint = '';
-      const institutionId = contract.institution_id;
-
+      
       switch (selectedContractType) {
         case CONTRACT_TYPES.DISPOSAL:
-          endpoint = `/api/institutions/${institutionId}/disposal-contracts/${contract.id}`;
+          endpoint = `/api/institutions/${contract.institution_id || 0}/disposal-contracts/${contract.id}`;
           break;
         case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = `/api/institutions/${institutionId}/waste-contracts/${contract.id}`;
-          break;
-        case CONTRACT_TYPES.SORTING:
-          endpoint = `/api/institutions/${institutionId}/sorting-contracts/${contract.id}`;
+          endpoint = `/api/institutions/${contract.institution_id || 0}/waste-contracts/${contract.id}`;
           break;
         case CONTRACT_TYPES.TMB:
-          endpoint = `/api/institutions/${institutionId}/tmb-contracts/${contract.id}`;
+          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}`;
           break;
       }
 
@@ -428,36 +350,21 @@ const ContractsPage = () => {
     }
   };
 
-  // ========================================================================
-  // ACCESS GUARD
-  // ========================================================================
+  // Access guard
   if (!hasAccess('contracts') && !hasAccess('institutions')) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-teal-100 dark:bg-teal-500/10 
-                          flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-teal-500" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Acces restricționat
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Nu ai permisiuni pentru pagina „Contracte".
-            </p>
-          </div>
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center">
+          <FileText className="w-16 h-16 text-teal-500 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acces restricționat</h1>
+          <p className="text-gray-600 dark:text-gray-400">Nu ai permisiuni pentru pagina „Contracte".</p>
         </div>
       </div>
     );
   }
 
-  // ========================================================================
-  // RENDER
-  // ========================================================================
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
       <DashboardHeader
         title="Contracte"
         subtitle="Gestionare contracte operatori"
@@ -465,12 +372,11 @@ const ContractsPage = () => {
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
-        {/* Stats Row */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 
-                            flex items-center justify-center shadow-lg shadow-teal-500/30">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -481,8 +387,7 @@ const ContractsPage = () => {
           </div>
           <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 
-                            flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -493,8 +398,7 @@ const ContractsPage = () => {
           </div>
           <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 
-                            flex items-center justify-center shadow-lg shadow-gray-400/30">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shadow-lg shadow-gray-400/30">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -508,8 +412,7 @@ const ContractsPage = () => {
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 
-                          flex items-center justify-center shadow-lg shadow-teal-500/30">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -526,10 +429,7 @@ const ContractsPage = () => {
             <button
               onClick={loadContracts}
               disabled={loading}
-              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 
-                       text-gray-600 dark:text-gray-400 
-                       hover:bg-gray-200 dark:hover:bg-gray-700 
-                       transition-colors disabled:opacity-50"
+              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
               title="Reîncarcă"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -538,12 +438,7 @@ const ContractsPage = () => {
             {canCreateData && (
               <button
                 onClick={handleAdd}
-                className="inline-flex items-center gap-2 px-4 py-2.5 
-                         bg-gradient-to-r from-teal-500 to-emerald-600 
-                         hover:from-teal-600 hover:to-emerald-700 
-                         text-white font-semibold rounded-xl 
-                         shadow-lg shadow-teal-500/30 
-                         transition-all duration-200"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/30"
               >
                 <Plus className="w-4 h-4" />
                 Adaugă Contract
@@ -556,13 +451,10 @@ const ContractsPage = () => {
         <ContractFilters
           contractType={selectedContractType}
           onContractTypeChange={handleContractTypeChange}
-          institutionId={selectedInstitution}
-          onInstitutionChange={handleInstitutionChange}
           sectorId={selectedSector}
           onSectorChange={handleSectorChange}
           status={selectedStatus}
           onStatusChange={handleStatusChange}
-          institutions={institutions}
           sectors={sectors}
         />
 
@@ -591,22 +483,14 @@ const ContractsPage = () => {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 
-                         border border-gray-200 dark:border-gray-700 
-                         text-sm font-medium text-gray-700 dark:text-gray-300
-                         hover:bg-gray-50 dark:hover:bg-gray-700 
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium disabled:opacity-50"
               >
                 Anterior
               </button>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 
-                         border border-gray-200 dark:border-gray-700 
-                         text-sm font-medium text-gray-700 dark:text-gray-300
-                         hover:bg-gray-50 dark:hover:bg-gray-700 
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium disabled:opacity-50"
               >
                 Următor
               </button>
@@ -627,7 +511,6 @@ const ContractsPage = () => {
         saving={saving}
         institutions={institutions}
         sectors={sectors}
-        preselectedInstitutionId={selectedInstitution}
       />
     </div>
   );
