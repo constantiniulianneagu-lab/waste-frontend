@@ -21,7 +21,7 @@ import UserProfile from "./components/UserProfile";
 import SectorStatsOverview from "./pages/SectorStatsOverview";
 import SectorStatsDetail from "./pages/SectorStatsDetail";
 
-// ✅ NEW: Contracts page
+// ✅ Contracts page (exists in your zip)
 import ContractsPage from "./pages/ContractsPage";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
@@ -70,7 +70,7 @@ function App() {
       reports: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
       users: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
       institutions: ["PLATFORM_ADMIN"],
-      // ✅ Recommended for Contracts: same as Users (admin-level management)
+      // ✅ Contracts: admin-level management (recommended)
       contracts: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
       sectorStats: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
     }),
@@ -139,7 +139,7 @@ function App() {
             }
           />
 
-          {/* ✅ CONTRACTS - nou (recomandat: PLATFORM_ADMIN + ADMIN_INSTITUTION) */}
+          {/* ✅ CONTRACTS */}
           <Route
             path="/contracts"
             element={
@@ -169,7 +169,7 @@ function App() {
             }
           />
 
-          {/* SECTOR STATS OVERVIEW - fără REGULATOR_VIEWER */}
+          {/* SECTOR STATS OVERVIEW */}
           <Route
             path="/sectoare"
             element={
@@ -179,7 +179,7 @@ function App() {
             }
           />
 
-          {/* SECTOR STATS DETAIL - fără REGULATOR_VIEWER */}
+          {/* SECTOR STATS DETAIL */}
           <Route
             path="/sectoare/:sector_number"
             element={
