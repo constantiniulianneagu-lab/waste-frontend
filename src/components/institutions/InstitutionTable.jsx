@@ -3,11 +3,14 @@
  * ============================================================================
  * INSTITUTION TABLE - MODERN EXPANDABLE TABLE
  * ============================================================================
- * Design: Amber/Orange theme - consistent cu stilul aplicației
+ * Design: Green/Teal theme - waste management
+ * Updated: 2025-01-24
+ * - Read-only contracts display (management in Contracts page)
+ * - Representative info for operators
+ * ============================================================================
  */
 
-import { useState } from 'react';
-import {
+import { 
   ChevronDown,
   ChevronRight,
   Edit2,
@@ -24,9 +27,15 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Plus,
+  User,
+  ExternalLink,
 } from 'lucide-react';
-import { getInstitutionTypeLabel, getInstitutionTypeBadgeColor } from '../../constants/institutionTypes';
+import { 
+  getInstitutionTypeLabel, 
+  getInstitutionTypeBadgeColor,
+  hasContracts,
+  needsRepresentative
+} from '../../constants/institutionTypes';
 
 const InstitutionTable = ({
   institutions = [],
@@ -36,7 +45,7 @@ const InstitutionTable = ({
   onEdit,
   onDelete,
   onView,
-  onAddContract,
+  onNavigateToContracts,
   institutionContracts = {},
   loadingContracts = {},
   sortBy = 'name',
@@ -50,8 +59,8 @@ const InstitutionTable = ({
       return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100" />;
     }
     return sortOrder === 'asc' 
-      ? <ArrowUp className="w-3.5 h-3.5 text-amber-500" />
-      : <ArrowDown className="w-3.5 h-3.5 text-amber-500" />;
+      ? <ArrowUp className="w-3.5 h-3.5 text-teal-500" />
+      : <ArrowDown className="w-3.5 h-3.5 text-teal-500" />;
   };
 
   const SortableHeader = ({ column, children, className = '' }) => (
@@ -68,13 +77,14 @@ const InstitutionTable = ({
     </th>
   );
 
+  // Loading state
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
                     border border-gray-200 dark:border-gray-700/50
-                    rounded-[20px] overflow-hidden shadow-sm">
+                    rounded-2xl overflow-hidden shadow-sm">
         <div className="p-8 text-center">
-          <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-600 
+          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 
                         rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Se încarcă instituțiile...</p>
         </div>
@@ -82,15 +92,16 @@ const InstitutionTable = ({
     );
   }
 
+  // Empty state
   if (institutions.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
                     border border-gray-200 dark:border-gray-700/50
-                    rounded-[20px] overflow-hidden shadow-sm">
+                    rounded-2xl overflow-hidden shadow-sm">
         <div className="p-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-500/10 
+          <div className="w-16 h-16 rounded-2xl bg-teal-100 dark:bg-teal-500/10 
                         flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-amber-500" />
+            <Building2 className="w-8 h-8 text-teal-500" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             Nicio instituție găsită
@@ -106,7 +117,7 @@ const InstitutionTable = ({
   return (
     <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
                   border border-gray-200 dark:border-gray-700/50
-                  rounded-[20px] overflow-hidden shadow-sm">
+                  rounded-2xl overflow-hidden shadow-sm">
       
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -133,16 +144,17 @@ const InstitutionTable = ({
               const isExpanded = expandedRows.has(institution.id);
               const contracts = institutionContracts[institution.id] || [];
               const isLoadingContracts = loadingContracts[institution.id];
+              const showRepresentative = needsRepresentative(institution.type);
+              const showContracts = hasContracts(institution.type);
               
               return (
-                <>
+                <tbody key={institution.id}>
                   {/* Main Row */}
                   <tr
-                    key={institution.id}
                     className={`
                       group transition-colors duration-200
                       ${isExpanded 
-                        ? 'bg-amber-50/50 dark:bg-amber-500/5' 
+                        ? 'bg-teal-50/50 dark:bg-teal-500/5' 
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}
                     `}
                   >
@@ -154,8 +166,8 @@ const InstitutionTable = ({
                           w-8 h-8 rounded-lg flex items-center justify-center
                           transition-all duration-200
                           ${isExpanded 
-                            ? 'bg-amber-500 text-white' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-amber-100 hover:text-amber-600'}
+                            ? 'bg-teal-500 text-white' 
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-teal-100 hover:text-teal-600'}
                         `}
                       >
                         {isExpanded 
@@ -167,12 +179,12 @@ const InstitutionTable = ({
                     {/* Institution Name */}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 
-                                      flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/20">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 
+                                      flex items-center justify-center flex-shrink-0 shadow-lg shadow-teal-500/20">
                           <Building2 className="w-5 h-5 text-white" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          <p className="font-semibold text-gray-900 dark:text-white truncate">
                             {institution.name}
                           </p>
                           {institution.short_name && (
@@ -184,12 +196,10 @@ const InstitutionTable = ({
                       </div>
                     </td>
                     
-                    {/* Type Badge */}
+                    {/* Type */}
                     <td className="px-4 py-4">
-                      <span className={`
-                        inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
-                        ${getInstitutionTypeBadgeColor(institution.type)}
-                      `}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium 
+                                      ${getInstitutionTypeBadgeColor(institution.type)}`}>
                         {getInstitutionTypeLabel(institution.type)}
                       </span>
                     </td>
@@ -198,19 +208,20 @@ const InstitutionTable = ({
                     <td className="px-4 py-4">
                       {institution.sector ? (
                         <div className="flex flex-wrap gap-1">
-                          {institution.sector.split(',').map((s, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center justify-center w-6 h-6 
-                                       rounded-md bg-blue-100 dark:bg-blue-500/20 
-                                       text-xs font-bold text-blue-700 dark:text-blue-400"
+                          {institution.sector.split(',').map((s, idx) => (
+                            <span 
+                              key={idx}
+                              className="inline-flex items-center justify-center w-7 h-7 
+                                       bg-teal-100 dark:bg-teal-500/20 
+                                       text-teal-700 dark:text-teal-300 
+                                       text-xs font-bold rounded-lg"
                             >
-                              {s.trim()}
+                              S{s.trim()}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-sm text-gray-400">-</span>
                       )}
                     </td>
                     
@@ -218,16 +229,19 @@ const InstitutionTable = ({
                     <td className="px-4 py-4">
                       <div className="space-y-1">
                         {institution.contact_email && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-                            <Mail className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                            <Mail className="w-3.5 h-3.5" />
                             <span className="truncate max-w-[150px]">{institution.contact_email}</span>
                           </div>
                         )}
                         {institution.contact_phone && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-                            <Phone className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                            <Phone className="w-3.5 h-3.5" />
                             <span>{institution.contact_phone}</span>
                           </div>
+                        )}
+                        {!institution.contact_email && !institution.contact_phone && (
+                          <span className="text-sm text-gray-400">-</span>
                         )}
                       </div>
                     </td>
@@ -235,16 +249,14 @@ const InstitutionTable = ({
                     {/* Status */}
                     <td className="px-4 py-4 text-center">
                       {institution.is_active ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full 
-                                       bg-emerald-100 dark:bg-emerald-500/20 
-                                       text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium
+                                       bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
                           <CheckCircle className="w-3 h-3" />
                           Activ
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full 
-                                       bg-gray-100 dark:bg-gray-700 
-                                       text-xs font-semibold text-gray-600 dark:text-gray-400">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium
+                                       bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                           <XCircle className="w-3 h-3" />
                           Inactiv
                         </span>
@@ -266,8 +278,8 @@ const InstitutionTable = ({
                         {canEdit && (
                           <button
                             onClick={() => onEdit(institution)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-amber-600 
-                                     hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                            className="p-2 rounded-lg text-gray-400 hover:text-teal-600 
+                                     hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors"
                             title="Editează"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -290,16 +302,16 @@ const InstitutionTable = ({
                   
                   {/* Expanded Row - Details & Contracts */}
                   {isExpanded && (
-                    <tr key={`${institution.id}-expanded`}>
+                    <tr>
                       <td colSpan={7} className="px-4 py-0">
-                        <div className="py-4 pl-12 pr-4 bg-amber-50/30 dark:bg-amber-500/5 
-                                      border-t border-amber-100 dark:border-amber-500/10">
+                        <div className="py-4 pl-12 pr-4 bg-teal-50/30 dark:bg-teal-500/5 
+                                      border-t border-teal-100 dark:border-teal-500/10">
                           
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Left: Details */}
                             <div className="space-y-4">
                               <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-amber-500" />
+                                <FileText className="w-4 h-4 text-teal-500" />
                                 Detalii Instituție
                               </h4>
                               
@@ -333,7 +345,7 @@ const InstitutionTable = ({
                                       href={institution.website} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
-                                      className="font-medium text-amber-600 dark:text-amber-400 hover:underline"
+                                      className="font-medium text-teal-600 dark:text-teal-400 hover:underline"
                                     >
                                       {institution.website}
                                     </a>
@@ -342,70 +354,122 @@ const InstitutionTable = ({
                               </div>
                             </div>
                             
-                            {/* Right: Contracts */}
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between">
+                            {/* Middle: Representative (for operators) */}
+                            {showRepresentative && (
+                              <div className="space-y-4">
                                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-amber-500" />
-                                  Contracte
+                                  <User className="w-4 h-4 text-teal-500" />
+                                  Reprezentant
                                 </h4>
-                                {canEdit && (
-                                  <button
-                                    onClick={() => onAddContract(institution)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 
-                                             bg-amber-500 hover:bg-amber-600 text-white 
-                                             text-xs font-semibold rounded-lg transition-colors"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                    Adaugă Contract
-                                  </button>
+                                
+                                {institution.representative_name ? (
+                                  <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <p className="font-semibold text-gray-900 dark:text-white">
+                                      {institution.representative_name}
+                                    </p>
+                                    {institution.representative_position && (
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {institution.representative_position}
+                                      </p>
+                                    )}
+                                    <div className="mt-3 space-y-1.5">
+                                      {institution.representative_email && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                          <Mail className="w-3.5 h-3.5" />
+                                          {institution.representative_email}
+                                        </div>
+                                      )}
+                                      {institution.representative_phone && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                          <Phone className="w-3.5 h-3.5" />
+                                          {institution.representative_phone}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                    Niciun reprezentant definit
+                                  </p>
                                 )}
                               </div>
-                              
-                              {isLoadingContracts ? (
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                  <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                                  Se încarcă contractele...
-                                </div>
-                              ) : contracts.length > 0 ? (
-                                <div className="space-y-2">
-                                  {contracts.slice(0, 3).map((contract, idx) => (
-                                    <div 
-                                      key={idx}
-                                      className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                            )}
+                            
+                            {/* Right: Contracts (read-only) */}
+                            {showContracts && (
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-teal-500" />
+                                    Contracte
+                                  </h4>
+                                  {onNavigateToContracts && (
+                                    <button
+                                      onClick={() => onNavigateToContracts(institution)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 
+                                               text-teal-600 dark:text-teal-400
+                                               text-xs font-semibold rounded-lg 
+                                               hover:bg-teal-50 dark:hover:bg-teal-500/10
+                                               transition-colors"
                                     >
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                          {contract.contract_number || `Contract #${idx + 1}`}
-                                        </span>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                          contract.is_active 
-                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                                        }`}>
-                                          {contract.is_active ? 'Activ' : 'Inactiv'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {contracts.length > 3 && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                      + încă {contracts.length - 3} contracte
-                                    </p>
+                                      Gestionează
+                                      <ExternalLink className="w-3 h-3" />
+                                    </button>
                                   )}
                                 </div>
-                              ) : (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                                  Niciun contract înregistrat
-                                </p>
-                              )}
-                            </div>
+                                
+                                {isLoadingContracts ? (
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                                    Se încarcă contractele...
+                                  </div>
+                                ) : contracts.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {contracts.slice(0, 3).map((contract, idx) => (
+                                      <div 
+                                        key={idx}
+                                        className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                              {contract.contract_number || `Contract #${idx + 1}`}
+                                            </span>
+                                            {contract.sector_number && (
+                                              <span className="ml-2 text-xs text-gray-500">
+                                                (Sector {contract.sector_number})
+                                              </span>
+                                            )}
+                                          </div>
+                                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                            contract.is_active 
+                                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                          }`}>
+                                            {contract.is_active ? 'Activ' : 'Inactiv'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {contracts.length > 3 && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                                        + încă {contracts.length - 3} contracte
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                    Niciun contract înregistrat
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
                     </tr>
                   )}
-                </>
+                </tbody>
               );
             })}
           </tbody>

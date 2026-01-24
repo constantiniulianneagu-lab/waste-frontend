@@ -1,151 +1,173 @@
 // src/components/institutions/InstitutionFilters.jsx
 /**
  * ============================================================================
- * INSTITUTION FILTERS - TYPE CHIPS & SEARCH
+ * INSTITUTION FILTERS - TYPE FILTER CHIPS
  * ============================================================================
- * Design: Amber/Orange theme
+ * Design: Green/Teal theme
+ * Updated: 2025-01-24
+ * ============================================================================
  */
 
-import { Search, X, Filter } from 'lucide-react';
-import { INSTITUTION_TYPES, getInstitutionTypeLabel } from '../../constants/institutionTypes';
+import { 
+  Building2, 
+  Building, 
+  Truck, 
+  Factory, 
+  PackageSearch,
+  Wind,
+  Flame,
+  Mountain, 
+  Recycle, 
+  Zap, 
+  Shield,
+  X
+} from 'lucide-react';
+import { 
+  INSTITUTION_TYPES, 
+  getInstitutionTypeLabel,
+  INSTITUTION_TYPE_COLORS
+} from '../../constants/institutionTypes';
 
-// Mapare pentru afișare în română - chips
-const TYPE_CHIPS = [
-  { key: 'ASSOCIATION', label: 'Asociație', color: 'rose' },
-  { key: 'MUNICIPALITY', label: 'Municipii', color: 'blue' },
-  { key: 'WASTE_COLLECTOR', label: 'Operatori', color: 'emerald' },
-  { key: 'TMB_OPERATOR', label: 'TMB', color: 'cyan' },
-  { key: 'SORTING_OPERATOR', label: 'Sortare', color: 'purple' },
-  { key: 'DISPOSAL_CLIENT', label: 'Depozite', color: 'amber' },
-  { key: 'RECYCLING_CLIENT', label: 'Reciclare', color: 'green' },
-  { key: 'RECOVERY_CLIENT', label: 'Valorificare', color: 'orange' },
-  { key: 'REGULATOR', label: 'Autorități', color: 'indigo' },
-];
-
-const getChipColors = (color, isActive) => {
-  const colors = {
-    rose: isActive 
-      ? 'bg-rose-500 text-white border-rose-500' 
-      : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30',
-    blue: isActive 
-      ? 'bg-blue-500 text-white border-blue-500' 
-      : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30',
-    emerald: isActive 
-      ? 'bg-emerald-500 text-white border-emerald-500' 
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30',
-    cyan: isActive 
-      ? 'bg-cyan-500 text-white border-cyan-500' 
-      : 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/30',
-    purple: isActive 
-      ? 'bg-purple-500 text-white border-purple-500' 
-      : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/30',
-    amber: isActive 
-      ? 'bg-amber-500 text-white border-amber-500' 
-      : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30',
-    green: isActive 
-      ? 'bg-green-500 text-white border-green-500' 
-      : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30',
-    orange: isActive 
-      ? 'bg-orange-500 text-white border-orange-500' 
-      : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30',
-    indigo: isActive 
-      ? 'bg-indigo-500 text-white border-indigo-500' 
-      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/30',
-  };
-  return colors[color] || colors.amber;
+// Icon mapping
+const TYPE_ICONS = {
+  [INSTITUTION_TYPES.ASSOCIATION]: Building2,
+  [INSTITUTION_TYPES.MUNICIPALITY]: Building,
+  [INSTITUTION_TYPES.WASTE_COLLECTOR]: Truck,
+  [INSTITUTION_TYPES.TMB_OPERATOR]: Factory,
+  [INSTITUTION_TYPES.SORTING_OPERATOR]: PackageSearch,
+  [INSTITUTION_TYPES.AEROBIC_OPERATOR]: Wind,
+  [INSTITUTION_TYPES.ANAEROBIC_OPERATOR]: Flame,
+  [INSTITUTION_TYPES.LANDFILL]: Mountain,
+  [INSTITUTION_TYPES.DISPOSAL_CLIENT]: Mountain,
+  [INSTITUTION_TYPES.RECYCLING_CLIENT]: Recycle,
+  [INSTITUTION_TYPES.RECOVERY_CLIENT]: Zap,
+  [INSTITUTION_TYPES.REGULATOR]: Shield,
 };
 
 const InstitutionFilters = ({
-  searchQuery = '',
+  searchQuery,
   onSearchChange,
-  activeTypeFilter = null,
+  activeTypeFilter,
   onTypeFilterChange,
-  stats = {}
+  stats = {},
 }) => {
+  // Get count for a type from stats
+  const getTypeCount = (type) => {
+    const typeMap = {
+      [INSTITUTION_TYPES.ASSOCIATION]: stats.byType?.ASSOCIATION || 0,
+      [INSTITUTION_TYPES.MUNICIPALITY]: stats.byType?.MUNICIPALITY || 0,
+      [INSTITUTION_TYPES.WASTE_COLLECTOR]: stats.byType?.WASTE_COLLECTOR || 0,
+      [INSTITUTION_TYPES.TMB_OPERATOR]: stats.byType?.TMB_OPERATOR || 0,
+      [INSTITUTION_TYPES.SORTING_OPERATOR]: stats.byType?.SORTING_OPERATOR || 0,
+      [INSTITUTION_TYPES.AEROBIC_OPERATOR]: stats.byType?.AEROBIC_OPERATOR || 0,
+      [INSTITUTION_TYPES.ANAEROBIC_OPERATOR]: stats.byType?.ANAEROBIC_OPERATOR || 0,
+      [INSTITUTION_TYPES.LANDFILL]: (stats.byType?.LANDFILL || 0) + (stats.byType?.DISPOSAL_CLIENT || 0),
+      [INSTITUTION_TYPES.DISPOSAL_CLIENT]: (stats.byType?.LANDFILL || 0) + (stats.byType?.DISPOSAL_CLIENT || 0),
+      [INSTITUTION_TYPES.RECYCLING_CLIENT]: stats.byType?.RECYCLING_CLIENT || 0,
+      [INSTITUTION_TYPES.RECOVERY_CLIENT]: stats.byType?.RECOVERY_CLIENT || 0,
+      [INSTITUTION_TYPES.REGULATOR]: stats.byType?.REGULATOR || 0,
+    };
+    return typeMap[type] || 0;
+  };
+
+  // Filter chip colors based on type
+  const getChipColors = (type, isActive) => {
+    if (isActive) {
+      const colorMap = {
+        [INSTITUTION_TYPES.ASSOCIATION]: 'bg-teal-500 text-white shadow-teal-500/30',
+        [INSTITUTION_TYPES.MUNICIPALITY]: 'bg-blue-500 text-white shadow-blue-500/30',
+        [INSTITUTION_TYPES.WASTE_COLLECTOR]: 'bg-emerald-500 text-white shadow-emerald-500/30',
+        [INSTITUTION_TYPES.TMB_OPERATOR]: 'bg-cyan-500 text-white shadow-cyan-500/30',
+        [INSTITUTION_TYPES.SORTING_OPERATOR]: 'bg-violet-500 text-white shadow-violet-500/30',
+        [INSTITUTION_TYPES.AEROBIC_OPERATOR]: 'bg-lime-500 text-white shadow-lime-500/30',
+        [INSTITUTION_TYPES.ANAEROBIC_OPERATOR]: 'bg-orange-500 text-white shadow-orange-500/30',
+        [INSTITUTION_TYPES.LANDFILL]: 'bg-slate-500 text-white shadow-slate-500/30',
+        [INSTITUTION_TYPES.DISPOSAL_CLIENT]: 'bg-slate-500 text-white shadow-slate-500/30',
+        [INSTITUTION_TYPES.RECYCLING_CLIENT]: 'bg-green-500 text-white shadow-green-500/30',
+        [INSTITUTION_TYPES.RECOVERY_CLIENT]: 'bg-amber-500 text-white shadow-amber-500/30',
+        [INSTITUTION_TYPES.REGULATOR]: 'bg-indigo-500 text-white shadow-indigo-500/30',
+      };
+      return colorMap[type] || 'bg-gray-500 text-white';
+    }
+    return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700';
+  };
+
+  // Types to show (exclude duplicates like DISPOSAL_CLIENT which is same as LANDFILL)
+  const visibleTypes = [
+    INSTITUTION_TYPES.ASSOCIATION,
+    INSTITUTION_TYPES.MUNICIPALITY,
+    INSTITUTION_TYPES.WASTE_COLLECTOR,
+    INSTITUTION_TYPES.TMB_OPERATOR,
+    INSTITUTION_TYPES.SORTING_OPERATOR,
+    INSTITUTION_TYPES.AEROBIC_OPERATOR,
+    INSTITUTION_TYPES.ANAEROBIC_OPERATOR,
+    INSTITUTION_TYPES.LANDFILL, // Shows combined count with DISPOSAL_CLIENT
+    INSTITUTION_TYPES.RECYCLING_CLIENT,
+    INSTITUTION_TYPES.RECOVERY_CLIENT,
+    INSTITUTION_TYPES.REGULATOR,
+  ];
+
   return (
     <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
-                    border border-gray-200 dark:border-gray-700/50
-                    rounded-[20px] p-5 shadow-sm dark:shadow-none">
+                  border border-gray-200 dark:border-gray-700/50
+                  rounded-2xl p-4 shadow-sm">
       
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 
-                      flex items-center justify-center">
-          <Filter className="w-4 h-4 text-white" />
-        </div>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-          Filtre
-        </h3>
-        {activeTypeFilter && (
+      {/* Active filter indicator */}
+      {activeTypeFilter && (
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Filtru activ:</span>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium
+                           ${getChipColors(activeTypeFilter, true)} shadow-lg`}>
+              {(() => {
+                const Icon = TYPE_ICONS[activeTypeFilter];
+                return Icon ? <Icon className="w-3.5 h-3.5" /> : null;
+              })()}
+              {getInstitutionTypeLabel(activeTypeFilter)}
+            </span>
+          </div>
           <button
             onClick={() => onTypeFilterChange(null)}
-            className="ml-auto text-xs font-medium text-amber-600 dark:text-amber-400 
-                     hover:text-amber-700 dark:hover:text-amber-300 
-                     flex items-center gap-1"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 
+                     dark:hover:bg-gray-700 transition-colors"
+            title="Șterge filtrul"
           >
-            <X className="w-3 h-3" />
-            Resetează
+            <X className="w-4 h-4" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Caută instituție..."
-          className="w-full pl-10 pr-4 py-2.5 
-                   bg-gray-50 dark:bg-gray-900/50 
-                   border border-gray-200 dark:border-gray-700
-                   rounded-xl text-sm text-gray-900 dark:text-white
-                   placeholder:text-gray-400
-                   focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
-                   transition-all duration-200"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => onSearchChange('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 
-                     w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700
-                     flex items-center justify-center
-                     hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-          </button>
-        )}
-      </div>
-
-      {/* Type Chips */}
+      {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
-        {TYPE_CHIPS.map(({ key, label, color }) => {
-          const isActive = activeTypeFilter === key;
-          const count = stats.byType?.[key] || 0;
+        {visibleTypes.map(type => {
+          const Icon = TYPE_ICONS[type];
+          const count = getTypeCount(type);
+          const isActive = activeTypeFilter === type;
+          
+          // Skip types with 0 count unless it's the active filter
+          if (count === 0 && !isActive) return null;
           
           return (
             <button
-              key={key}
-              onClick={() => onTypeFilterChange(isActive ? null : key)}
+              key={type}
+              onClick={() => onTypeFilterChange(isActive ? null : type)}
               className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5
-                text-xs font-semibold rounded-full border
-                transition-all duration-200
-                ${getChipColors(color, isActive)}
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                text-xs font-semibold transition-all duration-200
+                ${getChipColors(type, isActive)}
+                ${isActive ? 'shadow-lg' : ''}
               `}
             >
-              {label}
-              {count > 0 && (
-                <span className={`
-                  px-1.5 py-0.5 rounded-full text-[10px] font-bold
-                  ${isActive 
-                    ? 'bg-white/20' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
-                `}>
-                  {count}
-                </span>
-              )}
+              {Icon && <Icon className="w-3.5 h-3.5" />}
+              <span>{getInstitutionTypeLabel(type)}</span>
+              <span className={`
+                ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold
+                ${isActive 
+                  ? 'bg-white/20' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
+              `}>
+                {count}
+              </span>
             </button>
           );
         })}

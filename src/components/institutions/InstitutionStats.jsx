@@ -3,124 +3,111 @@
  * ============================================================================
  * INSTITUTION STATS - SUMMARY CARDS
  * ============================================================================
- * Design: Amber/Orange theme - consistent cu stilul aplicației
+ * Design: Green/Teal theme
+ * Updated: 2025-01-24
+ * ============================================================================
  */
 
-import { 
-    Building2, 
-    Building, 
-    Truck, 
-    Factory, 
-    Recycle, 
-    Zap, 
-    Mountain,
-    Shield,
-    CheckCircle,
-    XCircle 
-  } from 'lucide-react';
-  
-  const StatCard = ({ title, value, icon: Icon, gradient, iconBg }) => (
-    <div className="group relative">
-      <div className={`
-        relative overflow-hidden
-        bg-white dark:bg-gray-800/50 backdrop-blur-xl
-        border border-gray-200 dark:border-gray-700/50
-        rounded-[20px] p-5
-        shadow-sm dark:shadow-none
-        hover:shadow-lg dark:hover:shadow-xl
-        hover:-translate-y-1
-        transition-all duration-300 ease-out
-      `}>
-        {/* Gradient accent line */}
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient} 
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-              {title}
-            </p>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">
-              {value}
-            </p>
-          </div>
-          
-          <div className={`w-12 h-12 rounded-[14px] ${iconBg} 
-                          flex items-center justify-center
-                          shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-            <Icon className="w-6 h-6 text-white" strokeWidth={2} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-  
-  const InstitutionStats = ({ stats = {}, loading = false }) => {
-    if (loading) {
-      return (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-800/50 rounded-[20px] p-5 animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-  
-    const cards = [
-      {
-        title: 'Total',
-        value: stats.total || 0,
-        icon: Building2,
-        gradient: 'from-amber-500 to-orange-600',
-        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600'
-      },
-      {
-        title: 'Active',
-        value: stats.active || 0,
-        icon: CheckCircle,
-        gradient: 'from-emerald-500 to-teal-600',
-        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600'
-      },
-      {
-        title: 'Inactive',
-        value: stats.inactive || 0,
-        icon: XCircle,
-        gradient: 'from-gray-400 to-gray-500',
-        iconBg: 'bg-gradient-to-br from-gray-400 to-gray-500'
-      },
-      {
-        title: 'Municipii',
-        value: stats.byType?.MUNICIPIU || stats.municipalities || 0,
-        icon: Building,
-        gradient: 'from-blue-500 to-indigo-600',
-        iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600'
-      },
-      {
-        title: 'Operatori',
-        value: stats.byType?.OPERATOR || stats.collectors || 0,
-        icon: Truck,
-        gradient: 'from-emerald-500 to-green-600',
-        iconBg: 'bg-gradient-to-br from-emerald-500 to-green-600'
-      },
-      {
-        title: 'TMB',
-        value: stats.byType?.TMB || stats.tmb_operators || 0,
-        icon: Factory,
-        gradient: 'from-cyan-500 to-blue-600',
-        iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600'
-      },
-    ];
-  
+import { Building2, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
+
+const InstitutionStats = ({ stats = {}, loading = false }) => {
+  const cards = [
+    {
+      label: 'Total Instituții',
+      value: stats.total || 0,
+      icon: Building2,
+      gradient: 'from-teal-500 to-emerald-600',
+      shadow: 'shadow-teal-500/30',
+      bg: 'bg-teal-50 dark:bg-teal-500/10',
+    },
+    {
+      label: 'Active',
+      value: stats.active || 0,
+      icon: CheckCircle,
+      gradient: 'from-emerald-500 to-green-600',
+      shadow: 'shadow-emerald-500/30',
+      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+    },
+    {
+      label: 'Inactive',
+      value: stats.inactive || 0,
+      icon: XCircle,
+      gradient: 'from-gray-400 to-gray-500',
+      shadow: 'shadow-gray-400/30',
+      bg: 'bg-gray-50 dark:bg-gray-500/10',
+    },
+    {
+      label: 'Operatori',
+      value: (stats.byType?.WASTE_COLLECTOR || 0) + 
+             (stats.byType?.TMB_OPERATOR || 0) + 
+             (stats.byType?.SORTING_OPERATOR || 0) +
+             (stats.byType?.AEROBIC_OPERATOR || 0) +
+             (stats.byType?.ANAEROBIC_OPERATOR || 0) +
+             (stats.byType?.DISPOSAL_CLIENT || 0) +
+             (stats.byType?.LANDFILL || 0),
+      icon: TrendingUp,
+      gradient: 'from-cyan-500 to-blue-600',
+      shadow: 'shadow-cyan-500/30',
+      bg: 'bg-cyan-50 dark:bg-cyan-500/10',
+    },
+  ];
+
+  if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {cards.map((card, index) => (
-          <StatCard key={index} {...card} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 
+                     border border-gray-200 dark:border-gray-700/50
+                     animate-pulse"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700" />
+              <div className="space-y-2">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="h-6 w-10 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     );
-  };
-  
-  export default InstitutionStats;
+  }
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map((card, idx) => {
+        const Icon = card.icon;
+        return (
+          <div
+            key={idx}
+            className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                     border border-gray-200 dark:border-gray-700/50
+                     rounded-2xl p-5 shadow-sm
+                     hover:shadow-md transition-shadow duration-200"
+          >
+            <div className="flex items-center gap-4">
+              <div className={`
+                w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient}
+                flex items-center justify-center shadow-lg ${card.shadow}
+              `}>
+                <Icon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {card.label}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {card.value}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default InstitutionStats;

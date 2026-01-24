@@ -3,7 +3,10 @@
  * ============================================================================
  * INSTITUTION SIDEBAR - ADD/EDIT FORM
  * ============================================================================
- * Design: Amber/Orange theme - slide-in sidebar
+ * Design: Green/Teal theme - slide-in sidebar
+ * Updated: 2025-01-24
+ * - Added representative fields for operators
+ * ============================================================================
  */
 
 import { useState, useEffect } from 'react';
@@ -13,8 +16,16 @@ import {
   Trash2,
   Building2,
   AlertTriangle,
+  User,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import { INSTITUTION_TYPES, getInstitutionTypeLabel } from '../../constants/institutionTypes';
+import { 
+  INSTITUTION_TYPES, 
+  getInstitutionTypeLabel,
+  getInstitutionTypesForDropdown,
+  needsRepresentative
+} from '../../constants/institutionTypes';
 
 // Sectors disponibile
 const AVAILABLE_SECTORS = [
@@ -47,10 +58,19 @@ const InstitutionSidebar = ({
     fiscal_code: '',
     registration_no: '',
     is_active: true,
+    // Representative fields
+    representative_name: '',
+    representative_position: '',
+    representative_phone: '',
+    representative_email: '',
   });
 
   const [errors, setErrors] = useState({});
   const [selectedSectors, setSelectedSectors] = useState([]);
+  const [showRepresentativeSection, setShowRepresentativeSection] = useState(false);
+
+  // Check if current type needs representative
+  const typeNeedsRepresentative = needsRepresentative(formData.type);
 
   // Populate form when editing
   useEffect(() => {
@@ -67,6 +87,10 @@ const InstitutionSidebar = ({
         fiscal_code: institution.fiscal_code || '',
         registration_no: institution.registration_no || '',
         is_active: institution.is_active ?? true,
+        representative_name: institution.representative_name || '',
+        representative_position: institution.representative_position || '',
+        representative_phone: institution.representative_phone || '',
+        representative_email: institution.representative_email || '',
       });
 
       // Parse sectors
@@ -76,6 +100,12 @@ const InstitutionSidebar = ({
       } else {
         setSelectedSectors([]);
       }
+
+      // Show representative section if has data
+      setShowRepresentativeSection(
+        !!(institution.representative_name || institution.representative_position || 
+           institution.representative_phone || institution.representative_email)
+      );
     } else if (mode === 'add') {
       setFormData({
         name: '',
@@ -89,11 +119,23 @@ const InstitutionSidebar = ({
         fiscal_code: '',
         registration_no: '',
         is_active: true,
+        representative_name: '',
+        representative_position: '',
+        representative_phone: '',
+        representative_email: '',
       });
       setSelectedSectors([]);
+      setShowRepresentativeSection(false);
     }
     setErrors({});
   }, [institution, mode, isOpen]);
+
+  // Auto-show representative section when type changes to operator
+  useEffect(() => {
+    if (typeNeedsRepresentative && !showRepresentativeSection) {
+      setShowRepresentativeSection(true);
+    }
+  }, [formData.type]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -134,6 +176,10 @@ const InstitutionSidebar = ({
     if (formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
       newErrors.contact_email = 'Email invalid';
     }
+
+    if (formData.representative_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.representative_email)) {
+      newErrors.representative_email = 'Email reprezentant invalid';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -172,7 +218,7 @@ const InstitutionSidebar = ({
       
       {/* Sidebar */}
       <div className={`
-        fixed right-0 top-0 h-full w-full max-w-lg
+        fixed right-0 top-0 h-full w-full max-w-xl
         bg-white dark:bg-gray-900
         shadow-2xl z-50
         transform transition-transform duration-300 ease-out
@@ -186,7 +232,7 @@ const InstitutionSidebar = ({
               w-10 h-10 rounded-xl flex items-center justify-center
               ${mode === 'delete' 
                 ? 'bg-red-100 dark:bg-red-500/20' 
-                : 'bg-gradient-to-br from-amber-500 to-orange-600'}
+                : 'bg-gradient-to-br from-teal-500 to-emerald-600'}
             `}>
               {mode === 'delete' 
                 ? <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -217,25 +263,29 @@ const InstitutionSidebar = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {mode === 'delete' ? (
+            // Delete confirmation
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/20 
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 
                             flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                Confirmați ștergerea?
+                Confirmare ștergere
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Instituția <strong>{institution?.name}</strong> va fi ștearsă. 
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Sigur doriți să ștergeți instituția <strong>{institution?.name}</strong>?
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
                 Această acțiune nu poate fi anulată.
               </p>
             </div>
           ) : (
+            // Form
             <div className="space-y-5">
-              {/* Nume */}
+              {/* Nume Complet */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Nume Instituție <span className="text-red-500">*</span>
+                  Nume Complet <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -245,10 +295,10 @@ const InstitutionSidebar = ({
                   disabled={isReadOnly}
                   className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border rounded-xl text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed
                            transition-all ${errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
-                  placeholder="Ex: Primăria Sectorului 1"
+                  placeholder="Numele complet al instituției"
                 />
                 {errors.name && (
                   <p className="mt-1 text-xs text-red-600">{errors.name}</p>
@@ -258,7 +308,7 @@ const InstitutionSidebar = ({
               {/* Nume Scurt */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Nume Scurt / Prescurtare
+                  Nume Scurt / Acronim
                 </label>
                 <input
                   type="text"
@@ -269,13 +319,13 @@ const InstitutionSidebar = ({
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border border-gray-300 dark:border-gray-700 rounded-xl 
                            text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  placeholder="Ex: PS1"
+                  placeholder="Ex: ADIGDMB"
                 />
               </div>
 
-              {/* Tip */}
+              {/* Tip Instituție */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Tip Instituție <span className="text-red-500">*</span>
@@ -287,14 +337,14 @@ const InstitutionSidebar = ({
                   disabled={isReadOnly}
                   className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border rounded-xl text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed
                            transition-all ${errors.type ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
                 >
-                  <option value="">Selectează tipul</option>
-                  {Object.values(INSTITUTION_TYPES).map(type => (
-                    <option key={type} value={type}>
-                      {getInstitutionTypeLabel(type)}
+                  <option value="">Selectează tipul...</option>
+                  {getInstitutionTypesForDropdown().map(item => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
                     </option>
                   ))}
                 </select>
@@ -303,10 +353,10 @@ const InstitutionSidebar = ({
                 )}
               </div>
 
-              {/* Sectoare - Multi-select chips */}
+              {/* Sectoare */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Sectoare Asociate
+                  Sectoare (U.A.T.)
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {AVAILABLE_SECTORS.map(sector => {
@@ -318,13 +368,11 @@ const InstitutionSidebar = ({
                         onClick={() => !isReadOnly && handleSectorToggle(sector.number)}
                         disabled={isReadOnly}
                         className={`
-                          px-4 py-2 rounded-xl text-sm font-semibold
-                          transition-all duration-200
+                          px-4 py-2 rounded-xl text-sm font-semibold transition-all
                           disabled:cursor-not-allowed
-                          ${isSelected
-                            ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          }
+                          ${isSelected 
+                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30' 
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}
                         `}
                       >
                         S{sector.number}
@@ -350,7 +398,7 @@ const InstitutionSidebar = ({
                   disabled={isReadOnly}
                   className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border rounded-xl text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed
                            transition-all ${errors.contact_email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
                   placeholder="contact@institutie.ro"
@@ -374,7 +422,7 @@ const InstitutionSidebar = ({
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border border-gray-300 dark:border-gray-700 rounded-xl 
                            text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   placeholder="+40 21 XXX XXXX"
                 />
@@ -394,7 +442,7 @@ const InstitutionSidebar = ({
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border border-gray-300 dark:border-gray-700 rounded-xl 
                            text-gray-900 dark:text-white resize-none
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   placeholder="Adresa completă"
                 />
@@ -414,7 +462,7 @@ const InstitutionSidebar = ({
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                            border border-gray-300 dark:border-gray-700 rounded-xl 
                            text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                           focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                            disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   placeholder="https://www.institutie.ro"
                 />
@@ -435,7 +483,7 @@ const InstitutionSidebar = ({
                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                              border border-gray-300 dark:border-gray-700 rounded-xl 
                              text-gray-900 dark:text-white
-                             focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                             focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                              disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     placeholder="RO12345678"
                   />
@@ -453,12 +501,123 @@ const InstitutionSidebar = ({
                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 
                              border border-gray-300 dark:border-gray-700 rounded-xl 
                              text-gray-900 dark:text-white
-                             focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500
+                             focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
                              disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     placeholder="J40/XXX/YYYY"
                   />
                 </div>
               </div>
+
+              {/* Representative Section - Collapsible */}
+              {typeNeedsRepresentative && (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowRepresentativeSection(!showRepresentativeSection)}
+                    className="w-full flex items-center justify-between px-4 py-3 
+                             bg-gray-50 dark:bg-gray-800/50
+                             text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-teal-500" />
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Reprezentant Operator
+                      </span>
+                    </div>
+                    {showRepresentativeSection 
+                      ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                      : <ChevronDown className="w-4 h-4 text-gray-400" />
+                    }
+                  </button>
+                  
+                  {showRepresentativeSection && (
+                    <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+                      {/* Representative Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                          Nume și Prenume
+                        </label>
+                        <input
+                          type="text"
+                          name="representative_name"
+                          value={formData.representative_name}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 bg-white dark:bg-gray-800 
+                                   border border-gray-300 dark:border-gray-700 rounded-lg 
+                                   text-gray-900 dark:text-white text-sm
+                                   focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
+                                   disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                          placeholder="Ion Popescu"
+                        />
+                      </div>
+
+                      {/* Representative Position */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                          Funcție
+                        </label>
+                        <input
+                          type="text"
+                          name="representative_position"
+                          value={formData.representative_position}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 bg-white dark:bg-gray-800 
+                                   border border-gray-300 dark:border-gray-700 rounded-lg 
+                                   text-gray-900 dark:text-white text-sm
+                                   focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
+                                   disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                          placeholder="Director General"
+                        />
+                      </div>
+
+                      {/* Representative Contact - 2 columns */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            Telefon
+                          </label>
+                          <input
+                            type="text"
+                            name="representative_phone"
+                            value={formData.representative_phone}
+                            onChange={handleInputChange}
+                            disabled={isReadOnly}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 
+                                     border border-gray-300 dark:border-gray-700 rounded-lg 
+                                     text-gray-900 dark:text-white text-sm
+                                     focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
+                                     disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                            placeholder="+40 7XX XXX XXX"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            name="representative_email"
+                            value={formData.representative_email}
+                            onChange={handleInputChange}
+                            disabled={isReadOnly}
+                            className={`w-full px-3 py-2 bg-white dark:bg-gray-800 
+                                     border rounded-lg text-gray-900 dark:text-white text-sm
+                                     focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
+                                     disabled:opacity-60 disabled:cursor-not-allowed transition-all
+                                     ${errors.representative_email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                            placeholder="ion.popescu@email.ro"
+                          />
+                          {errors.representative_email && (
+                            <p className="mt-1 text-xs text-red-600">{errors.representative_email}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Status Activ */}
               <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -468,8 +627,8 @@ const InstitutionSidebar = ({
                   checked={formData.is_active}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-5 h-5 text-amber-600 bg-gray-100 border-gray-300 rounded 
-                           focus:ring-amber-500 focus:ring-2 disabled:opacity-60"
+                  className="w-5 h-5 text-teal-600 bg-gray-100 border-gray-300 rounded 
+                           focus:ring-teal-500 focus:ring-2 disabled:opacity-60"
                 />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Instituție activă
@@ -516,11 +675,11 @@ const InstitutionSidebar = ({
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 
-                         hover:from-amber-600 hover:to-orange-700 
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 
+                         hover:from-teal-600 hover:to-emerald-700 
                          text-white font-semibold rounded-xl transition-all
                          disabled:opacity-50 disabled:cursor-not-allowed
-                         flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30"
+                         flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
               >
                 {saving ? (
                   <>

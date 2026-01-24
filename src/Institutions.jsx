@@ -4,19 +4,22 @@
  * INSTITUTIONS MANAGEMENT - REFACTORED
  * ============================================================================
  * 
- * Design: Amber/Orange theme - consistent cu stilul aplicației
+ * Design: Green/Teal theme - waste management
+ * Updated: 2025-01-24
  * 
  * Features:
  * - CRUD complet pentru instituții
  * - Filtrare după tip, căutare
  * - Sortare, paginare
- * - Contracte expandabile
+ * - Contracte read-only (management în pagina Contracte)
+ * - Representative info pentru operatori
  * - Permission-based access
  * 
  * ============================================================================
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, RefreshCw } from 'lucide-react';
 
 import { apiGet, apiPost, apiPut, apiDelete } from './api/apiClient';
@@ -30,13 +33,7 @@ import InstitutionFilters from './components/institutions/InstitutionFilters';
 import InstitutionTable from './components/institutions/InstitutionTable';
 import InstitutionSidebar from './components/institutions/InstitutionSidebar';
 
-// Contract Modals (existing)
-import WasteOperatorContractModal from './WasteOperatorContractModal';
-import SortingContractModal from './SortingContractModal';
-import DisposalContractModal from './DisposalContractModal';
-import TMBContractModal from './TMBContractModal';
-
-// Toast notification helper (simple version)
+// Toast notification helper
 const showToast = (message, type = 'success') => {
   if (type === 'error') {
     console.error(message);
@@ -53,6 +50,7 @@ const Institutions = () => {
   const { user } = useAuth();
   const permissions = usePermissions();
   const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
+  const navigate = useNavigate();
 
   // ========================================================================
   // STATE
@@ -81,7 +79,7 @@ const Institutions = () => {
   // Expand rows
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Contracts for institutions
+  // Contracts for institutions (read-only display)
   const [institutionContracts, setInstitutionContracts] = useState({});
   const [loadingContracts, setLoadingContracts] = useState({});
 
@@ -90,14 +88,6 @@ const Institutions = () => {
   const [sidebarMode, setSidebarMode] = useState(null);
   const [selectedInstitution, setSelectedInstitution] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // Contract modals
-  const [wasteContractModalOpen, setWasteContractModalOpen] = useState(false);
-  const [sortingContractModalOpen, setSortingContractModalOpen] = useState(false);
-  const [disposalContractModalOpen, setDisposalContractModalOpen] = useState(false);
-  const [tmbContractModalOpen, setTmbContractModalOpen] = useState(false);
-  const [selectedContractForEdit, setSelectedContractForEdit] = useState(null);
-  const [currentInstitutionId, setCurrentInstitutionId] = useState(null);
 
   // ========================================================================
   // LOAD DATA
@@ -149,7 +139,7 @@ const Institutions = () => {
   };
 
   // ========================================================================
-  // LOAD CONTRACTS
+  // LOAD CONTRACTS (read-only for display)
   // ========================================================================
   const loadContractsForInstitution = async (institutionId, forceReload = false) => {
     if (institutionContracts[institutionId] && !forceReload) return;
@@ -157,33 +147,7 @@ const Institutions = () => {
     setLoadingContracts(prev => ({ ...prev, [institutionId]: true }));
 
     try {
-      const institution = institutions.find(inst => inst.id === institutionId);
-      if (!institution) {
-        setInstitutionContracts(prev => ({ ...prev, [institutionId]: [] }));
-        return;
-      }
-
-      let endpoint = '';
-      switch (institution.type) {
-        case 'TMB_OPERATOR':
-          endpoint = `/api/institutions/${institutionId}/tmb-contracts`;
-          break;
-        case 'WASTE_COLLECTOR':
-          endpoint = `/api/institutions/${institutionId}/waste-contracts`;
-          break;
-        case 'SORTING_OPERATOR':
-          endpoint = `/api/institutions/${institutionId}/sorting-contracts`;
-          break;
-        case 'DISPOSAL_CLIENT':
-        case 'LANDFILL':
-          endpoint = `/api/institutions/${institutionId}/disposal-contracts`;
-          break;
-        default:
-          setInstitutionContracts(prev => ({ ...prev, [institutionId]: [] }));
-          return;
-      }
-
-      const response = await apiGet(endpoint);
+      const response = await apiGet(`/api/institutions/${institutionId}/contracts`);
       setInstitutionContracts(prev => ({
         ...prev,
         [institutionId]: response.success ? (response.data || []) : []
@@ -201,17 +165,27 @@ const Institutions = () => {
   // ========================================================================
   const filteredInstitutions = useMemo(() => {
     return institutions.filter(inst => {
-      if (activeTypeFilter && inst.type !== activeTypeFilter) {
-        return false;
+      // Type filter
+      if (activeTypeFilter) {
+        // Handle LANDFILL/DISPOSAL_CLIENT as same
+        if (activeTypeFilter === 'LANDFILL' || activeTypeFilter === 'DISPOSAL_CLIENT') {
+          if (inst.type !== 'LANDFILL' && inst.type !== 'DISPOSAL_CLIENT') {
+            return false;
+          }
+        } else if (inst.type !== activeTypeFilter) {
+          return false;
+        }
       }
 
+      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
           inst.name?.toLowerCase().includes(query) ||
           inst.short_name?.toLowerCase().includes(query) ||
           inst.fiscal_code?.toLowerCase().includes(query) ||
-          inst.contact_email?.toLowerCase().includes(query)
+          inst.contact_email?.toLowerCase().includes(query) ||
+          inst.representative_name?.toLowerCase().includes(query)
         );
       }
 
@@ -225,46 +199,48 @@ const Institutions = () => {
 
       switch (sortBy) {
         case 'name':
-          aValue = (a.name || '').toLowerCase();
-          bValue = (b.name || '').toLowerCase();
+          aValue = a.name?.toLowerCase() || '';
+          bValue = b.name?.toLowerCase() || '';
           break;
         case 'type':
-          aValue = (a.type || '').toLowerCase();
-          bValue = (b.type || '').toLowerCase();
+          aValue = a.type || '';
+          bValue = b.type || '';
           break;
         case 'sector':
           aValue = a.sector || '';
           bValue = b.sector || '';
           break;
         default:
-          return 0;
+          aValue = a.name?.toLowerCase() || '';
+          bValue = b.name?.toLowerCase() || '';
       }
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-      }
-      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
     });
   }, [filteredInstitutions, sortBy, sortOrder]);
 
-  const paginatedInstitutions = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return sortedInstitutions.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedInstitutions, currentPage, itemsPerPage]);
-
   const totalPages = Math.ceil(sortedInstitutions.length / itemsPerPage);
+  const paginatedInstitutions = sortedInstitutions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTypeFilter, searchQuery]);
 
   // ========================================================================
   // HANDLERS
   // ========================================================================
-  const handleSearchChange = (query) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
   };
 
   const handleTypeFilterChange = (type) => {
     setActiveTypeFilter(type);
-    setCurrentPage(1);
   };
 
   const handleSort = (column) => {
@@ -276,15 +252,23 @@ const Institutions = () => {
     }
   };
 
-  const handleToggleExpand = (id) => {
-    if (expandedRows.has(id)) {
-      setExpandedRows(new Set());
-    } else {
-      setExpandedRows(new Set([id]));
-      loadContractsForInstitution(id);
-    }
+  const handleToggleExpand = (institutionId) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(institutionId)) {
+        newSet.delete(institutionId);
+      } else {
+        newSet.add(institutionId);
+        // Load contracts when expanding
+        loadContractsForInstitution(institutionId);
+      }
+      return newSet;
+    });
   };
 
+  // ========================================================================
+  // SIDEBAR HANDLERS
+  // ========================================================================
   const handleAdd = () => {
     setSelectedInstitution(null);
     setSidebarMode('add');
@@ -311,34 +295,29 @@ const Institutions = () => {
 
   const handleCloseSidebar = () => {
     setSidebarOpen(false);
-    setSidebarMode(null);
     setSelectedInstitution(null);
+    setSidebarMode(null);
   };
 
   const handleSave = async (formData) => {
     setSaving(true);
     try {
+      let response;
       if (sidebarMode === 'add') {
-        const response = await apiPost('/api/institutions', formData);
-        if (response.success) {
-          showToast('Instituție adăugată cu succes!');
-          await loadInstitutions();
-          handleCloseSidebar();
-        } else {
-          showToast(response.message || 'Eroare la adăugare', 'error');
-        }
-      } else if (sidebarMode === 'edit') {
-        const response = await apiPut(`/api/institutions/${selectedInstitution.id}`, formData);
-        if (response.success) {
-          showToast('Instituție actualizată cu succes!');
-          await loadInstitutions();
-          handleCloseSidebar();
-        } else {
-          showToast(response.message || 'Eroare la actualizare', 'error');
-        }
+        response = await apiPost('/api/institutions', formData);
+      } else {
+        response = await apiPut(`/api/institutions/${selectedInstitution.id}`, formData);
+      }
+
+      if (response.success) {
+        showToast(sidebarMode === 'add' ? 'Instituție adăugată cu succes' : 'Instituție actualizată cu succes');
+        handleCloseSidebar();
+        loadInstitutions();
+      } else {
+        showToast(response.message || 'Eroare la salvare', 'error');
       }
     } catch (err) {
-      console.error('Error saving:', err);
+      console.error('Save error:', err);
       showToast('Eroare la salvare', 'error');
     } finally {
       setSaving(false);
@@ -350,47 +329,26 @@ const Institutions = () => {
     try {
       const response = await apiDelete(`/api/institutions/${institution.id}`);
       if (response.success) {
-        showToast('Instituție ștearsă cu succes!');
-        await loadInstitutions();
+        showToast('Instituție ștearsă cu succes');
         handleCloseSidebar();
+        loadInstitutions();
       } else {
         showToast(response.message || 'Eroare la ștergere', 'error');
       }
     } catch (err) {
-      console.error('Error deleting:', err);
+      console.error('Delete error:', err);
       showToast('Eroare la ștergere', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleAddContract = (institution) => {
-    setCurrentInstitutionId(institution.id);
-    setSelectedContractForEdit(null);
-
-    switch (institution.type) {
-      case 'TMB_OPERATOR':
-        setTmbContractModalOpen(true);
-        break;
-      case 'WASTE_COLLECTOR':
-        setWasteContractModalOpen(true);
-        break;
-      case 'SORTING_OPERATOR':
-        setSortingContractModalOpen(true);
-        break;
-      case 'DISPOSAL_CLIENT':
-      case 'LANDFILL':
-        setDisposalContractModalOpen(true);
-        break;
-      default:
-        showToast('Acest tip de instituție nu suportă contracte', 'error');
-    }
-  };
-
-  const handleContractSuccess = () => {
-    if (currentInstitutionId) {
-      loadContractsForInstitution(currentInstitutionId, true);
-    }
+  // ========================================================================
+  // NAVIGATE TO CONTRACTS
+  // ========================================================================
+  const handleNavigateToContracts = (institution) => {
+    // Navigate to Contracts page with institution filter
+    navigate(`/contracts?institution=${institution.id}`);
   };
 
   // ========================================================================
@@ -399,11 +357,11 @@ const Institutions = () => {
   if (!hasAccess('institutions')) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[20px] p-8">
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8">
           <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-500/10 
+            <div className="w-16 h-16 rounded-2xl bg-teal-100 dark:bg-teal-500/10 
                           flex items-center justify-center mx-auto mb-4">
-              <Building2 className="w-8 h-8 text-amber-500" />
+              <Building2 className="w-8 h-8 text-teal-500" />
             </div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Acces restricționat
@@ -425,7 +383,7 @@ const Institutions = () => {
       {/* Header */}
       <DashboardHeader
         title="Instituții"
-        subtitle="Gestionare instituții și contracte"
+        subtitle="Gestionare instituții partenere"
         onSearchChange={handleSearchChange}
       />
 
@@ -436,8 +394,8 @@ const Institutions = () => {
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 
-                          flex items-center justify-center shadow-lg shadow-amber-500/30">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 
+                          flex items-center justify-center shadow-lg shadow-teal-500/30">
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -467,10 +425,10 @@ const Institutions = () => {
               <button
                 onClick={handleAdd}
                 className="inline-flex items-center gap-2 px-4 py-2.5 
-                         bg-gradient-to-r from-amber-500 to-orange-600 
-                         hover:from-amber-600 hover:to-orange-700 
+                         bg-gradient-to-r from-teal-500 to-emerald-600 
+                         hover:from-teal-600 hover:to-emerald-700 
                          text-white font-semibold rounded-xl 
-                         shadow-lg shadow-amber-500/30 
+                         shadow-lg shadow-teal-500/30 
                          transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
@@ -498,7 +456,7 @@ const Institutions = () => {
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           onView={handleView}
-          onAddContract={handleAddContract}
+          onNavigateToContracts={handleNavigateToContracts}
           institutionContracts={institutionContracts}
           loadingContracts={loadingContracts}
           sortBy={sortBy}
@@ -551,51 +509,6 @@ const Institutions = () => {
         onSave={handleSave}
         onDelete={handleDelete}
         saving={saving}
-      />
-
-      {/* Contract Modals */}
-      <WasteOperatorContractModal
-        isOpen={wasteContractModalOpen}
-        onClose={() => {
-          setWasteContractModalOpen(false);
-          setSelectedContractForEdit(null);
-        }}
-        institutionId={currentInstitutionId}
-        contract={selectedContractForEdit}
-        onSuccess={handleContractSuccess}
-      />
-
-      <SortingContractModal
-        isOpen={sortingContractModalOpen}
-        onClose={() => {
-          setSortingContractModalOpen(false);
-          setSelectedContractForEdit(null);
-        }}
-        institutionId={currentInstitutionId}
-        contract={selectedContractForEdit}
-        onSuccess={handleContractSuccess}
-      />
-
-      <DisposalContractModal
-        isOpen={disposalContractModalOpen}
-        onClose={() => {
-          setDisposalContractModalOpen(false);
-          setSelectedContractForEdit(null);
-        }}
-        institutionId={currentInstitutionId}
-        contract={selectedContractForEdit}
-        onSuccess={handleContractSuccess}
-      />
-
-      <TMBContractModal
-        isOpen={tmbContractModalOpen}
-        onClose={() => {
-          setTmbContractModalOpen(false);
-          setSelectedContractForEdit(null);
-        }}
-        institutionId={currentInstitutionId}
-        contract={selectedContractForEdit}
-        onSuccess={handleContractSuccess}
       />
     </div>
   );
