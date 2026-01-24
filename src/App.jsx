@@ -5,7 +5,7 @@
  * ============================================================================
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
@@ -20,6 +20,9 @@ import ReportTMB from "./components/reports/ReportTMB";
 import UserProfile from "./components/UserProfile";
 import SectorStatsOverview from "./pages/SectorStatsOverview";
 import SectorStatsDetail from "./pages/SectorStatsDetail";
+
+// ✅ NEW: Contracts page
+import ContractsPage from "./pages/ContractsPage";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
@@ -41,7 +44,6 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
     if (!allowedRoles.includes(user.role)) {
-      // fallback “safe”: du-l în dashboard
       return <Navigate to="/dashboard/landfill" replace />;
     }
   }
@@ -54,7 +56,26 @@ function App() {
   const location = useLocation();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const showSidebar = user && location.pathname !== "/login";
+  const showSidebar = !!user && location.pathname !== "/login";
+
+  // ✅ Centralize roles to avoid repeating arrays everywhere
+  const roles = useMemo(
+    () => ({
+      dashboards: [
+        "PLATFORM_ADMIN",
+        "ADMIN_INSTITUTION",
+        "EDITOR_INSTITUTION",
+        "REGULATOR_VIEWER",
+      ],
+      reports: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+      users: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
+      institutions: ["PLATFORM_ADMIN"],
+      // ✅ Recommended for Contracts: same as Users (admin-level management)
+      contracts: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
+      sectorStats: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+    }),
+    []
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -84,7 +105,7 @@ function App() {
           <Route
             path="/dashboard/landfill"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"]}>
+              <ProtectedRoute allowedRoles={roles.dashboards}>
                 <DashboardLandfill />
               </ProtectedRoute>
             }
@@ -93,7 +114,7 @@ function App() {
           <Route
             path="/dashboard/tmb"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"]}>
+              <ProtectedRoute allowedRoles={roles.dashboards}>
                 <DashboardTmb />
               </ProtectedRoute>
             }
@@ -103,7 +124,7 @@ function App() {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+              <ProtectedRoute allowedRoles={roles.reports}>
                 <ReportsMain />
               </ProtectedRoute>
             }
@@ -112,8 +133,18 @@ function App() {
           <Route
             path="/reports/tmb"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+              <ProtectedRoute allowedRoles={roles.reports}>
                 <ReportTMB />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ CONTRACTS - nou (recomandat: PLATFORM_ADMIN + ADMIN_INSTITUTION) */}
+          <Route
+            path="/contracts"
+            element={
+              <ProtectedRoute allowedRoles={roles.contracts}>
+                <ContractsPage />
               </ProtectedRoute>
             }
           />
@@ -122,7 +153,7 @@ function App() {
           <Route
             path="/users"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION"]}>
+              <ProtectedRoute allowedRoles={roles.users}>
                 <Users />
               </ProtectedRoute>
             }
@@ -132,7 +163,7 @@ function App() {
           <Route
             path="/institutions"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN"]}>
+              <ProtectedRoute allowedRoles={roles.institutions}>
                 <Institutions />
               </ProtectedRoute>
             }
@@ -142,7 +173,7 @@ function App() {
           <Route
             path="/sectoare"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+              <ProtectedRoute allowedRoles={roles.sectorStats}>
                 <SectorStatsOverview />
               </ProtectedRoute>
             }
@@ -152,7 +183,7 @@ function App() {
           <Route
             path="/sectoare/:sector_number"
             element={
-              <ProtectedRoute allowedRoles={["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"]}>
+              <ProtectedRoute allowedRoles={roles.sectorStats}>
                 <SectorStatsDetail />
               </ProtectedRoute>
             }
@@ -168,7 +199,10 @@ function App() {
             }
           />
 
-          <Route path="*" element={<Navigate to="/dashboard/landfill" replace />} />
+          <Route
+            path="*"
+            element={<Navigate to="/dashboard/landfill" replace />}
+          />
         </Routes>
       </div>
     </div>
