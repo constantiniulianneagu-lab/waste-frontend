@@ -1,14 +1,14 @@
 // src/components/contracts/ContractTable.jsx
 /**
  * ============================================================================
- * CONTRACT TABLE - Updated with TMB support
+ * CONTRACT TABLE - WITH OPERATOR COLUMN + IMPROVED
  * ============================================================================
  */
 
 import {
   Edit2, Trash2, Eye, FileText, CheckCircle, XCircle,
   ArrowUpDown, ArrowUp, ArrowDown, Calendar, MapPin,
-  AlertCircle, FileCheck, Users,
+  AlertCircle, FileCheck, Users, Building2,
 } from 'lucide-react';
 
 const ContractTable = ({
@@ -110,10 +110,15 @@ const ContractTable = ({
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700/50">
               <SortableHeader column="contract_number">Nr. Contract</SortableHeader>
+              
+              {/* OPERATOR COLUMN - NEW */}
+              <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Operator
+              </th>
+              
               <SortableHeader column="sector_number">U.A.T.</SortableHeader>
               <SortableHeader column="contract_date_start">Perioadă</SortableHeader>
               
-              {/* Columns based on contract type */}
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Tarif
               </th>
@@ -146,7 +151,6 @@ const ContractTable = ({
               const expired = isExpired(effectiveDateEnd);
               const expiringSoon = !expired && isExpiringSoon(effectiveDateEnd);
               
-              // Get effective values
               const effectiveTariff = contract.effective_tariff || contract.tariff_per_ton;
               const effectiveQuantity = contract.effective_quantity || contract.estimated_quantity_tons || contract.contracted_quantity_tons;
               const effectiveTotalValue = contract.effective_total_value || contract.total_value;
@@ -163,6 +167,22 @@ const ContractTable = ({
                         {contract.contract_number || '-'}
                       </span>
                     </div>
+                  </td>
+
+                  {/* OPERATOR - NEW COLUMN */}
+                  <td className="px-4 py-4">
+                    {contract.institution_name ? (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[180px]" title={contract.institution_name}>
+                            {contract.institution_short_name || contract.institution_name}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </td>
 
                   {/* Sector (U.A.T.) */}
@@ -229,7 +249,7 @@ const ContractTable = ({
                       {contract.associate_name ? (
                         <div className="flex items-center gap-1.5">
                           <Users className="w-3.5 h-3.5 text-violet-500" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[120px]" title={contract.associate_name}>
                             {contract.associate_short_name || contract.associate_name}
                           </span>
                         </div>
