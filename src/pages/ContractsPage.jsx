@@ -22,6 +22,7 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractSidebar from '../components/contracts/ContractSidebar';
+import ContractViewModal from '../components/contracts/ContractViewModal'; // <-- NEW
 
 // Contract types
 const CONTRACT_TYPES = {
@@ -77,11 +78,15 @@ const ContractsPage = () => {
   const [sortBy, setSortBy] = useState('contract_date_start');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Sidebar
+  // Sidebar (for add/edit/delete)
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMode, setSidebarMode] = useState(null);
   const [selectedContract, setSelectedContract] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // View Modal (NEW - for elegant view)
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewContract, setViewContract] = useState(null);
 
   // Stats
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
@@ -246,7 +251,7 @@ const ContractsPage = () => {
     }
   };
 
-  // Sidebar handlers
+  // Sidebar handlers (add/edit/delete)
   const handleAdd = () => {
     setSelectedContract(null);
     setSidebarMode('add');
@@ -259,10 +264,10 @@ const ContractsPage = () => {
     setSidebarOpen(true);
   };
 
+  // VIEW - Now opens the elegant modal instead of sidebar
   const handleView = (contract) => {
-    setSelectedContract(contract);
-    setSidebarMode('view');
-    setSidebarOpen(true);
+    setViewContract(contract);
+    setViewModalOpen(true);
   };
 
   const handleDeleteClick = (contract) => {
@@ -275,6 +280,11 @@ const ContractsPage = () => {
     setSidebarOpen(false);
     setSelectedContract(null);
     setSidebarMode(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false);
+    setViewContract(null);
   };
 
   const handleSave = async (formData) => {
@@ -499,7 +509,7 @@ const ContractsPage = () => {
         )}
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - for Add/Edit/Delete */}
       <ContractSidebar
         isOpen={sidebarOpen}
         onClose={handleCloseSidebar}
@@ -511,6 +521,14 @@ const ContractsPage = () => {
         saving={saving}
         institutions={institutions}
         sectors={sectors}
+      />
+
+      {/* View Modal - Elegant display for viewing contract details */}
+      <ContractViewModal
+        isOpen={viewModalOpen}
+        onClose={handleCloseViewModal}
+        contract={viewContract}
+        contractType={selectedContractType}
       />
     </div>
   );
