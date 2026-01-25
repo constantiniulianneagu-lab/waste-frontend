@@ -1,7 +1,7 @@
 // src/components/contracts/ContractSidebar.jsx
 /**
  * ============================================================================
- * CONTRACT SIDEBAR - COMPLETE WITH VALIDATION + AMENDMENTS
+ * CONTRACT SIDEBAR - WITH PDF UPLOAD + VALIDATION + AMENDMENTS
  * ============================================================================
  */
 
@@ -12,6 +12,8 @@ import {
   Percent, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
+import PDFUpload from '../common/PDFUpload';
+import PDFViewerModal from '../common/PDFViewerModal';
 
 const AMENDMENT_TYPES = [
   { value: 'EXTENSION', label: 'Prelungire perioadă' },
@@ -60,32 +62,24 @@ const ValidationModal = ({ isOpen, onClose, onConfirm, errors, warnings, loading
 
           {/* Content */}
           <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-            {/* Errors */}
             {hasErrors && (
               <div className="space-y-2">
                 {errors.map((error, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/20">
                     <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                        {error.message}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">{error.message}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Warnings */}
             {hasWarnings && (
               <div className="space-y-2">
                 {warnings.map((warning, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200 dark:border-amber-500/20">
                     <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                        {warning.message}
-                      </p>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">{warning.message}</p>
                       {warning.details && (
                         <div className="mt-1 text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
                           {warning.details.contract_number && (
@@ -93,9 +87,6 @@ const ValidationModal = ({ isOpen, onClose, onConfirm, errors, warnings, loading
                           )}
                           {warning.details.period && (
                             <p>Perioadă: <span className="font-semibold">{warning.details.period}</span></p>
-                          )}
-                          {warning.details.overlap_days && (
-                            <p>Suprapunere: <span className="font-semibold">{warning.details.overlap_days} zile</span></p>
                           )}
                         </div>
                       )}
@@ -170,6 +161,9 @@ const ContractSidebar = ({
     indicator_recycling_percent: '',
     indicator_energy_recovery_percent: '',
     indicator_disposal_percent: '',
+    // PDF fields
+    contract_file_url: '',
+    contract_file_name: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -184,6 +178,11 @@ const ContractSidebar = ({
   const [validationErrors, setValidationErrors] = useState([]);
   const [validationWarnings, setValidationWarnings] = useState([]);
   const [validating, setValidating] = useState(false);
+
+  // PDF Viewer modal state
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfViewerUrl, setPdfViewerUrl] = useState('');
+  const [pdfViewerFileName, setPdfViewerFileName] = useState('');
 
   // Filter institutions based on contract type
   const filteredInstitutions = institutions.filter(inst => {
@@ -224,6 +223,8 @@ const ContractSidebar = ({
         indicator_recycling_percent: contract.indicator_recycling_percent || '',
         indicator_energy_recovery_percent: contract.indicator_energy_recovery_percent || '',
         indicator_disposal_percent: contract.indicator_disposal_percent || '',
+        contract_file_url: contract.contract_file_url || '',
+        contract_file_name: contract.contract_file_name || '',
       });
       
       if (mode === 'edit' || mode === 'view') {
@@ -247,6 +248,8 @@ const ContractSidebar = ({
         indicator_recycling_percent: '',
         indicator_energy_recovery_percent: '',
         indicator_disposal_percent: '',
+        contract_file_url: '',
+        contract_file_name: '',
       });
       setAmendments([]);
     }
@@ -299,6 +302,30 @@ const ContractSidebar = ({
     }
   };
 
+  // Handle PDF upload change
+  const handlePDFChange = (fileData) => {
+    if (fileData) {
+      setFormData(prev => ({
+        ...prev,
+        contract_file_url: fileData.url,
+        contract_file_name: fileData.fileName,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        contract_file_url: '',
+        contract_file_name: '',
+      }));
+    }
+  };
+
+  // Handle PDF view
+  const handleViewPDF = (url, fileName) => {
+    setPdfViewerUrl(url);
+    setPdfViewerFileName(fileName);
+    setPdfViewerOpen(true);
+  };
+
   // Local validation (required fields)
   const validateLocal = () => {
     const newErrors = {};
@@ -349,22 +376,19 @@ const ContractSidebar = ({
         setValidationErrors(response.errors || []);
         setValidationWarnings(response.warnings || []);
         
-        // If there are errors or warnings, show modal
         if ((response.errors && response.errors.length > 0) || (response.warnings && response.warnings.length > 0)) {
           setShowValidationModal(true);
           return false;
         }
         
-        // No issues, proceed to save
         return true;
       } else {
-        // API error
         console.error('Validation API error:', response.message);
-        return true; // Allow save on validation API error
+        return true;
       }
     } catch (err) {
       console.error('Validation error:', err);
-      return true; // Allow save on network error
+      return true;
     } finally {
       setValidating(false);
     }
@@ -372,17 +396,15 @@ const ContractSidebar = ({
 
   // Handle submit with validation
   const handleSubmit = async () => {
-    // First, local validation
     if (!validateLocal()) return;
     
-    // Then, server validation
     const canProceed = await validateServer();
     if (canProceed) {
       onSave(formData);
     }
   };
 
-  // Handle confirm from validation modal (save despite warnings)
+  // Handle confirm from validation modal
   const handleConfirmSave = () => {
     setShowValidationModal(false);
     onSave(formData);
@@ -410,6 +432,8 @@ const ContractSidebar = ({
       new_contracted_quantity_tons: '',
       new_estimated_quantity_tons: '',
       changes_description: '',
+      amendment_file_url: '',
+      amendment_file_name: '',
     });
   };
 
@@ -425,12 +449,30 @@ const ContractSidebar = ({
       new_contracted_quantity_tons: a.new_contracted_quantity_tons || '',
       new_estimated_quantity_tons: a.new_estimated_quantity_tons || '',
       changes_description: a.changes_description || '',
+      amendment_file_url: a.amendment_file_url || '',
+      amendment_file_name: a.amendment_file_name || '',
     });
   };
 
   const handleAmendmentInputChange = (e) => {
     const { name, value } = e.target;
     setAmendmentForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAmendmentPDFChange = (fileData) => {
+    if (fileData) {
+      setAmendmentForm(prev => ({
+        ...prev,
+        amendment_file_url: fileData.url,
+        amendment_file_name: fileData.fileName,
+      }));
+    } else {
+      setAmendmentForm(prev => ({
+        ...prev,
+        amendment_file_url: '',
+        amendment_file_name: '',
+      }));
+    }
   };
 
   const handleSaveAmendment = async () => {
@@ -568,7 +610,6 @@ const ContractSidebar = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {mode === 'delete' ? (
-            // Delete confirmation
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-8 h-8 text-red-600" />
@@ -584,7 +625,6 @@ const ContractSidebar = ({
               )}
             </div>
           ) : (
-            // Form
             <div className="space-y-5">
               
               {/* Operator / Institution */}
@@ -716,7 +756,6 @@ const ContractSidebar = ({
                   )}
                 </div>
                 
-                {/* CEC Tax (DISPOSAL only) */}
                 {contractType === 'DISPOSAL' && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -764,11 +803,6 @@ const ContractSidebar = ({
                       {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
                     </span>
                   </div>
-                  {contractType === 'DISPOSAL' && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      ({parseFloat(formData.tariff_per_ton || 0).toFixed(2)} + {parseFloat(formData.cec_tax_per_ton || 0).toFixed(2)}) × {parseFloat(formData.contracted_quantity_tons || 0).toLocaleString('ro-RO')} t
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -793,9 +827,6 @@ const ContractSidebar = ({
                         <option key={i.id} value={i.id}>{i.name}</option>
                       ))}
                     </select>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Selectați dacă contractul este în asociere cu alt operator
-                    </p>
                   </div>
 
                   {/* Performance Indicators */}
@@ -819,7 +850,7 @@ const ContractSidebar = ({
                           value={formData.indicator_recycling_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -840,7 +871,7 @@ const ContractSidebar = ({
                           value={formData.indicator_energy_recovery_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -861,7 +892,7 @@ const ContractSidebar = ({
                           value={formData.indicator_disposal_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -870,6 +901,19 @@ const ContractSidebar = ({
                   </div>
                 </>
               )}
+
+              {/* ================= PDF UPLOAD FOR CONTRACT ================= */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
+                <PDFUpload
+                  label="Document Contract (PDF)"
+                  value={formData.contract_file_url ? { url: formData.contract_file_url, fileName: formData.contract_file_name } : null}
+                  onChange={handlePDFChange}
+                  onView={handleViewPDF}
+                  contractType={contractType}
+                  contractNumber={formData.contract_number}
+                  disabled={isReadOnly}
+                />
+              </div>
 
               {/* Notes */}
               <div>
@@ -905,7 +949,6 @@ const ContractSidebar = ({
               {/* ================= AMENDMENTS SECTION ================= */}
               {(mode === 'edit' || mode === 'view') && (contractType === 'DISPOSAL' || contractType === 'TMB') && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden mt-6">
-                  {/* Section Header */}
                   <button
                     type="button"
                     onClick={() => setShowAmendments(!showAmendments)}
@@ -928,7 +971,6 @@ const ContractSidebar = ({
                     }
                   </button>
 
-                  {/* Amendments List */}
                   {showAmendments && (
                     <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
                       {loadingAmendments ? (
@@ -947,14 +989,24 @@ const ContractSidebar = ({
                           {amendments.map(a => (
                             <div key={a.id} className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                               <div className="flex items-start justify-between">
-                                <div>
-                                  <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-semibold text-gray-900 dark:text-white">
                                       {a.amendment_number}
                                     </span>
                                     <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded">
                                       {AMENDMENT_TYPES.find(t => t.value === a.amendment_type)?.label || a.amendment_type}
                                     </span>
+                                    {a.amendment_file_url && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleViewPDF(a.amendment_file_url, a.amendment_file_name || 'Act aditional.pdf')}
+                                        className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded flex items-center gap-1 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
+                                      >
+                                        <FileText className="w-3 h-3" />
+                                        PDF
+                                      </button>
+                                    )}
                                   </div>
                                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
@@ -976,7 +1028,7 @@ const ContractSidebar = ({
                                 </div>
                                 
                                 {mode === 'edit' && (
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-1 ml-2">
                                     <button
                                       type="button"
                                       onClick={() => handleEditAmendment(a)}
@@ -1047,7 +1099,7 @@ const ContractSidebar = ({
                                 </select>
                               </div>
 
-                              {/* Conditional fields */}
+                              {/* Conditional fields based on amendment type */}
                               {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'MULTIPLE') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -1112,6 +1164,18 @@ const ContractSidebar = ({
                                 </div>
                               )}
 
+                              {/* PDF Upload for Amendment */}
+                              <PDFUpload
+                                label="Document Act Adițional (PDF)"
+                                value={amendmentForm.amendment_file_url ? { url: amendmentForm.amendment_file_url, fileName: amendmentForm.amendment_file_name } : null}
+                                onChange={handleAmendmentPDFChange}
+                                onView={handleViewPDF}
+                                contractType={contractType}
+                                contractNumber={formData.contract_number}
+                                isAmendment={true}
+                                amendmentNumber={amendmentForm.amendment_number}
+                              />
+
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                                   Descriere
@@ -1125,7 +1189,6 @@ const ContractSidebar = ({
                                 />
                               </div>
 
-                              {/* Amendment Actions */}
                               <div className="flex gap-2 pt-2">
                                 <button
                                   type="button"
@@ -1218,6 +1281,14 @@ const ContractSidebar = ({
         errors={validationErrors}
         warnings={validationWarnings}
         loading={saving}
+      />
+
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
+        isOpen={pdfViewerOpen}
+        onClose={() => setPdfViewerOpen(false)}
+        url={pdfViewerUrl}
+        fileName={pdfViewerFileName}
       />
     </>
   );
