@@ -9,9 +9,10 @@ import { useState, useEffect } from 'react';
 import {
   X, FileText, Calendar, MapPin, Building2, Users,
   Percent, FileCheck, ChevronDown, ChevronUp,
-  Clock, DollarSign, Package, AlertCircle,
+  Clock, DollarSign, Package, AlertCircle, Eye,
 } from 'lucide-react';
 import { apiGet } from '../../api/apiClient';
+import PDFViewerModal from '../common/PDFViewerModal';
 
 const ContractViewModal = ({
   isOpen,
@@ -22,6 +23,11 @@ const ContractViewModal = ({
   const [amendments, setAmendments] = useState([]);
   const [loadingAmendments, setLoadingAmendments] = useState(false);
   const [showAmendments, setShowAmendments] = useState(false);
+
+  // PDF Viewer state
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfViewerUrl, setPdfViewerUrl] = useState('');
+  const [pdfViewerFileName, setPdfViewerFileName] = useState('');
 
   useEffect(() => {
     if (isOpen && contract?.id) {
@@ -55,6 +61,12 @@ const ContractViewModal = ({
     } finally {
       setLoadingAmendments(false);
     }
+  };
+
+  const handleViewPDF = (url, fileName) => {
+    setPdfViewerUrl(url);
+    setPdfViewerFileName(fileName);
+    setPdfViewerOpen(true);
   };
 
   const formatDate = (dateStr) => {
@@ -299,6 +311,32 @@ const ContractViewModal = ({
                 </div>
               )}
 
+              {/* Section: Contract Document */}
+              {contract.contract_file_url && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                    Document Contract
+                  </h3>
+                  <button
+                    onClick={() => handleViewPDF(contract.contract_file_url, contract.contract_file_name || 'Contract.pdf')}
+                    className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-500/10 dark:to-orange-500/10 rounded-xl border border-red-100 dark:border-red-500/20 hover:shadow-md transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/30">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                        {contract.contract_file_name || 'Contract.pdf'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Click pentru vizualizare
+                      </p>
+                    </div>
+                    <Eye className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                  </button>
+                </div>
+              )}
+
               {/* Section: Notes */}
               {contract.notes && (
                 <div>
@@ -347,7 +385,12 @@ const ContractViewModal = ({
                         </p>
                       ) : (
                         amendments.map((amendment, idx) => (
-                          <AmendmentCard key={amendment.id} amendment={amendment} index={idx + 1} />
+                          <AmendmentCard 
+                            key={amendment.id} 
+                            amendment={amendment} 
+                            index={idx + 1} 
+                            onViewPDF={handleViewPDF}
+                          />
                         ))
                       )}
                     </div>
@@ -374,11 +417,22 @@ const ContractViewModal = ({
           </div>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      <PDFViewerModal
+        isOpen={pdfViewerOpen}
+        onClose={() => setPdfViewerOpen(false)}
+        url={pdfViewerUrl}
+        fileName={pdfViewerFileName}
+      />
     </>
   );
 };
 
-// Helper Components
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
 const InfoItem = ({ icon: Icon, label, value, iconColor = 'text-gray-400' }) => (
   <div className="flex items-start gap-3">
     <Icon className={`w-4 h-4 mt-0.5 ${iconColor}`} />
@@ -404,7 +458,7 @@ const IndicatorCard = ({ label, value, color }) => {
   );
 };
 
-const AmendmentCard = ({ amendment, index }) => {
+const AmendmentCard = ({ amendment, index, onViewPDF }) => {
   const AMENDMENT_TYPE_LABELS = {
     EXTENSION: 'Prelungire',
     TARIFF_CHANGE: 'Modificare tarif',
@@ -459,6 +513,23 @@ const AmendmentCard = ({ amendment, index }) => {
           </div>
         )}
       </div>
+
+      {/* PDF Button for Amendment */}
+      {amendment.amendment_file_url && (
+        <button
+          onClick={() => onViewPDF(
+            amendment.amendment_file_url,
+            amendment.amendment_file_name || `Act_Aditional_${index}.pdf`
+          )}
+          className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 hover:shadow-sm transition group"
+        >
+          <FileText className="w-4 h-4 text-red-500" />
+          <span className="text-xs font-medium text-red-600 dark:text-red-400">
+            Vezi document act adițional
+          </span>
+          <Eye className="w-4 h-4 ml-auto text-red-400 group-hover:text-red-500 transition-colors" />
+        </button>
+      )}
 
       {amendment.changes_description && (
         <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 italic">
