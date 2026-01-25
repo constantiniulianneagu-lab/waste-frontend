@@ -1,7 +1,7 @@
 // src/components/contracts/ContractSidebar.jsx
 /**
  * ============================================================================
- * CONTRACT SIDEBAR - COMPLETE WITH AMENDMENTS + TMB SUPPORT
+ * CONTRACT SIDEBAR - COMPLETE WITH VALIDATION + AMENDMENTS
  * ============================================================================
  */
 
@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import {
   X, Save, Trash2, FileText, AlertTriangle, Plus,
   ChevronDown, ChevronUp, Calendar, FileCheck, Users,
-  Percent,
+  Percent, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 
@@ -20,6 +20,127 @@ const AMENDMENT_TYPES = [
   { value: 'MULTIPLE', label: 'Modificări multiple' },
 ];
 
+// ============================================================================
+// VALIDATION MODAL COMPONENT
+// ============================================================================
+const ValidationModal = ({ isOpen, onClose, onConfirm, errors, warnings, loading }) => {
+  if (!isOpen) return null;
+
+  const hasErrors = errors && errors.length > 0;
+  const hasWarnings = warnings && warnings.length > 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+          {/* Header */}
+          <div className={`px-6 py-4 ${hasErrors ? 'bg-red-50 dark:bg-red-500/10' : 'bg-amber-50 dark:bg-amber-500/10'}`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                hasErrors 
+                  ? 'bg-red-100 dark:bg-red-500/20' 
+                  : 'bg-amber-100 dark:bg-amber-500/20'
+              }`}>
+                {hasErrors 
+                  ? <AlertCircle className="w-5 h-5 text-red-600" />
+                  : <AlertTriangle className="w-5 h-5 text-amber-600" />
+                }
+              </div>
+              <div>
+                <h3 className={`text-lg font-bold ${hasErrors ? 'text-red-900 dark:text-red-100' : 'text-amber-900 dark:text-amber-100'}`}>
+                  {hasErrors ? 'Eroare la Validare' : 'Atenție'}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {hasErrors ? 'Contractul nu poate fi salvat' : 'Verificați înainte de salvare'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* Errors */}
+            {hasErrors && (
+              <div className="space-y-2">
+                {errors.map((error, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/20">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        {error.message}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Warnings */}
+            {hasWarnings && (
+              <div className="space-y-2">
+                {warnings.map((warning, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200 dark:border-amber-500/20">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        {warning.message}
+                      </p>
+                      {warning.details && (
+                        <div className="mt-1 text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
+                          {warning.details.contract_number && (
+                            <p>Contract: <span className="font-semibold">{warning.details.contract_number}</span></p>
+                          )}
+                          {warning.details.period && (
+                            <p>Perioadă: <span className="font-semibold">{warning.details.period}</span></p>
+                          )}
+                          {warning.details.overlap_days && (
+                            <p>Suprapunere: <span className="font-semibold">{warning.details.overlap_days} zile</span></p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors"
+              >
+                {hasErrors ? 'Închide' : 'Anulează'}
+              </button>
+              
+              {!hasErrors && hasWarnings && (
+                <button
+                  onClick={onConfirm}
+                  disabled={loading}
+                  className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )}
+                  {loading ? 'Se salvează...' : 'Continuă și Salvează'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ============================================================================
+// MAIN SIDEBAR COMPONENT
+// ============================================================================
 const ContractSidebar = ({
   isOpen,
   onClose,
@@ -34,21 +155,16 @@ const ContractSidebar = ({
 }) => {
   // Form state
   const [formData, setFormData] = useState({
-    // Common fields
     institution_id: '',
     contract_number: '',
     contract_date_start: '',
     contract_date_end: '',
     notes: '',
     is_active: true,
-    
-    // DISPOSAL specific
     sector_id: '',
     tariff_per_ton: '',
     cec_tax_per_ton: '',
     contracted_quantity_tons: '',
-    
-    // TMB specific
     estimated_quantity_tons: '',
     associate_institution_id: '',
     indicator_recycling_percent: '',
@@ -62,6 +178,12 @@ const ContractSidebar = ({
   const [showAmendments, setShowAmendments] = useState(false);
   const [amendmentForm, setAmendmentForm] = useState(null);
   const [savingAmendment, setSavingAmendment] = useState(false);
+
+  // Validation modal state
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [validationWarnings, setValidationWarnings] = useState([]);
+  const [validating, setValidating] = useState(false);
 
   // Filter institutions based on contract type
   const filteredInstitutions = institutions.filter(inst => {
@@ -77,7 +199,7 @@ const ContractSidebar = ({
     }
   });
 
-  // TMB operators for associate dropdown (exclude selected operator)
+  // TMB operators for associate dropdown
   const tmbOperatorsForAssociate = institutions.filter(inst => 
     (inst.type === 'TMB_OPERATOR' || inst.type === 'AEROBIC_OPERATOR' || inst.type === 'ANAEROBIC_OPERATOR') &&
     inst.id !== parseInt(formData.institution_id)
@@ -131,6 +253,9 @@ const ContractSidebar = ({
     setErrors({});
     setAmendmentForm(null);
     setShowAmendments(false);
+    setShowValidationModal(false);
+    setValidationErrors([]);
+    setValidationWarnings([]);
   }, [contract, mode, isOpen, contractType]);
 
   // Load amendments
@@ -174,8 +299,8 @@ const ContractSidebar = ({
     }
   };
 
-  // Validation
-  const validate = () => {
+  // Local validation (required fields)
+  const validateLocal = () => {
     const newErrors = {};
     
     if (!formData.contract_number.trim()) {
@@ -201,9 +326,65 @@ const ContractSidebar = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Submit form
-  const handleSubmit = () => {
-    if (!validate()) return;
+  // Server validation
+  const validateServer = async () => {
+    setValidating(true);
+    try {
+      const endpoint = contractType === 'TMB' 
+        ? '/api/contracts/validate/tmb'
+        : '/api/contracts/validate/disposal';
+      
+      const payload = {
+        id: contract?.id || null,
+        institution_id: formData.institution_id,
+        sector_id: formData.sector_id,
+        contract_number: formData.contract_number,
+        contract_date_start: formData.contract_date_start,
+        contract_date_end: formData.contract_date_end,
+      };
+
+      const response = await apiPost(endpoint, payload);
+      
+      if (response.success) {
+        setValidationErrors(response.errors || []);
+        setValidationWarnings(response.warnings || []);
+        
+        // If there are errors or warnings, show modal
+        if ((response.errors && response.errors.length > 0) || (response.warnings && response.warnings.length > 0)) {
+          setShowValidationModal(true);
+          return false;
+        }
+        
+        // No issues, proceed to save
+        return true;
+      } else {
+        // API error
+        console.error('Validation API error:', response.message);
+        return true; // Allow save on validation API error
+      }
+    } catch (err) {
+      console.error('Validation error:', err);
+      return true; // Allow save on network error
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  // Handle submit with validation
+  const handleSubmit = async () => {
+    // First, local validation
+    if (!validateLocal()) return;
+    
+    // Then, server validation
+    const canProceed = await validateServer();
+    if (canProceed) {
+      onSave(formData);
+    }
+  };
+
+  // Handle confirm from validation modal (save despite warnings)
+  const handleConfirmSave = () => {
+    setShowValidationModal(false);
     onSave(formData);
   };
 
@@ -1015,19 +1196,29 @@ const ContractSidebar = ({
             ) : mode !== 'view' && (
               <button
                 onClick={handleSubmit}
-                disabled={saving}
+                disabled={saving || validating}
                 className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30 transition-all"
               >
-                {saving 
+                {(saving || validating)
                   ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   : <Save className="w-4 h-4" />
                 }
-                {saving ? 'Se salvează...' : (mode === 'add' ? 'Adaugă' : 'Salvează')}
+                {validating ? 'Se verifică...' : saving ? 'Se salvează...' : (mode === 'add' ? 'Adaugă' : 'Salvează')}
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Validation Modal */}
+      <ValidationModal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        onConfirm={handleConfirmSave}
+        errors={validationErrors}
+        warnings={validationWarnings}
+        loading={saving}
+      />
     </>
   );
 };
