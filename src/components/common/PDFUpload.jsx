@@ -3,15 +3,14 @@
  * ============================================================================
  * PDF UPLOAD COMPONENT
  * ============================================================================
- * Reusable component for uploading PDF files
- * ============================================================================
  */
 
 import { useState, useRef } from 'react';
 import { Upload, FileText, X, Loader2, Eye, Download, AlertCircle } from 'lucide-react';
+import { uploadContractPDF, deleteContractPDF } from '../../utils/supabaseStorage';
 
 const PDFUpload = ({
-  value = null, // { url, fileName }
+  value = null,
   onChange,
   onView,
   contractType = 'DISPOSAL',
@@ -29,13 +28,11 @@ const PDFUpload = ({
   const handleFileSelect = async (file) => {
     if (!file) return;
 
-    // Validate file type
     if (file.type !== 'application/pdf') {
       setError('Doar fișiere PDF sunt acceptate');
       return;
     }
 
-    // Validate file size (max 20MB)
     const maxSize = 20 * 1024 * 1024;
     if (file.size > maxSize) {
       setError('Fișierul depășește limita de 20MB');
@@ -46,9 +43,6 @@ const PDFUpload = ({
     setUploading(true);
 
     try {
-      // Dynamic import to avoid issues
-      const { uploadContractPDF } = await import('../../utils/supabaseStorage');
-      
       const result = await uploadContractPDF(
         file,
         contractType,
@@ -102,7 +96,6 @@ const PDFUpload = ({
   const handleRemove = async () => {
     if (value?.url) {
       try {
-        const { deleteContractPDF } = await import('../../utils/supabaseStorage');
         await deleteContractPDF(value.url, contractType);
       } catch (err) {
         console.error('Delete error:', err);
