@@ -1,10 +1,7 @@
 // src/components/contracts/ContractSidebar.jsx
 /**
  * ============================================================================
- * CONTRACT SIDEBAR - ADD/EDIT/VIEW WITH AMENDMENTS
- * ============================================================================
- * Suport pentru: DISPOSAL, WASTE_COLLECTOR, TMB
- * Updated: 2025-01-25
+ * CONTRACT SIDEBAR - COMPLETE WITH AMENDMENTS + TMB SUPPORT
  * ============================================================================
  */
 
@@ -12,7 +9,7 @@ import { useState, useEffect } from 'react';
 import {
   X, Save, Trash2, FileText, AlertTriangle, Plus,
   ChevronDown, ChevronUp, Calendar, FileCheck, Users,
-  Percent, Upload,
+  Percent,
 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 
@@ -38,6 +35,7 @@ const ContractSidebar = ({
   // Form state
   const [formData, setFormData] = useState({
     // Common fields
+    institution_id: '',
     contract_number: '',
     contract_date_start: '',
     contract_date_end: '',
@@ -45,7 +43,6 @@ const ContractSidebar = ({
     is_active: true,
     
     // DISPOSAL specific
-    institution_id: '',
     sector_id: '',
     tariff_per_ton: '',
     cec_tax_per_ton: '',
@@ -57,8 +54,6 @@ const ContractSidebar = ({
     indicator_recycling_percent: '',
     indicator_energy_recovery_percent: '',
     indicator_disposal_percent: '',
-    contract_file_url: '',
-    contract_file_name: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -82,52 +77,45 @@ const ContractSidebar = ({
     }
   });
 
-  // TMB operators for associate dropdown
-  const tmbOperators = institutions.filter(inst => 
-    inst.type === 'TMB_OPERATOR' || inst.type === 'AEROBIC_OPERATOR' || inst.type === 'ANAEROBIC_OPERATOR'
+  // TMB operators for associate dropdown (exclude selected operator)
+  const tmbOperatorsForAssociate = institutions.filter(inst => 
+    (inst.type === 'TMB_OPERATOR' || inst.type === 'AEROBIC_OPERATOR' || inst.type === 'ANAEROBIC_OPERATOR') &&
+    inst.id !== parseInt(formData.institution_id)
   );
 
   // Initialize form data
   useEffect(() => {
     if (contract && (mode === 'edit' || mode === 'view' || mode === 'delete')) {
       setFormData({
-        // Common
+        institution_id: contract.institution_id || '',
         contract_number: contract.contract_number || '',
         contract_date_start: contract.contract_date_start || '',
         contract_date_end: contract.contract_date_end || '',
         notes: contract.notes || '',
         is_active: contract.is_active ?? true,
-        
-        // DISPOSAL
-        institution_id: contract.institution_id || '',
         sector_id: contract.sector_id || '',
         tariff_per_ton: contract.tariff_per_ton || '',
         cec_tax_per_ton: contract.cec_tax_per_ton || '',
         contracted_quantity_tons: contract.contracted_quantity_tons || '',
-        
-        // TMB
         estimated_quantity_tons: contract.estimated_quantity_tons || '',
         associate_institution_id: contract.associate_institution_id || '',
         indicator_recycling_percent: contract.indicator_recycling_percent || '',
         indicator_energy_recovery_percent: contract.indicator_energy_recovery_percent || '',
         indicator_disposal_percent: contract.indicator_disposal_percent || '',
-        contract_file_url: contract.contract_file_url || '',
-        contract_file_name: contract.contract_file_name || '',
       });
       
       if (mode === 'edit' || mode === 'view') {
         loadAmendments();
       }
     } else if (mode === 'add') {
-      // Default values for new contract
       const prefix = contractType === 'DISPOSAL' ? 'D-' : contractType === 'TMB' ? 'TMB-' : 'C-';
       setFormData({
+        institution_id: '',
         contract_number: prefix,
         contract_date_start: '',
         contract_date_end: '',
         notes: '',
         is_active: true,
-        institution_id: '',
         sector_id: '',
         tariff_per_ton: '',
         cec_tax_per_ton: '0',
@@ -137,13 +125,12 @@ const ContractSidebar = ({
         indicator_recycling_percent: '',
         indicator_energy_recovery_percent: '',
         indicator_disposal_percent: '',
-        contract_file_url: '',
-        contract_file_name: '',
       });
       setAmendments([]);
     }
     setErrors({});
     setAmendmentForm(null);
+    setShowAmendments(false);
   }, [contract, mode, isOpen, contractType]);
 
   // Load amendments
@@ -197,22 +184,16 @@ const ContractSidebar = ({
     if (!formData.contract_date_start) {
       newErrors.contract_date_start = 'Data de început este obligatorie';
     }
-    
-    if (contractType === 'DISPOSAL') {
-      if (!formData.institution_id) {
-        newErrors.institution_id = 'Selectați instituția';
-      }
-      if (!formData.sector_id) {
-        newErrors.sector_id = 'Selectați sectorul';
-      }
-      if (!formData.tariff_per_ton || parseFloat(formData.tariff_per_ton) <= 0) {
-        newErrors.tariff_per_ton = 'Tariful este obligatoriu';
-      }
+    if (!formData.institution_id) {
+      newErrors.institution_id = contractType === 'TMB' ? 'Selectați operatorul TMB' : 'Selectați instituția';
+    }
+    if (!formData.sector_id) {
+      newErrors.sector_id = 'Selectați U.A.T. (sectorul)';
     }
     
-    if (contractType === 'TMB') {
-      if (!formData.sector_id) {
-        newErrors.sector_id = 'Selectați U.A.T. (sectorul)';
+    if (contractType === 'DISPOSAL') {
+      if (!formData.tariff_per_ton || parseFloat(formData.tariff_per_ton) <= 0) {
+        newErrors.tariff_per_ton = 'Tariful este obligatoriu';
       }
     }
     
@@ -354,11 +335,7 @@ const ContractSidebar = ({
   };
 
   const getTitle = () => {
-    const labels = {
-      DISPOSAL: 'Depozitare',
-      WASTE_COLLECTOR: 'Colectare',
-      TMB: 'TMB'
-    };
+    const labels = { DISPOSAL: 'Depozitare', WASTE_COLLECTOR: 'Colectare', TMB: 'TMB' };
     const l = labels[contractType] || '';
     switch (mode) {
       case 'add': return `Adaugă Contract ${l}`;
@@ -395,11 +372,14 @@ const ContractSidebar = ({
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">{getTitle()}</h2>
               {contract && mode !== 'add' && (
-                <p className="text-xs text-gray-500">{contract.contract_number}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{contract.contract_number}</p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <button 
+            onClick={onClose} 
+            className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -426,31 +406,29 @@ const ContractSidebar = ({
             // Form
             <div className="space-y-5">
               
-              {/* Institution (DISPOSAL only) */}
-              {contractType === 'DISPOSAL' && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Instituție <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="institution_id"
-                    value={formData.institution_id}
-                    onChange={handleInputChange}
-                    disabled={isReadOnly || mode === 'edit'}
-                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 ${
-                      errors.institution_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                    }`}
-                  >
-                    <option value="">Selectează...</option>
-                    {filteredInstitutions.map(i => (
-                      <option key={i.id} value={i.id}>{i.name}</option>
-                    ))}
-                  </select>
-                  {errors.institution_id && (
-                    <p className="mt-1 text-xs text-red-600">{errors.institution_id}</p>
-                  )}
-                </div>
-              )}
+              {/* Operator / Institution */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  {contractType === 'TMB' ? 'Operator TMB' : 'Instituție'} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="institution_id"
+                  value={formData.institution_id}
+                  onChange={handleInputChange}
+                  disabled={isReadOnly || mode === 'edit'}
+                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
+                    errors.institution_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  }`}
+                >
+                  <option value="">Selectează...</option>
+                  {filteredInstitutions.map(i => (
+                    <option key={i.id} value={i.id}>{i.name}</option>
+                  ))}
+                </select>
+                {errors.institution_id && (
+                  <p className="mt-1 text-xs text-red-600">{errors.institution_id}</p>
+                )}
+              </div>
 
               {/* Contract Number */}
               <div>
@@ -463,7 +441,7 @@ const ContractSidebar = ({
                   value={formData.contract_number}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 ${
+                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                   }`}
                   placeholder={contractType === 'TMB' ? 'TMB-123' : 'D-123'}
@@ -485,7 +463,7 @@ const ContractSidebar = ({
                     value={formData.contract_date_start}
                     onChange={handleInputChange}
                     disabled={isReadOnly}
-                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 ${
+                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                       errors.contract_date_start ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     }`}
                   />
@@ -495,7 +473,7 @@ const ContractSidebar = ({
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Durata (Data Sfârșit)
+                    Durată (Data Sfârșit)
                   </label>
                   <input
                     type="date"
@@ -503,7 +481,7 @@ const ContractSidebar = ({
                     value={formData.contract_date_end}
                     onChange={handleInputChange}
                     disabled={isReadOnly}
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60"
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
               </div>
@@ -518,7 +496,7 @@ const ContractSidebar = ({
                   value={formData.sector_id}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 ${
+                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.sector_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                   }`}
                 >
@@ -538,7 +516,7 @@ const ContractSidebar = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Tarif (LEI/t) {contractType !== 'WASTE_COLLECTOR' && <span className="text-red-500">*</span>}
+                    Tarif (LEI/t) {contractType === 'DISPOSAL' && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
@@ -547,7 +525,7 @@ const ContractSidebar = ({
                     value={formData.tariff_per_ton}
                     onChange={handleInputChange}
                     disabled={isReadOnly}
-                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 ${
+                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                       errors.tariff_per_ton ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     }`}
                     placeholder="0.00"
@@ -570,7 +548,7 @@ const ContractSidebar = ({
                       value={formData.cec_tax_per_ton}
                       onChange={handleInputChange}
                       disabled={isReadOnly}
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                       placeholder="0.00"
                     />
                   </div>
@@ -589,13 +567,13 @@ const ContractSidebar = ({
                   value={contractType === 'TMB' ? formData.estimated_quantity_tons : formData.contracted_quantity_tons}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   placeholder="0"
                 />
               </div>
 
               {/* Total Value */}
-              {(formData.tariff_per_ton || formData.estimated_quantity_tons || formData.contracted_quantity_tons) && (
+              {(formData.tariff_per_ton && (formData.estimated_quantity_tons || formData.contracted_quantity_tons)) && (
                 <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-xl border border-teal-200 dark:border-teal-500/20">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -605,10 +583,15 @@ const ContractSidebar = ({
                       {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
                     </span>
                   </div>
+                  {contractType === 'DISPOSAL' && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      ({parseFloat(formData.tariff_per_ton || 0).toFixed(2)} + {parseFloat(formData.cec_tax_per_ton || 0).toFixed(2)}) × {parseFloat(formData.contracted_quantity_tons || 0).toLocaleString('ro-RO')} t
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* TMB SPECIFIC FIELDS */}
+              {/* ================= TMB SPECIFIC FIELDS ================= */}
               {contractType === 'TMB' && (
                 <>
                   {/* Associate */}
@@ -622,14 +605,14 @@ const ContractSidebar = ({
                       value={formData.associate_institution_id}
                       onChange={handleInputChange}
                       disabled={isReadOnly}
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                     >
                       <option value="">Fără asociat</option>
-                      {tmbOperators.map(i => (
+                      {tmbOperatorsForAssociate.map(i => (
                         <option key={i.id} value={i.id}>{i.name}</option>
                       ))}
                     </select>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Selectați dacă contractul este în asociere cu alt operator
                     </p>
                   </div>
@@ -655,7 +638,7 @@ const ContractSidebar = ({
                           value={formData.indicator_recycling_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm disabled:opacity-60"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -676,7 +659,7 @@ const ContractSidebar = ({
                           value={formData.indicator_energy_recovery_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm disabled:opacity-60"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -697,7 +680,7 @@ const ContractSidebar = ({
                           value={formData.indicator_disposal_percent}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
-                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm disabled:opacity-60"
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                           placeholder="0.00"
                         />
                         <span className="text-sm text-gray-500">%</span>
@@ -718,7 +701,7 @@ const ContractSidebar = ({
                   onChange={handleInputChange}
                   disabled={isReadOnly}
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white resize-none disabled:opacity-60"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white resize-none disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   placeholder="Observații..."
                 />
               </div>
@@ -731,23 +714,21 @@ const ContractSidebar = ({
                   checked={formData.is_active}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-5 h-5 text-teal-600 rounded disabled:opacity-60"
+                  className="w-5 h-5 text-teal-600 rounded border-gray-300 focus:ring-teal-500 disabled:opacity-60"
                 />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contract activ
                 </label>
               </div>
 
-              {/* ================================================================
-                  AMENDMENTS SECTION
-                  ================================================================ */}
+              {/* ================= AMENDMENTS SECTION ================= */}
               {(mode === 'edit' || mode === 'view') && (contractType === 'DISPOSAL' || contractType === 'TMB') && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden mt-6">
                   {/* Section Header */}
                   <button
                     type="button"
                     onClick={() => setShowAmendments(!showAmendments)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <FileCheck className="w-4 h-4 text-teal-500" />
@@ -776,7 +757,7 @@ const ContractSidebar = ({
                       ) : (
                         <>
                           {amendments.length === 0 && !amendmentForm && (
-                            <p className="text-sm text-gray-500 text-center py-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
                               Niciun act adițional
                             </p>
                           )}
@@ -794,7 +775,7 @@ const ContractSidebar = ({
                                       {AMENDMENT_TYPES.find(t => t.value === a.amendment_type)?.label || a.amendment_type}
                                     </span>
                                   </div>
-                                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
                                     {formatDate(a.amendment_date)}
                                   </p>
@@ -818,14 +799,14 @@ const ContractSidebar = ({
                                     <button
                                       type="button"
                                       onClick={() => handleEditAmendment(a)}
-                                      className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded"
+                                      className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded transition-colors"
                                     >
                                       <FileText className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteAmendment(a.id)}
-                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
+                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -852,7 +833,7 @@ const ContractSidebar = ({
                                     name="amendment_number"
                                     value={amendmentForm.amendment_number}
                                     onChange={handleAmendmentInputChange}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
                                 </div>
                                 <div>
@@ -864,7 +845,7 @@ const ContractSidebar = ({
                                     name="amendment_date"
                                     value={amendmentForm.amendment_date}
                                     onChange={handleAmendmentInputChange}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
                                 </div>
                               </div>
@@ -877,7 +858,7 @@ const ContractSidebar = ({
                                   name="amendment_type"
                                   value={amendmentForm.amendment_type}
                                   onChange={handleAmendmentInputChange}
-                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                 >
                                   {AMENDMENT_TYPES.map(t => (
                                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -896,7 +877,7 @@ const ContractSidebar = ({
                                     name="new_contract_date_end"
                                     value={amendmentForm.new_contract_date_end}
                                     onChange={handleAmendmentInputChange}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
                                 </div>
                               )}
@@ -913,7 +894,7 @@ const ContractSidebar = ({
                                       name="new_tariff_per_ton"
                                       value={amendmentForm.new_tariff_per_ton}
                                       onChange={handleAmendmentInputChange}
-                                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                     />
                                   </div>
                                   {contractType === 'DISPOSAL' && (
@@ -927,7 +908,7 @@ const ContractSidebar = ({
                                         name="new_cec_tax_per_ton"
                                         value={amendmentForm.new_cec_tax_per_ton}
                                         onChange={handleAmendmentInputChange}
-                                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                       />
                                     </div>
                                   )}
@@ -945,7 +926,7 @@ const ContractSidebar = ({
                                     name={contractType === 'TMB' ? 'new_estimated_quantity_tons' : 'new_contracted_quantity_tons'}
                                     value={contractType === 'TMB' ? amendmentForm.new_estimated_quantity_tons : amendmentForm.new_contracted_quantity_tons}
                                     onChange={handleAmendmentInputChange}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
                                 </div>
                               )}
@@ -959,7 +940,7 @@ const ContractSidebar = ({
                                   value={amendmentForm.changes_description}
                                   onChange={handleAmendmentInputChange}
                                   rows={2}
-                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm resize-none"
+                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white resize-none"
                                 />
                               </div>
 
@@ -968,7 +949,7 @@ const ContractSidebar = ({
                                 <button
                                   type="button"
                                   onClick={() => setAmendmentForm(null)}
-                                  className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg"
+                                  className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                 >
                                   Anulează
                                 </button>
@@ -976,7 +957,7 @@ const ContractSidebar = ({
                                   type="button"
                                   onClick={handleSaveAmendment}
                                   disabled={savingAmendment}
-                                  className="flex-1 px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 flex items-center justify-center gap-1"
+                                  className="flex-1 px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 flex items-center justify-center gap-1 transition-colors"
                                 >
                                   {savingAmendment 
                                     ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -993,7 +974,7 @@ const ContractSidebar = ({
                             <button
                               type="button"
                               onClick={handleAddAmendment}
-                              className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-500 hover:border-teal-400 hover:text-teal-600 flex items-center justify-center gap-1"
+                              className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:border-teal-400 hover:text-teal-600 dark:hover:border-teal-500 dark:hover:text-teal-400 flex items-center justify-center gap-1 transition-colors"
                             >
                               <Plus className="w-4 h-4" />
                               Adaugă Act Adițional
@@ -1014,7 +995,7 @@ const ContractSidebar = ({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl"
+              className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors"
             >
               {mode === 'view' ? 'Închide' : 'Anulează'}
             </button>
@@ -1023,7 +1004,7 @@ const ContractSidebar = ({
               <button
                 onClick={() => onDelete(contract)}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
               >
                 {saving 
                   ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1035,7 +1016,7 @@ const ContractSidebar = ({
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30"
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-teal-500/30 transition-all"
               >
                 {saving 
                   ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
