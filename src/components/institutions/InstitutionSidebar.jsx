@@ -28,6 +28,7 @@ const InstitutionSidebar = ({
   saving = false,
   sectors = [],
   institutionTypes = {},
+  dropdownOrder = [],
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -301,19 +302,26 @@ const InstitutionSidebar = ({
                   Tip Instituție <span className="text-red-500">*</span>
                 </label>
                 <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  disabled={isReadOnly}
-                  className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all ${
-                    errors.type ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                  }`}
-                >
-                  <option value="">Selectează tipul...</option>
-                  {Object.entries(institutionTypes).map(([value, { label }]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
+  name="type"
+  value={formData.type}
+  onChange={handleInputChange}
+  disabled={isReadOnly}
+  className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all ${
+    errors.type ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+  }`}
+>
+  <option value="">Selectează tipul...</option>
+  {dropdownOrder.length > 0 
+    ? dropdownOrder.map(typeKey => {
+        const typeInfo = institutionTypes[typeKey];
+        if (!typeInfo) return null;
+        return <option key={typeKey} value={typeKey}>{typeInfo.label}</option>;
+      })
+    : Object.entries(institutionTypes).map(([value, { label }]) => (
+        <option key={value} value={value}>{label}</option>
+      ))
+  }
+</select>
                 {errors.type && <p className="mt-1 text-xs text-red-600">{errors.type}</p>}
               </div>
 
