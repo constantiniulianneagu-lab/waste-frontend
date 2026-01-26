@@ -21,38 +21,41 @@ import InstitutionViewModal from '../components/institutions/InstitutionViewModa
 
 // Institution types with colors - ORDERED AS REQUESTED
 const INSTITUTION_TYPES = {
-  ASSOCIATION: { label: 'Asociație', color: 'slate' },
-  UAT: { label: 'U.A.T.', color: 'gray' },
-  PUBLIC_AUTHORITY: { label: 'Autoritate publică', color: 'stone' },
-  WASTE_COLLECTOR: { label: 'Colectare', color: 'teal' },
-  SORTING_OPERATOR: { label: 'Sortare', color: 'pink' },
-  AEROBIC_OPERATOR: { label: 'Aerob', color: 'cyan' },
-  ANAEROBIC_OPERATOR: { label: 'Anaerob', color: 'indigo' },
-  TMB_OPERATOR: { label: 'TMB', color: 'blue' },
-  DISPOSAL_CLIENT: { label: 'Depozitare', color: 'orange' },
-  LANDFILL: { label: 'Depozit', color: 'amber' },
-  RECYCLING_OPERATOR: { label: 'Reciclare', color: 'purple' },
-  RECOVERY_OPERATOR: { label: 'Valorificare', color: 'yellow' },
-  // Legacy/unmapped types - map them to proper labels
-  RECYCLING_CLIENT: { label: 'Reciclare', color: 'purple' },
-  REGULATOR: { label: 'Regulator', color: 'red' },
-};
+    // Main types from database
+    ASSOCIATION: { label: 'Asociație', color: 'slate' },
+    MUNICIPALITY: { label: 'U.A.T.', color: 'gray' },
+    WASTE_COLLECTOR: { label: 'Colectare', color: 'teal' },
+    SORTING_OPERATOR: { label: 'Sortare', color: 'pink' },
+    TMB_OPERATOR: { label: 'Tratare mecano-biologică', color: 'blue' },
+    AEROBIC_OPERATOR: { label: 'Tratare aerobă', color: 'cyan' },
+    ANAEROBIC_OPERATOR: { label: 'Tratare anaerobă', color: 'indigo' },
+    DISPOSAL_CLIENT: { label: 'Depozitare', color: 'orange' },
+    RECYCLING_CLIENT: { label: 'Reciclare', color: 'purple' },
+    RECOVERY_CLIENT: { label: 'Valorificare', color: 'yellow' },
+    REGULATOR: { label: 'Autoritate publică', color: 'stone' },
+    
+    // Legacy/alternative types (map to same labels for display)
+    UAT: { label: 'U.A.T.', color: 'gray' },
+    PUBLIC_AUTHORITY: { label: 'Autoritate publică', color: 'stone' },
+    LANDFILL: { label: 'Depozitare', color: 'orange' },
+    RECYCLING_OPERATOR: { label: 'Reciclare', color: 'purple' },
+    RECOVERY_OPERATOR: { label: 'Valorificare', color: 'yellow' },
+  };
 
 // Dropdown order
 const DROPDOWN_ORDER = [
-  'ASSOCIATION',
-  'UAT', 
-  'PUBLIC_AUTHORITY',
-  'WASTE_COLLECTOR',
-  'SORTING_OPERATOR',
-  'AEROBIC_OPERATOR',
-  'ANAEROBIC_OPERATOR',
-  'TMB_OPERATOR',
-  'DISPOSAL_CLIENT',
-  'LANDFILL',
-  'RECYCLING_OPERATOR',
-  'RECOVERY_OPERATOR',
-];
+    'ASSOCIATION',
+    'MUNICIPALITY',
+    'WASTE_COLLECTOR',
+    'SORTING_OPERATOR',
+    'TMB_OPERATOR',
+    'AEROBIC_OPERATOR',
+    'ANAEROBIC_OPERATOR',
+    'DISPOSAL_CLIENT',
+    'RECYCLING_CLIENT',
+    'RECOVERY_CLIENT',
+    'REGULATOR',
+  ];
 
 // Toast notification helper
 const showToast = (message, type = 'success') => {
@@ -157,29 +160,39 @@ const InstitutionsPage = () => {
 
       // Type filter
       if (selectedType) {
-        if (selectedType === 'LANDFILL' || selectedType === 'DISPOSAL_CLIENT') {
-          if (inst.type !== 'LANDFILL' && inst.type !== 'DISPOSAL_CLIENT') {
-            return false;
-          }
-        } else if (inst.type !== selectedType) {
+        const typeEquivalents = {
+          'MUNICIPALITY': ['MUNICIPALITY', 'UAT'],
+          'UAT': ['MUNICIPALITY', 'UAT'],
+          'DISPOSAL_CLIENT': ['DISPOSAL_CLIENT', 'LANDFILL'],
+          'LANDFILL': ['DISPOSAL_CLIENT', 'LANDFILL'],
+          'RECYCLING_CLIENT': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
+          'RECYCLING_OPERATOR': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
+          'RECOVERY_CLIENT': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
+          'RECOVERY_OPERATOR': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
+          'REGULATOR': ['REGULATOR', 'PUBLIC_AUTHORITY'],
+          'PUBLIC_AUTHORITY': ['REGULATOR', 'PUBLIC_AUTHORITY'],
+        };
+        
+        const equivalents = typeEquivalents[selectedType] || [selectedType];
+        if (!equivalents.includes(inst.type)) {
           return false;
         }
       }
 
       // Status filter
-      if (selectedStatus === 'active' && !inst.is_active) return false;
-      if (selectedStatus === 'inactive' && inst.is_active) return false;
+    if (selectedStatus === 'active' && !inst.is_active) return false;
+    if (selectedStatus === 'inactive' && inst.is_active) return false;
 
-      // Sector filter
-      if (selectedSector) {
-        const instSectors = inst.sectors || [];
-        const hasSector = instSectors.some(s => s.id === parseInt(selectedSector));
-        if (!hasSector) return false;
-      }
+    // Sector filter
+    if (selectedSector) {
+      const instSectors = inst.sectors || [];
+      const hasSector = instSectors.some(s => s.id === parseInt(selectedSector));
+      if (!hasSector) return false;
+    }
 
-      return true;
-    });
-  }, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
+    return true;
+  });
+}, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
 
   // Sorting
   const sortedInstitutions = useMemo(() => {
