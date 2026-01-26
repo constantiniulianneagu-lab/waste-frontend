@@ -14,15 +14,15 @@ import WasteLogin from "./WasteLogin";
 import DashboardLandfill from "./components/dashboard/DashboardLandfill";
 import DashboardTmb from "./components/dashboard/DashboardTmb";
 import Users from "./Users";
-import Institutions from "./Institutions";
 import ReportsMain from "./components/reports/ReportsMain";
 import ReportTMB from "./components/reports/ReportTMB";
 import UserProfile from "./components/UserProfile";
 import SectorStatsOverview from "./pages/SectorStatsOverview";
 import SectorStatsDetail from "./pages/SectorStatsDetail";
-
-// ✅ Contracts page (exists in your zip)
 import ContractsPage from "./pages/ContractsPage";
+
+// ✅ NEW: Import from pages folder
+import InstitutionsPage from "./pages/InstitutionsPage";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
@@ -58,7 +58,6 @@ function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const showSidebar = !!user && location.pathname !== "/login";
 
-  // ✅ Centralize roles to avoid repeating arrays everywhere
   const roles = useMemo(
     () => ({
       dashboards: [
@@ -70,7 +69,6 @@ function App() {
       reports: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
       users: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
       institutions: ["PLATFORM_ADMIN"],
-      // ✅ Contracts: admin-level management (recommended)
       contracts: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
       sectorStats: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
     }),
@@ -101,7 +99,7 @@ function App() {
             }
           />
 
-          {/* DASHBOARDS - toți (inclusiv regulator) */}
+          {/* DASHBOARDS */}
           <Route
             path="/dashboard/landfill"
             element={
@@ -120,7 +118,7 @@ function App() {
             }
           />
 
-          {/* REPORTS - fără REGULATOR_VIEWER */}
+          {/* REPORTS */}
           <Route
             path="/reports"
             element={
@@ -139,7 +137,7 @@ function App() {
             }
           />
 
-          {/* ✅ CONTRACTS */}
+          {/* CONTRACTS */}
           <Route
             path="/contracts"
             element={
@@ -149,7 +147,7 @@ function App() {
             }
           />
 
-          {/* USERS - PLATFORM_ADMIN + ADMIN_INSTITUTION */}
+          {/* USERS */}
           <Route
             path="/users"
             element={
@@ -159,17 +157,17 @@ function App() {
             }
           />
 
-          {/* INSTITUTIONS - doar PLATFORM_ADMIN */}
+          {/* ✅ INSTITUTIONS - Now using InstitutionsPage */}
           <Route
             path="/institutions"
             element={
               <ProtectedRoute allowedRoles={roles.institutions}>
-                <Institutions />
+                <InstitutionsPage />
               </ProtectedRoute>
             }
           />
 
-          {/* SECTOR STATS OVERVIEW */}
+          {/* SECTOR STATS */}
           <Route
             path="/sectoare"
             element={
@@ -179,7 +177,6 @@ function App() {
             }
           />
 
-          {/* SECTOR STATS DETAIL */}
           <Route
             path="/sectoare/:sector_number"
             element={
@@ -189,7 +186,7 @@ function App() {
             }
           />
 
-          {/* PROFILE - toți */}
+          {/* PROFILE */}
           <Route
             path="/profile"
             element={
