@@ -142,7 +142,7 @@ const InstitutionsPage = () => {
   }, []);
 
   // Filtering
-  const filteredInstitutions = useMemo(() => {
+const filteredInstitutions = useMemo(() => {
     return institutions.filter(inst => {
       // Search
       if (searchQuery) {
@@ -157,8 +157,8 @@ const InstitutionsPage = () => {
           inst.representative_name?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
-
-      // Type filter
+  
+      // Type filter - handle equivalent types
       if (selectedType) {
         const typeEquivalents = {
           'MUNICIPALITY': ['MUNICIPALITY', 'UAT'],
@@ -178,21 +178,21 @@ const InstitutionsPage = () => {
           return false;
         }
       }
-
+  
       // Status filter
-    if (selectedStatus === 'active' && !inst.is_active) return false;
-    if (selectedStatus === 'inactive' && inst.is_active) return false;
-
-    // Sector filter
-    if (selectedSector) {
-      const instSectors = inst.sectors || [];
-      const hasSector = instSectors.some(s => s.id === parseInt(selectedSector));
-      if (!hasSector) return false;
-    }
-
-    return true;
-  });
-}, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
+      if (selectedStatus === 'active' && !inst.is_active) return false;
+      if (selectedStatus === 'inactive' && inst.is_active) return false;
+  
+      // Sector filter - compare as strings (UUID)
+      if (selectedSector) {
+        const instSectors = inst.sectors || [];
+        const hasSector = instSectors.some(s => String(s.id) === String(selectedSector));
+        if (!hasSector) return false;
+      }
+  
+      return true;
+    });
+  }, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
 
   // Sorting
   const sortedInstitutions = useMemo(() => {
