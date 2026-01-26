@@ -1,38 +1,58 @@
 // src/pages/InstitutionsPage.jsx
 /**
  * ============================================================================
- * INSTITUTIONS PAGE - MODERN REDESIGN
+ * INSTITUTIONS PAGE - MODERN REDESIGN v2
  * ============================================================================
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, RefreshCw, Search } from 'lucide-react';
+import { Building2, Plus, RefreshCw, Search, X } from 'lucide-react';
 
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 
+import DashboardHeader from '../components/dashboard/DashboardHeader';
 import InstitutionFilters from '../components/institutions/InstitutionFilters';
 import InstitutionTable from '../components/institutions/InstitutionTable';
 import InstitutionSidebar from '../components/institutions/InstitutionSidebar';
 import InstitutionViewModal from '../components/institutions/InstitutionViewModal';
 
-// Institution types with colors
+// Institution types with colors - ORDERED AS REQUESTED
 const INSTITUTION_TYPES = {
+  ASSOCIATION: { label: 'Asociație', color: 'slate' },
+  UAT: { label: 'U.A.T.', color: 'gray' },
+  PUBLIC_AUTHORITY: { label: 'Autoritate publică', color: 'stone' },
   WASTE_COLLECTOR: { label: 'Colectare', color: 'teal' },
-  TMB_OPERATOR: { label: 'TMB', color: 'blue' },
+  SORTING_OPERATOR: { label: 'Sortare', color: 'pink' },
   AEROBIC_OPERATOR: { label: 'Aerob', color: 'cyan' },
   ANAEROBIC_OPERATOR: { label: 'Anaerob', color: 'indigo' },
+  TMB_OPERATOR: { label: 'TMB', color: 'blue' },
   DISPOSAL_CLIENT: { label: 'Depozitare', color: 'orange' },
   LANDFILL: { label: 'Depozit', color: 'amber' },
   RECYCLING_OPERATOR: { label: 'Reciclare', color: 'purple' },
-  SORTING_OPERATOR: { label: 'Sortare', color: 'pink' },
   RECOVERY_OPERATOR: { label: 'Valorificare', color: 'yellow' },
-  UAT: { label: 'U.A.T.', color: 'gray' },
-  ASSOCIATION: { label: 'Asociație', color: 'slate' },
-  PUBLIC_AUTHORITY: { label: 'Autoritate', color: 'stone' },
+  // Legacy/unmapped types - map them to proper labels
+  RECYCLING_CLIENT: { label: 'Reciclare', color: 'purple' },
+  REGULATOR: { label: 'Regulator', color: 'red' },
 };
+
+// Dropdown order
+const DROPDOWN_ORDER = [
+  'ASSOCIATION',
+  'UAT', 
+  'PUBLIC_AUTHORITY',
+  'WASTE_COLLECTOR',
+  'SORTING_OPERATOR',
+  'AEROBIC_OPERATOR',
+  'ANAEROBIC_OPERATOR',
+  'TMB_OPERATOR',
+  'DISPOSAL_CLIENT',
+  'LANDFILL',
+  'RECYCLING_OPERATOR',
+  'RECOVERY_OPERATOR',
+];
 
 // Toast notification helper
 const showToast = (message, type = 'success') => {
@@ -65,7 +85,7 @@ const InstitutionsPage = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(15);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting
   const [sortBy, setSortBy] = useState('name');
@@ -118,18 +138,6 @@ const InstitutionsPage = () => {
     }
   }, []);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const total = institutions.length;
-    const active = institutions.filter(i => i.is_active).length;
-    const operators = institutions.filter(i => 
-      ['WASTE_COLLECTOR', 'TMB_OPERATOR', 'AEROBIC_OPERATOR', 'ANAEROBIC_OPERATOR', 
-       'RECYCLING_OPERATOR', 'SORTING_OPERATOR', 'RECOVERY_OPERATOR', 'DISPOSAL_CLIENT', 'LANDFILL']
-      .includes(i.type)
-    ).length;
-    return { total, active, operators };
-  }, [institutions]);
-
   // Filtering
   const filteredInstitutions = useMemo(() => {
     return institutions.filter(inst => {
@@ -149,7 +157,6 @@ const InstitutionsPage = () => {
 
       // Type filter
       if (selectedType) {
-        // Handle LANDFILL/DISPOSAL_CLIENT as same
         if (selectedType === 'LANDFILL' || selectedType === 'DISPOSAL_CLIENT') {
           if (inst.type !== 'LANDFILL' && inst.type !== 'DISPOSAL_CLIENT') {
             return false;
@@ -198,7 +205,7 @@ const InstitutionsPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedType, selectedStatus, selectedSector]);
+  }, [searchQuery, selectedType, selectedStatus, selectedSector, itemsPerPage]);
 
   // Handlers
   const handleSort = (column) => {
@@ -216,6 +223,8 @@ const InstitutionsPage = () => {
     setSelectedSector('');
     setSearchQuery('');
   };
+
+  const hasActiveFilters = selectedType || selectedStatus || selectedSector || searchQuery;
 
   // CRUD handlers
   const handleAdd = () => {
@@ -291,11 +300,6 @@ const InstitutionsPage = () => {
     }
   };
 
-  // Navigate to contracts
-  const handleNavigateToContracts = (institution) => {
-    navigate(`/contracts?institution=${institution.id}`);
-  };
-
   // Access guard
   if (!hasAccess('institutions')) {
     return (
@@ -311,77 +315,15 @@ const InstitutionsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 lg:px-8 py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            {/* Title & Stats */}
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Instituții
-                </h1>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {stats.total} total
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                    {stats.active} active
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                  <span className="text-xs text-blue-600 dark:text-blue-400">
-                    {stats.operators} operatori
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Caută instituție..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-64 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-                />
-              </div>
-
-              {/* Refresh */}
-              <button
-                onClick={loadInstitutions}
-                disabled={loading}
-                className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-                title="Reîncarcă"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-
-              {/* Add Button */}
-              {canCreateData && (
-                <button
-                  onClick={handleAdd}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-xl shadow-lg shadow-teal-500/30 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Adaugă</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Header - Standard cu User Profile */}
+      <DashboardHeader
+        title="Instituții"
+        subtitle="Gestionare instituții partenere"
+      />
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
-        {/* Filters */}
+        {/* Filters Bar */}
         <InstitutionFilters
           selectedType={selectedType}
           onTypeChange={setSelectedType}
@@ -390,16 +332,17 @@ const InstitutionsPage = () => {
           selectedSector={selectedSector}
           onSectorChange={setSelectedSector}
           sectors={sectors}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
           onReset={handleResetFilters}
+          hasActiveFilters={hasActiveFilters}
+          onAdd={handleAdd}
+          onRefresh={loadInstitutions}
+          loading={loading}
+          canCreate={canCreateData}
           institutionTypes={INSTITUTION_TYPES}
+          dropdownOrder={DROPDOWN_ORDER}
         />
-
-        {/* Results count */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {filteredInstitutions.length} instituții găsite
-          </p>
-        </div>
 
         {/* Table */}
         <InstitutionTable
@@ -417,11 +360,27 @@ const InstitutionsPage = () => {
         />
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Pagina {currentPage} din {totalPages}
-            </p>
+        <div className="flex items-center justify-between pt-2">
+          {/* Left - Items per page */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Afișează</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              din {filteredInstitutions.length} instituții
+            </span>
+          </div>
+
+          {/* Right - Pagination */}
+          {totalPages > 1 && (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -469,8 +428,8 @@ const InstitutionsPage = () => {
                 Următor
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Sidebar - Add/Edit/Delete */}
@@ -484,6 +443,7 @@ const InstitutionsPage = () => {
         saving={saving}
         sectors={sectors}
         institutionTypes={INSTITUTION_TYPES}
+        dropdownOrder={DROPDOWN_ORDER}
       />
 
       {/* View Modal */}
