@@ -21,7 +21,6 @@ import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractSidebar from '../components/contracts/ContractSidebar';
 import ContractViewModal from '../components/contracts/ContractViewModal';
-import ExportButton from '../components/contracts/ExportButton';
 
 // Contract types
 const CONTRACT_TYPES = {
@@ -52,7 +51,7 @@ const ContractsPage = () => {
   const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || 'DISPOSAL';
+  const initialContractType = searchParams.get('type') || '';
   const initialSector = searchParams.get('sector') || '';
 
   // State
@@ -117,38 +116,73 @@ const ContractsPage = () => {
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
-      let endpoint = '';
-      const params = {};
+      let allContracts = [];
 
-      // Different endpoints based on contract type
-      switch (selectedContractType) {
-        case CONTRACT_TYPES.DISPOSAL:
-          endpoint = '/api/institutions/0/disposal-contracts';
-          break;
-        case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = '/api/institutions/0/waste-contracts';
-          break;
-        case CONTRACT_TYPES.TMB:
-          endpoint = '/api/institutions/0/tmb-contracts';
-          break;
-        default:
-          endpoint = '/api/institutions/0/disposal-contracts';
-      }
+      // If no contract type selected, load all types
+      if (!selectedContractType) {
+        const [disposalRes, wasteRes, tmbRes] = await Promise.all([
+          apiGet('/api/institutions/0/disposal-contracts', { 
+            sector_id: selectedSector || undefined,
+            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
+          }),
+          apiGet('/api/institutions/0/waste-contracts', { 
+            sector_id: selectedSector || undefined,
+            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
+          }),
+          apiGet('/api/institutions/0/tmb-contracts', { 
+            sector_id: selectedSector || undefined,
+            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
+          }),
+        ]);
 
-      if (selectedSector) {
-        params.sector_id = selectedSector;
-      }
-      if (selectedStatus) {
-        params.is_active = selectedStatus === 'active';
-      }
+        if (disposalRes.success) {
+          const contracts = Array.isArray(disposalRes.data) ? disposalRes.data : [];
+          allContracts.push(...contracts.map(c => ({ ...c, _type: 'DISPOSAL' })));
+        }
+        if (wasteRes.success) {
+          const contracts = Array.isArray(wasteRes.data) ? wasteRes.data : [];
+          allContracts.push(...contracts.map(c => ({ ...c, _type: 'WASTE_COLLECTOR' })));
+        }
+        if (tmbRes.success) {
+          const contracts = Array.isArray(tmbRes.data) ? tmbRes.data : [];
+          allContracts.push(...contracts.map(c => ({ ...c, _type: 'TMB' })));
+        }
 
-      const response = await apiGet(endpoint, params);
-
-      if (response.success) {
-        const contractsArray = Array.isArray(response.data) ? response.data : [];
-        setContracts(contractsArray);
+        setContracts(allContracts);
       } else {
-        setContracts([]);
+        // Load specific contract type
+        let endpoint = '';
+        const params = {};
+
+        switch (selectedContractType) {
+          case CONTRACT_TYPES.DISPOSAL:
+            endpoint = '/api/institutions/0/disposal-contracts';
+            break;
+          case CONTRACT_TYPES.WASTE_COLLECTOR:
+            endpoint = '/api/institutions/0/waste-contracts';
+            break;
+          case CONTRACT_TYPES.TMB:
+            endpoint = '/api/institutions/0/tmb-contracts';
+            break;
+          default:
+            endpoint = '/api/institutions/0/disposal-contracts';
+        }
+
+        if (selectedSector) {
+          params.sector_id = selectedSector;
+        }
+        if (selectedStatus) {
+          params.is_active = selectedStatus === 'active';
+        }
+
+        const response = await apiGet(endpoint, params);
+
+        if (response.success) {
+          const contractsArray = Array.isArray(response.data) ? response.data : [];
+          setContracts(contractsArray.map(c => ({ ...c, _type: selectedContractType })));
+        } else {
+          setContracts([]);
+        }
       }
     } catch (err) {
       console.error('Error loading contracts:', err);
@@ -375,6 +409,13 @@ const ContractsPage = () => {
   const handleExport = async (format) => {
     setExporting(true);
     try {
+      // If no contract type selected, we can't export (need to specify type for backend)
+      if (!selectedContractType) {
+        showToast('Vă rugăm selectați un tip de contract pentru export', 'error');
+        setExporting(false);
+        return;
+      }
+
       const params = new URLSearchParams({
         contractType: selectedContractType,
       });
@@ -432,25 +473,6 @@ const ContractsPage = () => {
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
-        {/* Top Bar - Export Button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              Contracte {CONTRACT_TYPE_LABELS[selectedContractType]}
-            </h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {sortedContracts.length} contracte găsite
-            </span>
-          </div>
-
-          {/* Export Button */}
-          <ExportButton 
-            onExport={handleExport} 
-            exporting={exporting}
-            disabled={sortedContracts.length === 0}
-          />
-        </div>
-
         {/* Filters Bar */}
         <ContractFilters
           contractType={selectedContractType}
@@ -468,13 +490,15 @@ const ContractsPage = () => {
           onRefresh={loadContracts}
           loading={loading}
           canCreate={canCreateData}
+          onExport={handleExport}
+          exporting={exporting}
         />
 
         {/* Table */}
         <ContractTable
           contracts={paginatedContracts}
           loading={loading}
-          contractType={selectedContractType}
+          contractType={selectedContractType || 'DISPOSAL'}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           onView={handleView}
@@ -577,7 +601,7 @@ const ContractsPage = () => {
         isOpen={viewModalOpen}
         onClose={handleCloseViewModal}
         contract={viewContract}
-        contractType={selectedContractType}
+        contractType={viewContract?._type || selectedContractType || 'DISPOSAL'}
       />
     </div>
   );
