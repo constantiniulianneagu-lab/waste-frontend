@@ -66,9 +66,41 @@ const ContractFilters = ({
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Tabs */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-2">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Left - Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filter icon */}
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            <Filter className="w-4 h-4" />
+            <span className="text-sm font-medium">Filtre:</span>
+          </div>
+
+          {/* U.A.T. (Sector) */}
+          <select
+            value={sectorId}
+            onChange={(e) => onSectorChange(e.target.value)}
+            className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[140px]"
+          >
+            <option value="">Toate sectoarele</option>
+            {sectors.map(s => (
+              <option key={s.id} value={s.id}>Sectorul {s.sector_number}</option>
+            ))}
+          </select>
+
+          {/* Status */}
+          <select
+            value={status}
+            onChange={(e) => onStatusChange(e.target.value)}
+            className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[120px]"
+          >
+            <option value="">Toate</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        {/* Center - Tabs */}
         <div className="flex items-center gap-2">
           {CONTRACT_TYPE_TABS.map((tab) => {
             const isActive = contractType === tab.value;
@@ -78,145 +110,106 @@ const ContractFilters = ({
               <button
                 key={tab.value}
                 onClick={() => onContractTypeChange(tab.value)}
-                className={`flex-1 flex flex-col items-center gap-1 px-4 py-3 rounded-lg transition-all ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/30'
                     : 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{tab.icon}</span>
-                  <span className="text-sm font-semibold">{tab.label}</span>
-                </div>
-                <span className={`text-lg font-bold ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                <span className={`font-bold ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                   {count}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Left - Filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Filter icon */}
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">Filtre:</span>
-            </div>
-
-            {/* U.A.T. (Sector) */}
-            <select
-              value={sectorId}
-              onChange={(e) => onSectorChange(e.target.value)}
-              className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[140px]"
-            >
-              <option value="">Toate sectoarele</option>
-              {sectors.map(s => (
-                <option key={s.id} value={s.id}>Sectorul {s.sector_number}</option>
-              ))}
-            </select>
-
-            {/* Status */}
-            <select
-              value={status}
-              onChange={(e) => onStatusChange(e.target.value)}
-              className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[120px]"
-            >
-              <option value="">Toate</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+        {/* Right - Search, Reset, Refresh, Add, Export */}
+        <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Caută contract..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-9 pr-4 py-2 w-56 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+            />
           </div>
 
-          {/* Right - Search, Reset, Refresh, Add, Export */}
-          <div className="flex items-center gap-2">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Caută contract..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-9 pr-4 py-2 w-56 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-              />
-            </div>
-
-            {/* Reset Button */}
-            {hasActiveFilters && (
-              <button
-                onClick={onReset}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                title="Resetează filtrele"
-              >
-                <X className="w-4 h-4" />
-                <span className="hidden sm:inline">Resetează</span>
-              </button>
-            )}
-
-            {/* Refresh */}
+          {/* Reset Button */}
+          {hasActiveFilters && (
             <button
-              onClick={onRefresh}
-              disabled={loading}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-              title="Reîncarcă"
+              onClick={onReset}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Resetează filtrele"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <X className="w-4 h-4" />
+              <span className="hidden sm:inline">Resetează</span>
             </button>
+          )}
 
-            {/* Add Button */}
-            {canCreate && (
+          {/* Refresh */}
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            title="Reîncarcă"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* Add Button */}
+          {canCreate && (
+            <button
+              onClick={onAdd}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-teal-500/30 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Adaugă contract</span>
+            </button>
+          )}
+
+          {/* Export Button with Dropdown */}
+          {onExport && (
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={onAdd}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-teal-500/30 transition-all"
+                onClick={() => setIsExportOpen(!isExportOpen)}
+                disabled={exporting}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Plus className="w-4 h-4" />
-                <span>Adaugă contract</span>
+                <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
+                <span>{exporting ? 'Se exportă...' : 'Export'}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
 
-            {/* Export Button with Dropdown */}
-            {onExport && (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsExportOpen(!isExportOpen)}
-                  disabled={exporting}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
-                  <span>{exporting ? 'Se exportă...' : 'Export'}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Dropdown Menu */}
-                {isExportOpen && !exporting && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
-                    {exportOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <button
-                          key={option.format}
-                          onClick={() => handleExportClick(option.format)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${option.hoverColor} first:rounded-t-xl last:rounded-b-xl`}
-                        >
-                          <div className={`w-8 h-8 rounded-lg ${option.bgColor} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className={`w-4 h-4 ${option.color}`} />
-                          </div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
-                            {option.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              {/* Dropdown Menu */}
+              {isExportOpen && !exporting && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
+                  {exportOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <button
+                        key={option.format}
+                        onClick={() => handleExportClick(option.format)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${option.hoverColor} first:rounded-t-xl last:rounded-b-xl`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg ${option.bgColor} flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-4 h-4 ${option.color}`} />
+                        </div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {option.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

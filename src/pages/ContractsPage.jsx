@@ -451,7 +451,7 @@ const ContractsPage = () => {
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
-        {/* Filters Bar */}
+        {/* Filters Bar with Tabs */}
         <ContractFilters
           contractType={selectedContractType}
           onContractTypeChange={handleContractTypeChange}
