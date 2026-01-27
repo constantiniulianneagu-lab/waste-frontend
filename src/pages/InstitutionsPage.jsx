@@ -143,58 +143,56 @@ const InstitutionsPage = () => {
 
   // Filtering
 const filteredInstitutions = useMemo(() => {
-    return institutions.filter(inst => {
-      // Search
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch = 
-          inst.name?.toLowerCase().includes(query) ||
-          inst.short_name?.toLowerCase().includes(query) ||
-          inst.email?.toLowerCase().includes(query) ||
-          inst.contact_email?.toLowerCase().includes(query) ||
-          inst.phone?.toLowerCase().includes(query) ||
-          inst.fiscal_code?.toLowerCase().includes(query) ||
-          inst.representative_name?.toLowerCase().includes(query);
-        if (!matchesSearch) return false;
+  return institutions.filter(inst => {
+    // Search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        inst.name?.toLowerCase().includes(query) ||
+        inst.short_name?.toLowerCase().includes(query) ||
+        inst.email?.toLowerCase().includes(query) ||
+        inst.contact_email?.toLowerCase().includes(query) ||
+        inst.phone?.toLowerCase().includes(query) ||
+        inst.fiscal_code?.toLowerCase().includes(query) ||
+        inst.representative_name?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // Type filter - handle equivalent types
+    if (selectedType) {
+      const typeEquivalents = {
+        'MUNICIPALITY': ['MUNICIPALITY', 'UAT'],
+        'UAT': ['MUNICIPALITY', 'UAT'],
+        'DISPOSAL_CLIENT': ['DISPOSAL_CLIENT', 'LANDFILL'],
+        'LANDFILL': ['DISPOSAL_CLIENT', 'LANDFILL'],
+        'RECYCLING_CLIENT': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
+        'RECYCLING_OPERATOR': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
+        'RECOVERY_CLIENT': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
+        'RECOVERY_OPERATOR': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
+        'REGULATOR': ['REGULATOR', 'PUBLIC_AUTHORITY'],
+        'PUBLIC_AUTHORITY': ['REGULATOR', 'PUBLIC_AUTHORITY'],
+      };
+      
+      const equivalents = typeEquivalents[selectedType] || [selectedType];
+      if (!equivalents.includes(inst.type)) {
+        return false;
       }
-  
-      // Type filter - handle equivalent types
-      if (selectedType) {
-        const typeEquivalents = {
-          'MUNICIPALITY': ['MUNICIPALITY', 'UAT'],
-          'UAT': ['MUNICIPALITY', 'UAT'],
-          'DISPOSAL_CLIENT': ['DISPOSAL_CLIENT', 'LANDFILL'],
-          'LANDFILL': ['DISPOSAL_CLIENT', 'LANDFILL'],
-          'RECYCLING_CLIENT': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
-          'RECYCLING_OPERATOR': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
-          'RECOVERY_CLIENT': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
-          'RECOVERY_OPERATOR': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
-          'REGULATOR': ['REGULATOR', 'PUBLIC_AUTHORITY'],
-          'PUBLIC_AUTHORITY': ['REGULATOR', 'PUBLIC_AUTHORITY'],
-        };
-        
-        const equivalents = typeEquivalents[selectedType] || [selectedType];
-        if (!equivalents.includes(inst.type)) {
-          return false;
-        }
-      }
-  
-      // Status filter
-      if (selectedStatus === 'active' && !inst.is_active) return false;
-      if (selectedStatus === 'inactive' && inst.is_active) return false;
-  
-      // Sector filter - FIX: don't use parseInt, compare strings
-if (selectedSector) {
-  const instSectors = inst.sectors || [];
-  const hasSector = instSectors.some(s => 
-    s.id === selectedSector || String(s.id) === String(selectedSector)
-  );
-  if (!hasSector) return false;
-}
-  
-      return true;
-    });
-  }, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
+    }
+
+    // Status filter
+    if (selectedStatus === 'active' && !inst.is_active) return false;
+    if (selectedStatus === 'inactive' && inst.is_active) return false;
+
+    // Sector filter - compare as strings (UUID)
+    if (selectedSector) {
+      const instSectors = inst.sectors || [];
+      const hasSector = instSectors.some(s => String(s.id) === String(selectedSector));
+      if (!hasSector) return false;
+    }
+
+    return true;
+  });
+}, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
 
   // Sorting
   const sortedInstitutions = useMemo(() => {
