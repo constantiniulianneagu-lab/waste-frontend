@@ -31,7 +31,12 @@ const ContractViewModal = ({
 
   useEffect(() => {
     if (isOpen && contract?.id) {
-      loadAmendments();
+      // For WASTE_COLLECTOR, amendments come with the contract
+      if (contractType === 'WASTE_COLLECTOR' && contract.amendments) {
+        setAmendments(contract.amendments);
+      } else {
+        loadAmendments();
+      }
     }
   }, [isOpen, contract?.id]);
 
@@ -48,6 +53,10 @@ const ContractViewModal = ({
         case 'TMB':
           endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
           break;
+        case 'WASTE_COLLECTOR':
+          // For waste collector, amendments come with the contract, no separate endpoint
+          // This function won't be called for WASTE_COLLECTOR due to useEffect check
+          return;
         default:
           return;
       }
@@ -107,12 +116,19 @@ const ContractViewModal = ({
     return daysUntil > 0 && daysUntil <= 30;
   };
 
+  // Contract is active if NOT expired and is_active flag is true
+  const isContractActive = () => {
+    if (isExpired()) return false; // Expired contracts are always inactive
+    return contract?.is_active; // Otherwise use manual flag
+  };
+
   if (!isOpen || !contract) return null;
 
   const effectiveDateEnd = contract.effective_date_end || contract.contract_date_end;
   const effectiveTariff = contract.effective_tariff || contract.tariff_per_ton;
   const effectiveQuantity = contract.effective_quantity || contract.estimated_quantity_tons || contract.contracted_quantity_tons;
   const effectiveTotalValue = contract.effective_total_value || contract.total_value;
+  const effectiveCecTax = contract.effective_cec || contract.cec_tax_per_ton; // Added for CEC tax
   const expired = isExpired();
   const expiringSoon = isExpiringSoon();
 
@@ -148,9 +164,9 @@ const ContractViewModal = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-teal-100 uppercase tracking-wider">
-                    Contract {contractType}
+                    Contract {contractType === 'DISPOSAL' ? 'Depozitare' : contractType === 'TMB' ? 'TMB' : contractType === 'WASTE_COLLECTOR' ? 'Colectare' : contractType}
                   </span>
-                  {contract.is_active ? (
+                  {isContractActive() ? (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100">
                       Activ
                     </span>
@@ -258,8 +274,8 @@ const ContractViewModal = ({
                 <div className="grid grid-cols-2 gap-4">
                   <InfoItem 
                     icon={MapPin} 
-                    label="U.A.T. (Sector)" 
-                    value={contract.sector_name ? `Sector ${contract.sector_number} - ${contract.sector_name}` : `Sector ${contract.sector_number}`}
+                    label="U.A.T." 
+                    value={contract.sector_name ? `Sectorul ${contract.sector_number}` : `Sectorul ${contract.sector_number}`}
                   />
                   <InfoItem 
                     icon={Building2} 
@@ -274,11 +290,11 @@ const ContractViewModal = ({
                       iconColor="text-violet-500"
                     />
                   )}
-                  {contractType === 'DISPOSAL' && contract.cec_tax_per_ton && (
+                  {contractType === 'DISPOSAL' && effectiveCecTax && (
                     <InfoItem 
                       icon={DollarSign} 
                       label="Taxa CEC" 
-                      value={`${formatCurrency(contract.cec_tax_per_ton)}/t`}
+                      value={`${formatCurrency(effectiveCecTax)}/t`}
                     />
                   )}
                 </div>
@@ -350,7 +366,7 @@ const ContractViewModal = ({
               )}
 
               {/* Section: Amendments */}
-              {(contractType === 'DISPOSAL' || contractType === 'TMB') && (
+              {(contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'WASTE_COLLECTOR') && (
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
                   <button
                     onClick={() => setShowAmendments(!showAmendments)}

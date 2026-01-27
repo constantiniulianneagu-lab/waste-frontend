@@ -83,6 +83,14 @@ const ContractTable = ({
     return new Date(dateEnd) < new Date();
   };
 
+  // Check if contract should be displayed as active
+  // Contract is Inactive if: (1) expired OR (2) manually set to inactive
+  const isContractActive = (contract) => {
+    const endDate = contract.effective_date_end || contract.contract_date_end;
+    if (isExpired(endDate)) return false; // Expired contracts are always inactive
+    return contract.is_active; // Otherwise use manual flag
+  };
+
   const getAttributionBadge = (type) => {
     if (!type) return <span className="text-sm text-gray-400">-</span>;
     
@@ -313,7 +321,7 @@ const ContractTable = ({
 
                   {/* Status */}
                   <td className="px-4 py-4 text-center">
-                    {contract.is_active ? (
+                    {isContractActive(contract) ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
                         <CheckCircle className="w-3 h-3" />
                         Activ
