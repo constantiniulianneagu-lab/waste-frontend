@@ -13,8 +13,10 @@ import Sidebar from "./components/Sidebar";
 import WasteLogin from "./WasteLogin";
 import DashboardLandfill from "./components/dashboard/DashboardLandfill";
 import DashboardTmb from "./components/dashboard/DashboardTmb";
-import Users from "./Users";
 import ReportsMain from "./components/reports/ReportsMain";
+
+// ✅ NEW: Import UsersPage from pages folder
+import UsersPage from "./pages/UsersPage";
 import ReportTMB from "./components/reports/ReportTMB";
 import UserProfile from "./components/UserProfile";
 import SectorStatsOverview from "./pages/SectorStatsOverview";
@@ -147,12 +149,12 @@ function App() {
             }
           />
 
-          {/* USERS */}
+          {/* USERS - Now using UsersPage */}
           <Route
             path="/users"
             element={
               <ProtectedRoute allowedRoles={roles.users}>
-                <Users />
+                <UsersPage />
               </ProtectedRoute>
             }
           />
