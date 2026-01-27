@@ -1,18 +1,16 @@
 // src/pages/ContractsPage.jsx
 /**
  * ============================================================================
- * CONTRACTS MANAGEMENT PAGE
+ * CONTRACTS MANAGEMENT PAGE - REDESIGNED v2.0
  * ============================================================================
- * Design: Green/Teal theme
- * Updated: 2025-01-25
- * 
- * Suport pentru: DISPOSAL, WASTE_COLLECTOR, TMB
+ * Design: Matching InstitutionsPage - Clean, modern layout
+ * Features: Export (PDF/XLS/CSV), Modern filters, No stats cards
+ * Updated: 2026-01-27
  * ============================================================================
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FileText, Plus, RefreshCw } from 'lucide-react';
 
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import { useAuth } from '../AuthContext';
@@ -22,7 +20,8 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractSidebar from '../components/contracts/ContractSidebar';
-import ContractViewModal from '../components/contracts/ContractViewModal'; // <-- NEW
+import ContractViewModal from '../components/contracts/ContractViewModal';
+import ExportButton from '../components/contracts/ExportButton';
 
 // Contract types
 const CONTRACT_TYPES = {
@@ -72,7 +71,7 @@ const ContractsPage = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(15);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting
   const [sortBy, setSortBy] = useState('contract_date_start');
@@ -84,12 +83,12 @@ const ContractsPage = () => {
   const [selectedContract, setSelectedContract] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // View Modal (NEW - for elegant view)
+  // View Modal
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewContract, setViewContract] = useState(null);
 
-  // Stats
-  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  // Export
+  const [exporting, setExporting] = useState(false);
 
   // Load reference data
   useEffect(() => {
@@ -148,15 +147,12 @@ const ContractsPage = () => {
       if (response.success) {
         const contractsArray = Array.isArray(response.data) ? response.data : [];
         setContracts(contractsArray);
-        calculateStats(contractsArray);
       } else {
         setContracts([]);
-        calculateStats([]);
       }
     } catch (err) {
       console.error('Error loading contracts:', err);
       setContracts([]);
-      calculateStats([]);
     } finally {
       setLoading(false);
     }
@@ -165,11 +161,6 @@ const ContractsPage = () => {
   useEffect(() => {
     loadContracts();
   }, [loadContracts]);
-
-  const calculateStats = (data) => {
-    const active = data.filter(c => c.is_active).length;
-    setStats({ total: data.length, active, inactive: data.length - active });
-  };
 
   // Filtering & Sorting
   const filteredContracts = useMemo(() => {
@@ -223,6 +214,11 @@ const ContractsPage = () => {
     setCurrentPage(1);
   }, [selectedContractType, selectedSector, selectedStatus, searchQuery]);
 
+  // Check if filters are active
+  const hasActiveFilters = useMemo(() => {
+    return selectedSector !== '' || selectedStatus !== '' || searchQuery !== '';
+  }, [selectedSector, selectedStatus, searchQuery]);
+
   // Handlers
   const handleSearchChange = (value) => setSearchQuery(value);
 
@@ -241,6 +237,16 @@ const ContractsPage = () => {
   };
 
   const handleStatusChange = (status) => setSelectedStatus(status);
+
+  const handleResetFilters = () => {
+    setSelectedSector('');
+    setSelectedStatus('');
+    setSearchQuery('');
+    setSearchParams(prev => { 
+      prev.delete('sector'); 
+      return prev; 
+    });
+  };
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -264,7 +270,6 @@ const ContractsPage = () => {
     setSidebarOpen(true);
   };
 
-  // VIEW - Now opens the elegant modal instead of sidebar
   const handleView = (contract) => {
     setViewContract(contract);
     setViewModalOpen(true);
@@ -302,162 +307,151 @@ const ContractsPage = () => {
         case CONTRACT_TYPES.TMB:
           endpoint = `/api/institutions/0/tmb-contracts`;
           break;
+        default:
+          throw new Error('Invalid contract type');
       }
 
       let response;
       if (sidebarMode === 'add') {
         response = await apiPost(endpoint, formData);
-      } else {
-        const contractId = selectedContract.id;
-        response = await apiPut(`${endpoint}/${contractId}`, formData);
+      } else if (sidebarMode === 'edit') {
+        response = await apiPut(`${endpoint}/${selectedContract.id}`, formData);
       }
 
       if (response.success) {
-        showToast(sidebarMode === 'add' ? 'Contract adăugat cu succes' : 'Contract actualizat cu succes');
+        showToast(`Contract ${sidebarMode === 'add' ? 'adăugat' : 'actualizat'} cu succes!`);
         handleCloseSidebar();
         loadContracts();
       } else {
         showToast(response.message || 'Eroare la salvare', 'error');
       }
     } catch (err) {
-      console.error('Save error:', err);
+      console.error('Error saving contract:', err);
       showToast('Eroare la salvare', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (contract) => {
+  const handleDelete = async () => {
+    if (!selectedContract) return;
+    
     setSaving(true);
     try {
       let endpoint = '';
       
       switch (selectedContractType) {
         case CONTRACT_TYPES.DISPOSAL:
-          endpoint = `/api/institutions/${contract.institution_id || 0}/disposal-contracts/${contract.id}`;
+          endpoint = `/api/institutions/${selectedContract.institution_id || 0}/disposal-contracts/${selectedContract.id}`;
           break;
         case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = `/api/institutions/${contract.institution_id || 0}/waste-contracts/${contract.id}`;
+          endpoint = `/api/institutions/${selectedContract.institution_id || 0}/waste-contracts/${selectedContract.id}`;
           break;
         case CONTRACT_TYPES.TMB:
-          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}`;
+          endpoint = `/api/institutions/0/tmb-contracts/${selectedContract.id}`;
           break;
+        default:
+          throw new Error('Invalid contract type');
       }
 
       const response = await apiDelete(endpoint);
+
       if (response.success) {
-        showToast('Contract șters cu succes');
+        showToast('Contract șters cu succes!');
         handleCloseSidebar();
         loadContracts();
       } else {
         showToast(response.message || 'Eroare la ștergere', 'error');
       }
     } catch (err) {
-      console.error('Delete error:', err);
+      console.error('Error deleting contract:', err);
       showToast('Eroare la ștergere', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  // Access guard
-  if (!hasAccess('contracts') && !hasAccess('institutions')) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center">
-          <FileText className="w-16 h-16 text-teal-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acces restricționat</h1>
-          <p className="text-gray-600 dark:text-gray-400">Nu ai permisiuni pentru pagina „Contracte".</p>
-        </div>
-      </div>
-    );
-  }
+  // Export handler
+  const handleExport = async (format) => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        contractType: selectedContractType,
+      });
+      
+      if (selectedSector) params.append('sector_id', selectedSector);
+      if (selectedStatus) params.append('is_active', selectedStatus === 'active');
+
+      const API_URL = 'https://waste-backend-3u9c.onrender.com';
+      const token = localStorage.getItem('wasteAccessToken');
+      
+      const response = await fetch(
+        `${API_URL}/api/contracts/export/${format}?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const fileExtension = format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'pdf';
+      a.download = `contracte-${CONTRACT_TYPE_LABELS[selectedContractType].toLowerCase()}-${timestamp}.${fileExtension}`;
+      
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast(`Export ${format.toUpperCase()} realizat cu succes!`);
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast(`Eroare la generarea ${format.toUpperCase()}. Vă rugăm încercați din nou.`, 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
       <DashboardHeader
         title="Contracte"
         subtitle="Gestionare contracte operatori"
-        onSearchChange={handleSearchChange}
       />
 
-      <div className="px-6 lg:px-8 py-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Total</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Active</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shadow-lg shadow-gray-400/30">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Inactive</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.inactive}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Content */}
+      <div className="px-6 lg:px-8 py-6 space-y-4">
+        {/* Top Bar - Export Button */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                Contracte {CONTRACT_TYPE_LABELS[selectedContractType]}
-              </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {sortedContracts.length} contracte găsite
-              </p>
-            </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              Contracte {CONTRACT_TYPE_LABELS[selectedContractType]}
+            </h2>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {sortedContracts.length} contracte găsite
+            </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadContracts}
-              disabled={loading}
-              className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
-              title="Reîncarcă"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-
-            {canCreateData && (
-              <button
-                onClick={handleAdd}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/30"
-              >
-                <Plus className="w-4 h-4" />
-                Adaugă Contract
-              </button>
-            )}
-          </div>
+          {/* Export Button */}
+          <ExportButton 
+            onExport={handleExport} 
+            exporting={exporting}
+            disabled={sortedContracts.length === 0}
+          />
         </div>
 
-        {/* Filters */}
+        {/* Filters Bar */}
         <ContractFilters
           contractType={selectedContractType}
           onContractTypeChange={handleContractTypeChange}
@@ -466,6 +460,14 @@ const ContractsPage = () => {
           status={selectedStatus}
           onStatusChange={handleStatusChange}
           sectors={sectors}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onReset={handleResetFilters}
+          hasActiveFilters={hasActiveFilters}
+          onAdd={handleAdd}
+          onRefresh={loadContracts}
+          loading={loading}
+          canCreate={canCreateData}
         />
 
         {/* Table */}
@@ -484,29 +486,76 @@ const ContractsPage = () => {
         />
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Pagina {currentPage} din {totalPages}
-            </p>
+        <div className="flex items-center justify-between pt-2">
+          {/* Left - Items per page */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Afișează</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              din {filteredContracts.length} contracte
+            </span>
+          </div>
+
+          {/* Right - Pagination */}
+          {totalPages > 1 && (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Anterior
               </button>
+              
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-teal-500 text-white'
+                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Următor
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Sidebar - for Add/Edit/Delete */}
