@@ -266,7 +266,7 @@ const SortingContractModal = ({
               <option value="">Selectează sector...</option>
               {sectors.map(s => (
                 <option key={s.id} value={s.id}>
-                  Sector {s.sector_number} - {s.sector_name}
+                  {s.sector_name}
                 </option>
               ))}
             </select>
