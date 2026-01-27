@@ -51,13 +51,14 @@ const ContractsPage = () => {
   const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || '';
+  const initialContractType = searchParams.get('type') || 'DISPOSAL';
   const initialSector = searchParams.get('sector') || '';
 
   // State
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contractCounts, setContractCounts] = useState({ DISPOSAL: 0, TMB: 0, WASTE_COLLECTOR: 0 });
   
   // Filters
   const [selectedContractType, setSelectedContractType] = useState(initialContractType);
@@ -89,10 +90,29 @@ const ContractsPage = () => {
   // Export
   const [exporting, setExporting] = useState(false);
 
-  // Load reference data
+  // Load reference data and counts
   useEffect(() => {
     loadReferenceData();
+    loadContractCounts();
   }, []);
+
+  const loadContractCounts = async () => {
+    try {
+      const [disposalRes, wasteRes, tmbRes] = await Promise.all([
+        apiGet('/api/institutions/0/disposal-contracts'),
+        apiGet('/api/institutions/0/waste-contracts'),
+        apiGet('/api/institutions/0/tmb-contracts'),
+      ]);
+
+      setContractCounts({
+        DISPOSAL: disposalRes.success ? (Array.isArray(disposalRes.data) ? disposalRes.data.length : 0) : 0,
+        WASTE_COLLECTOR: wasteRes.success ? (Array.isArray(wasteRes.data) ? wasteRes.data.length : 0) : 0,
+        TMB: tmbRes.success ? (Array.isArray(tmbRes.data) ? tmbRes.data.length : 0) : 0,
+      });
+    } catch (err) {
+      console.error('Error loading contract counts:', err);
+    }
+  };
 
   const loadReferenceData = async () => {
     try {
@@ -112,77 +132,42 @@ const ContractsPage = () => {
     }
   };
 
-  // Load contracts
+  // Load contracts for selected type
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
-      let allContracts = [];
+      let endpoint = '';
+      const params = {};
 
-      // If no contract type selected, load all types
-      if (!selectedContractType) {
-        const [disposalRes, wasteRes, tmbRes] = await Promise.all([
-          apiGet('/api/institutions/0/disposal-contracts', { 
-            sector_id: selectedSector || undefined,
-            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
-          }),
-          apiGet('/api/institutions/0/waste-contracts', { 
-            sector_id: selectedSector || undefined,
-            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
-          }),
-          apiGet('/api/institutions/0/tmb-contracts', { 
-            sector_id: selectedSector || undefined,
-            is_active: selectedStatus ? selectedStatus === 'active' : undefined 
-          }),
-        ]);
+      // Load specific contract type
+      switch (selectedContractType) {
+        case CONTRACT_TYPES.DISPOSAL:
+          endpoint = '/api/institutions/0/disposal-contracts';
+          break;
+        case CONTRACT_TYPES.WASTE_COLLECTOR:
+          endpoint = '/api/institutions/0/waste-contracts';
+          break;
+        case CONTRACT_TYPES.TMB:
+          endpoint = '/api/institutions/0/tmb-contracts';
+          break;
+        default:
+          endpoint = '/api/institutions/0/disposal-contracts';
+      }
 
-        if (disposalRes.success) {
-          const contracts = Array.isArray(disposalRes.data) ? disposalRes.data : [];
-          allContracts.push(...contracts.map(c => ({ ...c, _type: 'DISPOSAL' })));
-        }
-        if (wasteRes.success) {
-          const contracts = Array.isArray(wasteRes.data) ? wasteRes.data : [];
-          allContracts.push(...contracts.map(c => ({ ...c, _type: 'WASTE_COLLECTOR' })));
-        }
-        if (tmbRes.success) {
-          const contracts = Array.isArray(tmbRes.data) ? tmbRes.data : [];
-          allContracts.push(...contracts.map(c => ({ ...c, _type: 'TMB' })));
-        }
+      if (selectedSector) {
+        params.sector_id = selectedSector;
+      }
+      if (selectedStatus) {
+        params.is_active = selectedStatus === 'active';
+      }
 
-        setContracts(allContracts);
+      const response = await apiGet(endpoint, params);
+
+      if (response.success) {
+        const contractsArray = Array.isArray(response.data) ? response.data : [];
+        setContracts(contractsArray);
       } else {
-        // Load specific contract type
-        let endpoint = '';
-        const params = {};
-
-        switch (selectedContractType) {
-          case CONTRACT_TYPES.DISPOSAL:
-            endpoint = '/api/institutions/0/disposal-contracts';
-            break;
-          case CONTRACT_TYPES.WASTE_COLLECTOR:
-            endpoint = '/api/institutions/0/waste-contracts';
-            break;
-          case CONTRACT_TYPES.TMB:
-            endpoint = '/api/institutions/0/tmb-contracts';
-            break;
-          default:
-            endpoint = '/api/institutions/0/disposal-contracts';
-        }
-
-        if (selectedSector) {
-          params.sector_id = selectedSector;
-        }
-        if (selectedStatus) {
-          params.is_active = selectedStatus === 'active';
-        }
-
-        const response = await apiGet(endpoint, params);
-
-        if (response.success) {
-          const contractsArray = Array.isArray(response.data) ? response.data : [];
-          setContracts(contractsArray.map(c => ({ ...c, _type: selectedContractType })));
-        } else {
-          setContracts([]);
-        }
+        setContracts([]);
       }
     } catch (err) {
       console.error('Error loading contracts:', err);
@@ -409,13 +394,6 @@ const ContractsPage = () => {
   const handleExport = async (format) => {
     setExporting(true);
     try {
-      // If no contract type selected, we can't export (need to specify type for backend)
-      if (!selectedContractType) {
-        showToast('Vă rugăm selectați un tip de contract pentru export', 'error');
-        setExporting(false);
-        return;
-      }
-
       const params = new URLSearchParams({
         contractType: selectedContractType,
       });
@@ -492,13 +470,14 @@ const ContractsPage = () => {
           canCreate={canCreateData}
           onExport={handleExport}
           exporting={exporting}
+          contractCounts={contractCounts}
         />
 
         {/* Table */}
         <ContractTable
           contracts={paginatedContracts}
           loading={loading}
-          contractType={selectedContractType || 'DISPOSAL'}
+          contractType={selectedContractType}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           onView={handleView}
@@ -601,7 +580,7 @@ const ContractsPage = () => {
         isOpen={viewModalOpen}
         onClose={handleCloseViewModal}
         contract={viewContract}
-        contractType={viewContract?._type || selectedContractType || 'DISPOSAL'}
+        contractType={selectedContractType}
       />
     </div>
   );
