@@ -1,15 +1,16 @@
 // src/components/contracts/ContractSidebar.jsx
 /**
  * ============================================================================
- * CONTRACT SIDEBAR - WITH PDF UPLOAD + VALIDATION + AMENDMENTS
+ * CONTRACT SIDEBAR - WITH ATTRIBUTION TYPE + PDF UPLOAD + VALIDATION + AMENDMENTS
  * ============================================================================
+ * Updated: Added attribution_type field as first field for DISPOSAL and TMB
  */
 
 import { useState, useEffect } from 'react';
 import {
   X, Save, Trash2, FileText, AlertTriangle, Plus,
   ChevronDown, ChevronUp, Calendar, FileCheck, Users,
-  Percent, AlertCircle, CheckCircle,
+  Percent, AlertCircle, CheckCircle, Gavel,
 } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 import PDFUpload from '../common/PDFUpload';
@@ -20,6 +21,12 @@ const AMENDMENT_TYPES = [
   { value: 'TARIFF_CHANGE', label: 'Modificare tarif' },
   { value: 'QUANTITY_CHANGE', label: 'Modificare cantitate' },
   { value: 'MULTIPLE', label: 'Modificări multiple' },
+];
+
+// Attribution types for contracts
+const ATTRIBUTION_TYPES = [
+  { value: 'PUBLIC_TENDER', label: 'Licitație deschisă' },
+  { value: 'DIRECT_NEGOTIATION', label: 'Negociere fără publicare' },
 ];
 
 // ============================================================================
@@ -146,6 +153,7 @@ const ContractSidebar = ({
 }) => {
   // Form state
   const [formData, setFormData] = useState({
+    attribution_type: '', // NEW: first field
     institution_id: '',
     contract_number: '',
     contract_date_start: '',
@@ -168,50 +176,50 @@ const ContractSidebar = ({
 
   const [errors, setErrors] = useState({});
   const [amendments, setAmendments] = useState([]);
+  const [amendmentsExpanded, setAmendmentsExpanded] = useState(false);
   const [loadingAmendments, setLoadingAmendments] = useState(false);
-  const [showAmendments, setShowAmendments] = useState(false);
   const [amendmentForm, setAmendmentForm] = useState(null);
   const [savingAmendment, setSavingAmendment] = useState(false);
-
-  // Validation modal state
+  
+  // Validation
+  const [validating, setValidating] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [validationWarnings, setValidationWarnings] = useState([]);
-  const [validating, setValidating] = useState(false);
-
-  // PDF Viewer modal state
+  
+  // PDF Viewer
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [pdfViewerUrl, setPdfViewerUrl] = useState('');
   const [pdfViewerFileName, setPdfViewerFileName] = useState('');
 
-  // Filter institutions based on contract type
-  const filteredInstitutions = institutions.filter(inst => {
-    switch (contractType) {
-      case 'DISPOSAL':
-        return inst.type === 'DISPOSAL_CLIENT' || inst.type === 'LANDFILL';
-      case 'WASTE_COLLECTOR':
-        return inst.type === 'WASTE_COLLECTOR';
-      case 'TMB':
-        return inst.type === 'TMB_OPERATOR' || inst.type === 'AEROBIC_OPERATOR' || inst.type === 'ANAEROBIC_OPERATOR';
-      default:
-        return true;
+  // Filter institutions by type
+  const filteredInstitutions = institutions.filter(i => {
+    if (contractType === 'DISPOSAL') {
+      return i.type === 'DISPOSAL_CLIENT' || i.type === 'LANDFILL';
     }
+    if (contractType === 'TMB') {
+      return i.type === 'TMB_OPERATOR';
+    }
+    if (contractType === 'WASTE_COLLECTOR') {
+      return i.type === 'WASTE_COLLECTOR';
+    }
+    return true;
   });
 
-  // TMB operators for associate dropdown
-  const tmbOperatorsForAssociate = institutions.filter(inst => 
-    (inst.type === 'TMB_OPERATOR' || inst.type === 'AEROBIC_OPERATOR' || inst.type === 'ANAEROBIC_OPERATOR') &&
-    inst.id !== parseInt(formData.institution_id)
+  // TMB operators for associate field (exclude selected operator)
+  const tmbOperatorsForAssociate = institutions.filter(i => 
+    i.type === 'TMB_OPERATOR' && i.id !== formData.institution_id
   );
 
-  // Initialize form data
+  // Load contract data when editing/viewing
   useEffect(() => {
     if (contract && (mode === 'edit' || mode === 'view' || mode === 'delete')) {
       setFormData({
+        attribution_type: contract.attribution_type || '',
         institution_id: contract.institution_id || '',
         contract_number: contract.contract_number || '',
-        contract_date_start: contract.contract_date_start || '',
-        contract_date_end: contract.contract_date_end || '',
+        contract_date_start: contract.contract_date_start?.split('T')[0] || '',
+        contract_date_end: contract.contract_date_end?.split('T')[0] || '',
         notes: contract.notes || '',
         is_active: contract.is_active ?? true,
         sector_id: contract.sector_id || '',
@@ -230,18 +238,19 @@ const ContractSidebar = ({
       if (mode === 'edit' || mode === 'view') {
         loadAmendments();
       }
-    } else if (mode === 'add') {
-      const prefix = contractType === 'DISPOSAL' ? 'D-' : contractType === 'TMB' ? 'TMB-' : 'C-';
+    } else {
+      // Reset form for add mode
       setFormData({
+        attribution_type: '',
         institution_id: '',
-        contract_number: prefix,
+        contract_number: '',
         contract_date_start: '',
         contract_date_end: '',
         notes: '',
         is_active: true,
         sector_id: '',
         tariff_per_ton: '',
-        cec_tax_per_ton: '0',
+        cec_tax_per_ton: '',
         contracted_quantity_tons: '',
         estimated_quantity_tons: '',
         associate_institution_id: '',
@@ -255,13 +264,9 @@ const ContractSidebar = ({
     }
     setErrors({});
     setAmendmentForm(null);
-    setShowAmendments(false);
-    setShowValidationModal(false);
-    setValidationErrors([]);
-    setValidationWarnings([]);
-  }, [contract, mode, isOpen, contractType]);
+  }, [contract, mode, isOpen]);
 
-  // Load amendments
+  // Load amendments for existing contract
   const loadAmendments = async () => {
     if (!contract?.id) return;
     
@@ -290,19 +295,21 @@ const ContractSidebar = ({
     }
   };
 
-  // Handle input change
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
+    
+    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
-  // Handle PDF upload change
+  // Handle PDF upload
   const handlePDFChange = (fileData) => {
     if (fileData) {
       setFormData(prev => ({
@@ -319,73 +326,81 @@ const ContractSidebar = ({
     }
   };
 
-  // Handle PDF view
+  // Handle view PDF
   const handleViewPDF = (url, fileName) => {
     setPdfViewerUrl(url);
     setPdfViewerFileName(fileName);
     setPdfViewerOpen(true);
   };
 
-  // Local validation (required fields)
-  const validateLocal = () => {
+  // Validate form
+  const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.contract_number.trim()) {
-      newErrors.contract_number = 'Numărul contractului este obligatoriu';
-    }
-    if (!formData.contract_date_start) {
-      newErrors.contract_date_start = 'Data de început este obligatorie';
+    if (!formData.attribution_type && (contractType === 'DISPOSAL' || contractType === 'TMB')) {
+      newErrors.attribution_type = 'Selectați tipul de atribuire';
     }
     if (!formData.institution_id) {
-      newErrors.institution_id = contractType === 'TMB' ? 'Selectați operatorul TMB' : 'Selectați instituția';
+      newErrors.institution_id = 'Selectați operatorul';
+    }
+    if (!formData.contract_number) {
+      newErrors.contract_number = 'Introduceți numărul contractului';
+    }
+    if (!formData.contract_date_start) {
+      newErrors.contract_date_start = 'Selectați data contractului';
     }
     if (!formData.sector_id) {
-      newErrors.sector_id = 'Selectați U.A.T. (sectorul)';
+      newErrors.sector_id = 'Selectați sectorul';
     }
-    
-    if (contractType === 'DISPOSAL') {
-      if (!formData.tariff_per_ton || parseFloat(formData.tariff_per_ton) <= 0) {
-        newErrors.tariff_per_ton = 'Tariful este obligatoriu';
-      }
+    if (contractType === 'DISPOSAL' && !formData.tariff_per_ton) {
+      newErrors.tariff_per_ton = 'Introduceți tariful';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Server validation
+  // Server-side validation
   const validateServer = async () => {
     setValidating(true);
     try {
-      const endpoint = contractType === 'TMB' 
-        ? '/api/contracts/validate/tmb'
-        : '/api/contracts/validate/disposal';
-      
-      const payload = {
-        id: contract?.id || null,
-        institution_id: formData.institution_id,
-        sector_id: formData.sector_id,
-        contract_number: formData.contract_number,
-        contract_date_start: formData.contract_date_start,
-        contract_date_end: formData.contract_date_end,
-      };
+      let endpoint = '';
+      switch (contractType) {
+        case 'DISPOSAL':
+          endpoint = '/api/institutions/0/disposal-contracts/validate';
+          break;
+        case 'TMB':
+          endpoint = '/api/institutions/0/tmb-contracts/validate';
+          break;
+        default:
+          return true;
+      }
 
-      const response = await apiPost(endpoint, payload);
-      
+      const response = await apiPost(endpoint, {
+        id: contract?.id,
+        ...formData,
+      });
+
       if (response.success) {
-        setValidationErrors(response.errors || []);
-        setValidationWarnings(response.warnings || []);
+        const { errors: serverErrors, warnings: serverWarnings } = response;
         
-        if ((response.errors && response.errors.length > 0) || (response.warnings && response.warnings.length > 0)) {
+        if (serverErrors?.length > 0) {
+          setValidationErrors(serverErrors);
+          setValidationWarnings(serverWarnings || []);
+          setShowValidationModal(true);
+          return false;
+        }
+        
+        if (serverWarnings?.length > 0) {
+          setValidationErrors([]);
+          setValidationWarnings(serverWarnings);
           setShowValidationModal(true);
           return false;
         }
         
         return true;
-      } else {
-        console.error('Validation API error:', response.message);
-        return true;
       }
+      return true;
     } catch (err) {
       console.error('Validation error:', err);
       return true;
@@ -394,9 +409,9 @@ const ContractSidebar = ({
     }
   };
 
-  // Handle submit with validation
+  // Handle form submission
   const handleSubmit = async () => {
-    if (!validateLocal()) return;
+    if (!validateForm()) return;
     
     const canProceed = await validateServer();
     if (canProceed) {
@@ -569,6 +584,11 @@ const ContractSidebar = ({
     }
   };
 
+  const getAttributionLabel = (value) => {
+    const found = ATTRIBUTION_TYPES.find(t => t.value === value);
+    return found ? found.label : value || '-';
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -627,10 +647,37 @@ const ContractSidebar = ({
           ) : (
             <div className="space-y-5">
               
-              {/* Operator / Institution */}
+              {/* ================= ATTRIBUTION TYPE (FIRST FIELD) ================= */}
+              {(contractType === 'DISPOSAL' || contractType === 'TMB') && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <Gavel className="w-4 h-4 inline mr-1" />
+                    Tip Atribuire <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="attribution_type"
+                    value={formData.attribution_type}
+                    onChange={handleInputChange}
+                    disabled={isReadOnly}
+                    className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
+                      errors.attribution_type ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                    }`}
+                  >
+                    <option value="">Selectează tipul de atribuire...</option>
+                    {ATTRIBUTION_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                  {errors.attribution_type && (
+                    <p className="mt-1 text-xs text-red-600">{errors.attribution_type}</p>
+                  )}
+                </div>
+              )}
+
+              {/* ================= OPERATOR / INSTITUTION ================= */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {contractType === 'TMB' ? 'Operator TMB' : 'Instituție'} <span className="text-red-500">*</span>
+                  {contractType === 'TMB' ? 'Operator TMB' : contractType === 'DISPOSAL' ? 'Operator Depozitare' : 'Instituție'} <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="institution_id"
@@ -902,18 +949,16 @@ const ContractSidebar = ({
                 </>
               )}
 
-              {/* ================= PDF UPLOAD FOR CONTRACT ================= */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
-                <PDFUpload
-                  label="Document Contract (PDF)"
-                  value={formData.contract_file_url ? { url: formData.contract_file_url, fileName: formData.contract_file_name } : null}
-                  onChange={handlePDFChange}
-                  onView={handleViewPDF}
-                  contractType={contractType}
-                  contractNumber={formData.contract_number}
-                  disabled={isReadOnly}
-                />
-              </div>
+              {/* PDF Upload */}
+              <PDFUpload
+                label="Document Contract (PDF)"
+                value={formData.contract_file_url ? { url: formData.contract_file_url, fileName: formData.contract_file_name } : null}
+                onChange={handlePDFChange}
+                onView={handleViewPDF}
+                disabled={isReadOnly}
+                contractType={contractType}
+                contractNumber={formData.contract_number}
+              />
 
               {/* Notes */}
               <div>
@@ -926,20 +971,20 @@ const ContractSidebar = ({
                   onChange={handleInputChange}
                   disabled={isReadOnly}
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white resize-none disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                  placeholder="Observații..."
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 resize-none"
+                  placeholder="Observații adiționale..."
                 />
               </div>
 
               {/* Active Status */}
-              <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <input
                   type="checkbox"
                   name="is_active"
                   checked={formData.is_active}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-5 h-5 text-teal-600 rounded border-gray-300 focus:ring-teal-500 disabled:opacity-60"
+                  className="w-5 h-5 rounded-lg border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contract activ
@@ -948,11 +993,11 @@ const ContractSidebar = ({
 
               {/* ================= AMENDMENTS SECTION ================= */}
               {(mode === 'edit' || mode === 'view') && (contractType === 'DISPOSAL' || contractType === 'TMB') && (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden mt-6">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => setShowAmendments(!showAmendments)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => setAmendmentsExpanded(!amendmentsExpanded)}
+                    className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <FileCheck className="w-4 h-4 text-teal-500" />
@@ -960,81 +1005,54 @@ const ContractSidebar = ({
                         Acte Adiționale
                       </span>
                       {amendments.length > 0 && (
-                        <span className="px-2 py-0.5 bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 text-xs font-bold rounded-full">
+                        <span className="px-2 py-0.5 bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 text-xs font-bold rounded-full">
                           {amendments.length}
                         </span>
                       )}
                     </div>
-                    {showAmendments 
-                      ? <ChevronUp className="w-4 h-4 text-gray-400" />
-                      : <ChevronDown className="w-4 h-4 text-gray-400" />
-                    }
+                    {amendmentsExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    )}
                   </button>
 
-                  {showAmendments && (
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                  {amendmentsExpanded && (
+                    <div className="p-4 space-y-3">
                       {loadingAmendments ? (
                         <div className="text-center py-4">
-                          <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                          <div className="w-6 h-6 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
                         </div>
                       ) : (
                         <>
-                          {amendments.length === 0 && !amendmentForm && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                              Niciun act adițional
-                            </p>
-                          )}
-
-                          {/* Existing Amendments */}
-                          {amendments.map(a => (
-                            <div key={a.id} className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-gray-900 dark:text-white">
+                          {amendments.map((a) => (
+                            <div key={a.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm text-gray-900 dark:text-white">
                                       {a.amendment_number}
                                     </span>
-                                    <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded">
+                                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-xs rounded">
                                       {AMENDMENT_TYPES.find(t => t.value === a.amendment_type)?.label || a.amendment_type}
                                     </span>
-                                    {a.amendment_file_url && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleViewPDF(a.amendment_file_url, a.amendment_file_name || 'Act aditional.pdf')}
-                                        className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded flex items-center gap-1 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
-                                      >
-                                        <FileText className="w-3 h-3" />
-                                        PDF
-                                      </button>
-                                    )}
                                   </div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <Calendar className="w-3 h-3 inline mr-1" />
                                     {formatDate(a.amendment_date)}
-                                  </p>
-                                  <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-                                    {a.new_contract_date_end && (
-                                      <p>Nouă dată: <span className="font-medium">{formatDate(a.new_contract_date_end)}</span></p>
-                                    )}
-                                    {a.new_tariff_per_ton && (
-                                      <p>Nou tarif: <span className="font-medium">{a.new_tariff_per_ton} LEI/t</span></p>
-                                    )}
-                                    {(a.new_contracted_quantity_tons || a.new_estimated_quantity_tons) && (
-                                      <p>Nouă cantitate: <span className="font-medium">
-                                        {parseFloat(a.new_contracted_quantity_tons || a.new_estimated_quantity_tons).toLocaleString('ro-RO')} t
-                                      </span></p>
+                                    {a.changes_description && (
+                                      <span className="ml-2">• {a.changes_description}</span>
                                     )}
                                   </div>
                                 </div>
-                                
                                 {mode === 'edit' && (
-                                  <div className="flex gap-1 ml-2">
+                                  <div className="flex gap-1">
                                     <button
                                       type="button"
                                       onClick={() => handleEditAmendment(a)}
-                                      className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded transition-colors"
+                                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded transition-colors"
                                     >
-                                      <FileText className="w-3.5 h-3.5" />
+                                      <Calendar className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                       type="button"
@@ -1049,17 +1067,23 @@ const ContractSidebar = ({
                             </div>
                           ))}
 
+                          {amendments.length === 0 && !amendmentForm && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                              Nu există acte adiționale
+                            </p>
+                          )}
+
                           {/* Amendment Form */}
                           {amendmentForm && (
-                            <div className="p-4 bg-teal-50 dark:bg-teal-500/5 rounded-lg border border-teal-200 dark:border-teal-500/20 space-y-3">
-                              <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {amendmentForm.id ? 'Editează' : 'Adaugă'} Act Adițional
+                            <div className="p-4 border-2 border-dashed border-teal-300 dark:border-teal-500/50 rounded-xl space-y-3 bg-teal-50/50 dark:bg-teal-500/5">
+                              <h5 className="text-sm font-bold text-teal-700 dark:text-teal-400">
+                                {amendmentForm.id ? 'Editare Act Adițional' : 'Act Adițional Nou'}
                               </h5>
                               
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    Număr *
+                                    Număr <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="text"
@@ -1071,7 +1095,7 @@ const ContractSidebar = ({
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    Data *
+                                    Data <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="date"
@@ -1085,7 +1109,7 @@ const ContractSidebar = ({
 
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                  Ce se modifică
+                                  Tip Modificare
                                 </label>
                                 <select
                                   name="amendment_type"
@@ -1099,7 +1123,6 @@ const ContractSidebar = ({
                                 </select>
                               </div>
 
-                              {/* Conditional fields based on amendment type */}
                               {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'MULTIPLE') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -1119,7 +1142,7 @@ const ContractSidebar = ({
                                 <div className="grid grid-cols-2 gap-3">
                                   <div>
                                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                      Nou Tarif (LEI/t)
+                                      Noul Tarif
                                     </label>
                                     <input
                                       type="number"

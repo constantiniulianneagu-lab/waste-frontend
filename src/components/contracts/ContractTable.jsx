@@ -1,15 +1,22 @@
 // src/components/contracts/ContractTable.jsx
 /**
  * ============================================================================
- * CONTRACT TABLE - WITH OPERATOR COLUMN + IMPROVED
+ * CONTRACT TABLE - WITH ATTRIBUTION TYPE + OPERATOR COLUMN
  * ============================================================================
+ * Updated: Added attribution_type column for DISPOSAL and TMB
  */
 
 import {
   Edit2, Trash2, Eye, FileText, CheckCircle, XCircle,
   ArrowUpDown, ArrowUp, ArrowDown, Calendar, MapPin,
-  AlertCircle, FileCheck, Users, Building2,
+  AlertCircle, FileCheck, Users, Building2, Gavel,
 } from 'lucide-react';
+
+// Attribution types labels
+const ATTRIBUTION_LABELS = {
+  PUBLIC_TENDER: 'Licitație deschisă',
+  DIRECT_NEGOTIATION: 'Negociere fără publicare',
+};
 
 const ContractTable = ({
   contracts = [],
@@ -76,6 +83,22 @@ const ContractTable = ({
     return new Date(dateEnd) < new Date();
   };
 
+  const getAttributionBadge = (type) => {
+    if (!type) return <span className="text-sm text-gray-400">-</span>;
+    
+    const isPublicTender = type === 'PUBLIC_TENDER';
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
+        isPublicTender 
+          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+          : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+      }`}>
+        <Gavel className="w-3 h-3" />
+        {ATTRIBUTION_LABELS[type] || type}
+      </span>
+    );
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -103,6 +126,9 @@ const ContractTable = ({
     );
   }
 
+  // Show attribution column only for DISPOSAL and TMB
+  const showAttributionColumn = contractType === 'DISPOSAL' || contractType === 'TMB';
+
   return (
     <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
@@ -111,7 +137,14 @@ const ContractTable = ({
             <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700/50">
               <SortableHeader column="contract_number">Nr. Contract</SortableHeader>
               
-              {/* OPERATOR COLUMN - NEW */}
+              {/* ATTRIBUTION TYPE COLUMN - NEW */}
+              {showAttributionColumn && (
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Tip Atribuire
+                </th>
+              )}
+              
+              {/* OPERATOR COLUMN */}
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Operator
               </th>
@@ -169,7 +202,14 @@ const ContractTable = ({
                     </div>
                   </td>
 
-                  {/* OPERATOR - NEW COLUMN */}
+                  {/* ATTRIBUTION TYPE - NEW COLUMN */}
+                  {showAttributionColumn && (
+                    <td className="px-4 py-4">
+                      {getAttributionBadge(contract.attribution_type)}
+                    </td>
+                  )}
+
+                  {/* OPERATOR */}
                   <td className="px-4 py-4">
                     {contract.institution_name ? (
                       <div className="flex items-center gap-2">
