@@ -412,17 +412,49 @@ const ContractSidebar = ({
   // Handle form submission
   const handleSubmit = async () => {
     if (!validateForm()) return;
+
+    // Ensure contract_number keeps the required prefix (D- / TMB-)
+    const normalizeContractNumber = (type, num) => {
+      const raw = (num || '').trim();
+      if (!raw) return raw;
+
+      // Only enforce prefixes for DISPOSAL and TMB (as requested)
+      const expectedPrefix = type === 'TMB' ? 'TMB-' : type === 'DISPOSAL' ? 'D-' : null;
+      if (!expectedPrefix) return raw;
+
+      // If already correct, keep
+      if (raw.startsWith(expectedPrefix)) return raw;
+
+      // If user typed another known prefix, strip it then add the expected one
+      const base = raw.replace(/^(D-|TMB-)/, '');
+      return `${expectedPrefix}${base}`;
+    };
+
+    const normalizedFormData = {
+      ...formData,
+      contract_number: normalizeContractNumber(contractType, formData.contract_number),
+    };
     
     const canProceed = await validateServer();
     if (canProceed) {
-      onSave(formData);
+      onSave(normalizedFormData);
     }
   };
 
   // Handle confirm from validation modal
   const handleConfirmSave = () => {
     setShowValidationModal(false);
-    onSave(formData);
+
+    // Keep required prefixes (D- / TMB-) on confirm save as well
+    const expectedPrefix = contractType === 'TMB' ? 'TMB-' : contractType === 'DISPOSAL' ? 'D-' : null;
+    const raw = (formData.contract_number || '').trim();
+    const base = raw.replace(/^(D-|TMB-)/, '');
+    const contract_number = expectedPrefix ? (raw.startsWith(expectedPrefix) ? raw : `${expectedPrefix}${base}`) : raw;
+
+    onSave({
+      ...formData,
+      contract_number,
+    });
   };
 
   // Amendment handlers
@@ -771,7 +803,7 @@ const ContractSidebar = ({
                   <option value="">Selectează...</option>
                   {sectors.map(s => (
                     <option key={s.id} value={s.id}>
-                      Sector {s.sector_number} - {s.sector_name}
+                      {s.sector_name}
                     </option>
                   ))}
                 </select>
