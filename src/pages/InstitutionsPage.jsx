@@ -183,12 +183,14 @@ const filteredInstitutions = useMemo(() => {
       if (selectedStatus === 'active' && !inst.is_active) return false;
       if (selectedStatus === 'inactive' && inst.is_active) return false;
   
-      // Sector filter - compare as strings (UUID)
-      if (selectedSector) {
-        const instSectors = inst.sectors || [];
-        const hasSector = instSectors.some(s => String(s.id) === String(selectedSector));
-        if (!hasSector) return false;
-      }
+      // Sector filter - FIX: don't use parseInt, compare strings
+if (selectedSector) {
+  const instSectors = inst.sectors || [];
+  const hasSector = instSectors.some(s => 
+    s.id === selectedSector || String(s.id) === String(selectedSector)
+  );
+  if (!hasSector) return false;
+}
   
       return true;
     });
