@@ -72,7 +72,7 @@ const ContractFilters = ({
             <option value="">Toate sectoarele</option>
             {sectors.map(sector => (
               <option key={sector.id} value={sector.id}>
-                Sector {sector.sector_number} - {sector.sector_name}
+                {sector.sector_name}
               </option>
             ))}
           </select>
