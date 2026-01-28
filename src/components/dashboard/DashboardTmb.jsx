@@ -225,7 +225,7 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
-          title="Dashboard Tratare Mecano-Biologică"
+          title="Dashboard Tratarea mecano-biologică"
         />
         <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
           <div className="text-center">
@@ -249,7 +249,7 @@ const DashboardTmb = () => {
         <DashboardHeader
           notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
-          title="Dashboard Tratare Mecano-Biologică"
+          title="Dashboard Tratarea mecano-biologică"
         />
         <div className="p-6">
           <div className="max-w-3xl mx-auto">
@@ -475,7 +475,7 @@ const DashboardTmb = () => {
         onSearchChange={handleSearchChange}
         onExport={handleExport}
         exporting={exporting}
-        title="Dashboard Tratare Mecano-Biologică"
+        title="Dashboard Tratarea mecano-biologică"
       />
 
       <div className="px-6 lg:px-8 py-6 space-y-6">
