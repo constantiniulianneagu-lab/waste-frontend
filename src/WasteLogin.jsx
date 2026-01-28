@@ -73,13 +73,6 @@ const WasteLogin = () => {
     }
   };
 
-  const fillTestCredentials = () => {
-    setFormData({
-      email: 'admin@test.ro',
-      password: 'admin123'
-    });
-  };
-
   return (
     <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4">
       
@@ -223,23 +216,6 @@ const WasteLogin = () => {
                 </span>
               </div>
             )}
-
-            {/* Test credentials button */}
-            <button
-              type="button"
-              onClick={fillTestCredentials}
-              className="w-full mb-5 px-4 py-3 
-                       bg-blue-50 dark:bg-blue-900/30 
-                       text-blue-600 dark:text-blue-300 
-                       rounded-[16px] 
-                       hover:bg-blue-100 dark:hover:bg-blue-900/50 
-                       active:scale-98
-                       transition-all duration-300 
-                       text-sm font-bold
-                       border border-blue-200 dark:border-blue-800/30"
-            >
-              🧪 Fill Test Credentials
-            </button>
 
             {/* Login form */}
             <form onSubmit={handleSubmit} className="space-y-5">
