@@ -71,7 +71,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       },
 
       {
-        title: "Statistici Sectoare",
+        title: "Statistici",
         icon: TrendingUp,
         path: "/sectoare",
         gradient: "from-emerald-500 to-teal-600",
