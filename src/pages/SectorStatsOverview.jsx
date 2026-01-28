@@ -116,7 +116,7 @@ const SectorStatsOverview = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* HEADER - standardizat */}
       <DashboardHeader 
-        title="Statistici - Managementul Deșeurilor București"
+        title="Statistici - Managementul deșeurilor București"
         notificationCount={0}
       />
 
