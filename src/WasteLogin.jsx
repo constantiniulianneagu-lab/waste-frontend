@@ -334,7 +334,7 @@ const WasteLogin = () => {
 
             {/* Footer text */}
             <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">
-              SAMD © 2025 - Sistem Avansat de Monitorizare Deșeuri
+              SAMD © 2026 - Sistem Avansat de Monitorizare Deșeuri
             </p>
           </div>
         </div>
