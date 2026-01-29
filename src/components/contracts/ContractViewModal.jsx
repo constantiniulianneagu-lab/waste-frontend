@@ -476,7 +476,7 @@ const IndicatorCard = ({ label, value, color }) => {
 
 const AmendmentCard = ({ amendment, index, onViewPDF }) => {
   const AMENDMENT_TYPE_LABELS = {
-    EXTENSION: 'Prelungire',
+    EXTENSION: 'Modificare perioadă',
     TARIFF_CHANGE: 'Modificare tarif',
     QUANTITY_CHANGE: 'Modificare cantitate',
     MULTIPLE: 'Multiple',

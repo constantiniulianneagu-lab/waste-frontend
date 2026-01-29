@@ -17,7 +17,7 @@ import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
 
 const AMENDMENT_TYPES = [
-  { value: 'EXTENSION', label: 'Prelungire perioadă' },
+  { value: 'EXTENSION', label: 'Modificare perioadă' },
   { value: 'TARIFF_CHANGE', label: 'Modificare tarif' },
   { value: 'QUANTITY_CHANGE', label: 'Modificare cantitate' },
   { value: 'MULTIPLE', label: 'Modificări multiple' },
