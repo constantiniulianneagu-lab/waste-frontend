@@ -11,13 +11,6 @@ import {
   User, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
-// Types that need representative info
-const OPERATOR_TYPES = [
-  'WASTE_COLLECTOR', 'TMB_OPERATOR', 'AEROBIC_OPERATOR', 'ANAEROBIC_OPERATOR',
-  'RECYCLING_OPERATOR', 'SORTING_OPERATOR', 'RECOVERY_OPERATOR', 
-  'DISPOSAL_CLIENT', 'LANDFILL'
-];
-
 const InstitutionSidebar = ({
   isOpen,
   onClose,
@@ -51,8 +44,6 @@ const InstitutionSidebar = ({
   const [errors, setErrors] = useState({});
   const [selectedSectors, setSelectedSectors] = useState([]);
   const [showRepresentativeSection, setShowRepresentativeSection] = useState(false);
-
-  const typeNeedsRepresentative = OPERATOR_TYPES.includes(formData.type);
 
   // Populate form when editing
   useEffect(() => {
@@ -112,13 +103,6 @@ const InstitutionSidebar = ({
     }
     setErrors({});
   }, [institution, mode, isOpen]);
-
-  // Auto-show representative section when type changes to operator
-  useEffect(() => {
-    if (typeNeedsRepresentative && !showRepresentativeSection) {
-      setShowRepresentativeSection(true);
-    }
-  }, [formData.type, typeNeedsRepresentative]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -454,98 +438,96 @@ const InstitutionSidebar = ({
                 </div>
               </div>
 
-              {/* Representative Section - Collapsible */}
-              {typeNeedsRepresentative && (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setShowRepresentativeSection(!showRepresentativeSection)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-teal-500" />
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        Reprezentant Legal
-                      </span>
-                    </div>
-                    {showRepresentativeSection 
-                      ? <ChevronUp className="w-4 h-4 text-gray-400" />
-                      : <ChevronDown className="w-4 h-4 text-gray-400" />
-                    }
-                  </button>
-                  
-                  {showRepresentativeSection && (
-                    <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Nume
-                          </label>
-                          <input
-                            type="text"
-                            name="representative_name"
-                            value={formData.representative_name}
-                            onChange={handleInputChange}
-                            disabled={isReadOnly}
-                            className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
-                            placeholder="Ion Popescu"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Funcție
-                          </label>
-                          <input
-                            type="text"
-                            name="representative_position"
-                            value={formData.representative_position}
-                            onChange={handleInputChange}
-                            disabled={isReadOnly}
-                            className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
-                            placeholder="Director"
-                          />
-                        </div>
+              {/* Representative Section - Collapsible - FOR ALL INSTITUTIONS */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowRepresentativeSection(!showRepresentativeSection)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-teal-500" />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      Reprezentant Legal
+                    </span>
+                  </div>
+                  {showRepresentativeSection 
+                    ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                    : <ChevronDown className="w-4 h-4 text-gray-400" />
+                  }
+                </button>
+                
+                {showRepresentativeSection && (
+                  <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Nume
+                        </label>
+                        <input
+                          type="text"
+                          name="representative_name"
+                          value={formData.representative_name}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
+                          placeholder="Ion Popescu"
+                        />
                       </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Funcție
+                        </label>
+                        <input
+                          type="text"
+                          name="representative_position"
+                          value={formData.representative_position}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
+                          placeholder="Director"
+                        />
+                      </div>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Telefon
-                          </label>
-                          <input
-                            type="text"
-                            name="representative_phone"
-                            value={formData.representative_phone}
-                            onChange={handleInputChange}
-                            disabled={isReadOnly}
-                            className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
-                            placeholder="07XX XXX XXX"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            name="representative_email"
-                            value={formData.representative_email}
-                            onChange={handleInputChange}
-                            disabled={isReadOnly}
-                            className={`w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all ${
-                              errors.representative_email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                            }`}
-                            placeholder="email@email.ro"
-                          />
-                          {errors.representative_email && (
-                            <p className="mt-0.5 text-xs text-red-600">{errors.representative_email}</p>
-                          )}
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Telefon
+                        </label>
+                        <input
+                          type="text"
+                          name="representative_phone"
+                          value={formData.representative_phone}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all"
+                          placeholder="07XX XXX XXX"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          name="representative_email"
+                          value={formData.representative_email}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className={`w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:opacity-60 transition-all ${
+                            errors.representative_email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                          }`}
+                          placeholder="email@email.ro"
+                        />
+                        {errors.representative_email && (
+                          <p className="mt-0.5 text-xs text-red-600">{errors.representative_email}</p>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
 
               {/* Status Activ */}
               <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
