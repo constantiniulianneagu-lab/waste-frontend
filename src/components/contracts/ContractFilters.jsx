@@ -1,10 +1,7 @@
 // src/components/contracts/ContractFilters.jsx
 /**
  * ============================================================================
- * CONTRACT FILTERS - TABS WITH BADGES DESIGN
- * ============================================================================
- * Top: Tabs for contract types with count badges
- * Bottom: Sector & Status filters + Search + Actions
+ * CONTRACT FILTERS - TABS WITH BADGES (ALL 6 TYPES)
  * ============================================================================
  */
 
@@ -12,9 +9,12 @@ import { Filter, X, Search, RefreshCw, Plus, Download, FileText, FileSpreadsheet
 import { useState, useRef, useEffect } from 'react';
 
 const CONTRACT_TYPE_TABS = [
-  { value: 'DISPOSAL', label: 'Depozitare', icon: '📦' },
-  { value: 'TMB', label: 'TMB', icon: '⚙️' },
   { value: 'WASTE_COLLECTOR', label: 'Colectare', icon: '🚛' },
+  { value: 'SORTING', label: 'Sortare', icon: '🔄' },
+  { value: 'AEROBIC', label: 'Aerobă', icon: '🌱' },
+  { value: 'ANAEROBIC', label: 'Anaerobă', icon: '🔋' },
+  { value: 'TMB', label: 'TMB', icon: '⚙️' },
+  { value: 'DISPOSAL', label: 'Depozitare', icon: '📦' },
 ];
 
 const ContractFilters = ({
@@ -35,12 +35,11 @@ const ContractFilters = ({
   canCreate = false,
   onExport,
   exporting = false,
-  contractCounts = {}, // { DISPOSAL: 45, TMB: 12, WASTE_COLLECTOR: 28 }
+  contractCounts = {},
 }) => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -70,13 +69,11 @@ const ContractFilters = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left - Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Filter icon */}
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
             <Filter className="w-4 h-4" />
             <span className="text-sm font-medium">Filtre:</span>
           </div>
 
-          {/* U.A.T. (Sector) */}
           <select
             value={sectorId}
             onChange={(e) => onSectorChange(e.target.value)}
@@ -88,7 +85,6 @@ const ContractFilters = ({
             ))}
           </select>
 
-          {/* Status */}
           <select
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
@@ -101,7 +97,7 @@ const ContractFilters = ({
         </div>
 
         {/* Center - Tabs */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {CONTRACT_TYPE_TABS.map((tab) => {
             const isActive = contractType === tab.value;
             const count = contractCounts[tab.value] || 0;
@@ -126,9 +122,8 @@ const ContractFilters = ({
           })}
         </div>
 
-        {/* Right - Search, Reset, Refresh, Add, Export */}
+        {/* Right - Actions */}
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -140,7 +135,6 @@ const ContractFilters = ({
             />
           </div>
 
-          {/* Reset Button */}
           {hasActiveFilters && (
             <button
               onClick={onReset}
@@ -152,7 +146,6 @@ const ContractFilters = ({
             </button>
           )}
 
-          {/* Refresh */}
           <button
             onClick={onRefresh}
             disabled={loading}
@@ -162,7 +155,6 @@ const ContractFilters = ({
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Add Button */}
           {canCreate && (
             <button
               onClick={onAdd}
@@ -173,7 +165,6 @@ const ContractFilters = ({
             </button>
           )}
 
-          {/* Export Button with Dropdown */}
           {onExport && (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -186,7 +177,6 @@ const ContractFilters = ({
                 <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown Menu */}
               {isExportOpen && !exporting && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
                   {exportOptions.map((option) => {

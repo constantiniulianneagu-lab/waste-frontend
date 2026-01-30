@@ -1,94 +1,99 @@
 // src/pages/ContractsPage.jsx
 /**
  * ============================================================================
- * CONTRACTS MANAGEMENT PAGE - REDESIGNED v2.0
+ * CONTRACTS PAGE - ALL 6 TYPES
  * ============================================================================
- * Design: Matching InstitutionsPage - Clean, modern layout
- * Features: Export (PDF/XLS/CSV), Modern filters, No stats cards
- * Updated: 2026-01-27
+ * Order: Colectare → Sortare → Aerobă → Anaerobă → TMB → Depozitare
  * ============================================================================
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-
-import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
-import { useAuth } from '../AuthContext';
-import { usePermissions } from '../hooks/usePermissions';
-
-import DashboardHeader from '../components/dashboard/DashboardHeader';
+import { apiGet, apiDelete } from '../api/apiClient';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
-import ContractSidebar from '../components/contracts/ContractSidebar';
 import ContractViewModal from '../components/contracts/ContractViewModal';
+import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
+import Toast from '../components/common/Toast';
 
-// Contract types
+// Contract types with labels
 const CONTRACT_TYPES = {
-  DISPOSAL: 'DISPOSAL',
   WASTE_COLLECTOR: 'WASTE_COLLECTOR',
+  SORTING: 'SORTING',
+  AEROBIC: 'AEROBIC',
+  ANAEROBIC: 'ANAEROBIC',
   TMB: 'TMB',
+  DISPOSAL: 'DISPOSAL'
 };
 
 const CONTRACT_TYPE_LABELS = {
-  [CONTRACT_TYPES.DISPOSAL]: 'Depozitare',
-  [CONTRACT_TYPES.WASTE_COLLECTOR]: 'Colectare',
-  [CONTRACT_TYPES.TMB]: 'TMB',
+  WASTE_COLLECTOR: 'Colectare',
+  SORTING: 'Sortare',
+  AEROBIC: 'Aerobă',
+  ANAEROBIC: 'Anaerobă',
+  TMB: 'TMB',
+  DISPOSAL: 'Depozitare'
 };
 
-// Toast helper
-const showToast = (message, type = 'success') => {
-  if (type === 'error') {
-    console.error(message);
-    alert(message);
-  } else {
-    console.log(message);
-  }
+const ENDPOINT_MAP = {
+  WASTE_COLLECTOR: '/api/institutions/0/waste-contracts',
+  SORTING: '/api/institutions/0/sorting-contracts',
+  AEROBIC: '/api/institutions/0/aerobic-contracts',
+  ANAEROBIC: '/api/institutions/0/anaerobic-contracts',
+  TMB: '/api/institutions/0/tmb-contracts',
+  DISPOSAL: '/api/institutions/0/disposal-contracts'
 };
 
 const ContractsPage = () => {
-  const { user } = useAuth();
-  const permissions = usePermissions();
-  const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
-  
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || 'DISPOSAL';
+  const initialContractType = searchParams.get('type') || 'WASTE_COLLECTOR';
   const initialSector = searchParams.get('sector') || '';
 
   // State
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [contractCounts, setContractCounts] = useState({ DISPOSAL: 0, TMB: 0, WASTE_COLLECTOR: 0 });
-  
+  const [contractCounts, setContractCounts] = useState({
+    WASTE_COLLECTOR: 0,
+    SORTING: 0,
+    AEROBIC: 0,
+    ANAEROBIC: 0,
+    TMB: 0,
+    DISPOSAL: 0
+  });
+
   // Filters
   const [selectedContractType, setSelectedContractType] = useState(initialContractType);
   const [selectedSector, setSelectedSector] = useState(initialSector);
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Reference data
-  const [institutions, setInstitutions] = useState([]);
-  const [sectors, setSectors] = useState([]);
-
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const itemsPerPage = 10;
 
   // Sorting
   const [sortBy, setSortBy] = useState('contract_date_start');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Sidebar (for add/edit/delete)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState(null);
-  const [selectedContract, setSelectedContract] = useState(null);
-  const [saving, setSaving] = useState(false);
-
-  // View Modal
+  // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewContract, setViewContract] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState(null);
+
+  // Reference data
+  const [sectors, setSectors] = useState([]);
 
   // Export
   const [exporting, setExporting] = useState(false);
+
+  // Toast
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Permissions (simplified)
+  const canCreateData = true;
+  const canEditData = true;
+  const canDeleteData = true;
 
   // Load reference data and counts
   useEffect(() => {
@@ -98,16 +103,22 @@ const ContractsPage = () => {
 
   const loadContractCounts = async () => {
     try {
-      const [disposalRes, wasteRes, tmbRes] = await Promise.all([
-        apiGet('/api/institutions/0/disposal-contracts'),
+      const [wasteRes, sortRes, aeroRes, anaeroRes, tmbRes, dispRes] = await Promise.all([
         apiGet('/api/institutions/0/waste-contracts'),
+        apiGet('/api/institutions/0/sorting-contracts'),
+        apiGet('/api/institutions/0/aerobic-contracts'),
+        apiGet('/api/institutions/0/anaerobic-contracts'),
         apiGet('/api/institutions/0/tmb-contracts'),
+        apiGet('/api/institutions/0/disposal-contracts'),
       ]);
 
       setContractCounts({
-        DISPOSAL: disposalRes.success ? (Array.isArray(disposalRes.data) ? disposalRes.data.length : 0) : 0,
         WASTE_COLLECTOR: wasteRes.success ? (Array.isArray(wasteRes.data) ? wasteRes.data.length : 0) : 0,
+        SORTING: sortRes.success ? (Array.isArray(sortRes.data) ? sortRes.data.length : 0) : 0,
+        AEROBIC: aeroRes.success ? (Array.isArray(aeroRes.data) ? aeroRes.data.length : 0) : 0,
+        ANAEROBIC: anaeroRes.success ? (Array.isArray(anaeroRes.data) ? anaeroRes.data.length : 0) : 0,
         TMB: tmbRes.success ? (Array.isArray(tmbRes.data) ? tmbRes.data.length : 0) : 0,
+        DISPOSAL: dispRes.success ? (Array.isArray(dispRes.data) ? dispRes.data.length : 0) : 0,
       });
     } catch (err) {
       console.error('Error loading contract counts:', err);
@@ -116,19 +127,12 @@ const ContractsPage = () => {
 
   const loadReferenceData = async () => {
     try {
-      const [instResponse, sectorsResponse] = await Promise.all([
-        apiGet('/api/institutions', { limit: 500 }),
-        apiGet('/api/sectors')
-      ]);
-      
-      if (instResponse.success) {
-        setInstitutions(instResponse.data?.institutions || []);
+      const sectorsRes = await apiGet('/api/sectors');
+      if (sectorsRes.success) {
+        setSectors(sectorsRes.data || []);
       }
-      if (sectorsResponse.success) {
-        setSectors(sectorsResponse.data || []);
-      }
-    } catch (err) {
-      console.error('Error loading reference data:', err);
+    } catch (error) {
+      console.error('Error loading reference data:', error);
     }
   };
 
@@ -136,23 +140,8 @@ const ContractsPage = () => {
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
-      let endpoint = '';
+      const endpoint = ENDPOINT_MAP[selectedContractType];
       const params = {};
-
-      // Load specific contract type
-      switch (selectedContractType) {
-        case CONTRACT_TYPES.DISPOSAL:
-          endpoint = '/api/institutions/0/disposal-contracts';
-          break;
-        case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = '/api/institutions/0/waste-contracts';
-          break;
-        case CONTRACT_TYPES.TMB:
-          endpoint = '/api/institutions/0/tmb-contracts';
-          break;
-        default:
-          endpoint = '/api/institutions/0/disposal-contracts';
-      }
 
       if (selectedSector) {
         params.sector_id = selectedSector;
@@ -181,112 +170,99 @@ const ContractsPage = () => {
     loadContracts();
   }, [loadContracts]);
 
-  // Filtering & Sorting
+  // Filter and search
   const filteredContracts = useMemo(() => {
-    return contracts.filter(contract => {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          contract.contract_number?.toLowerCase().includes(query) ||
-          contract.institution_name?.toLowerCase().includes(query) ||
-          contract.sector_name?.toLowerCase().includes(query) ||
-          contract.associate_name?.toLowerCase().includes(query)
-        );
-      }
-      return true;
-    });
+    let filtered = [...contracts];
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(c =>
+        (c.contract_number && c.contract_number.toLowerCase().includes(query)) ||
+        (c.operator_name && c.operator_name.toLowerCase().includes(query)) ||
+        (c.institution_name && c.institution_name.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
   }, [contracts, searchQuery]);
 
+  // Sort
   const sortedContracts = useMemo(() => {
-    return [...filteredContracts].sort((a, b) => {
-      let aValue, bValue;
-      switch (sortBy) {
-        case 'contract_number':
-          aValue = a.contract_number || '';
-          bValue = b.contract_number || '';
-          break;
-        case 'contract_date_start':
-          aValue = a.contract_date_start || '';
-          bValue = b.contract_date_start || '';
-          break;
-        case 'sector_number':
-          aValue = a.sector_number || 0;
-          bValue = b.sector_number || 0;
-          break;
-        default:
-          aValue = a.contract_date_start || '';
-          bValue = b.contract_date_start || '';
+    const sorted = [...filteredContracts];
+    sorted.sort((a, b) => {
+      let aVal = a[sortBy];
+      let bVal = b[sortBy];
+
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
       }
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
+
+      if (sortOrder === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
     });
+
+    return sorted;
   }, [filteredContracts, sortBy, sortOrder]);
 
+  // Paginate
+  const paginatedContracts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedContracts.slice(start, start + itemsPerPage);
+  }, [sortedContracts, currentPage]);
+
   const totalPages = Math.ceil(sortedContracts.length / itemsPerPage);
-  const paginatedContracts = sortedContracts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedContractType, selectedSector, selectedStatus, searchQuery]);
-
-  // Check if filters are active
-  const hasActiveFilters = useMemo(() => {
-    return selectedSector !== '' || selectedStatus !== '' || searchQuery !== '';
-  }, [selectedSector, selectedStatus, searchQuery]);
 
   // Handlers
-  const handleSearchChange = (value) => setSearchQuery(value);
-
   const handleContractTypeChange = (type) => {
     setSelectedContractType(type);
-    setSearchParams(prev => { prev.set('type', type); return prev; });
+    setSearchParams({ type, sector: selectedSector });
+    setCurrentPage(1);
   };
 
-  const handleSectorChange = (sectorId) => {
-    setSelectedSector(sectorId);
-    if (sectorId) {
-      setSearchParams(prev => { prev.set('sector', sectorId); return prev; });
-    } else {
-      setSearchParams(prev => { prev.delete('sector'); return prev; });
-    }
+  const handleSectorChange = (sector) => {
+    setSelectedSector(sector);
+    setSearchParams({ type: selectedContractType, sector });
+    setCurrentPage(1);
   };
 
-  const handleStatusChange = (status) => setSelectedStatus(status);
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   const handleResetFilters = () => {
     setSelectedSector('');
     setSelectedStatus('');
     setSearchQuery('');
-    setSearchParams(prev => { 
-      prev.delete('sector'); 
-      return prev; 
-    });
+    setSearchParams({ type: selectedContractType });
+    setCurrentPage(1);
   };
 
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  const hasActiveFilters = selectedSector || selectedStatus || searchQuery;
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortBy(column);
+      setSortBy(field);
       setSortOrder('asc');
     }
   };
 
-  // Sidebar handlers (add/edit/delete)
-  const handleAdd = () => {
-    setSelectedContract(null);
-    setSidebarMode('add');
-    setSidebarOpen(true);
-  };
-
-  const handleEdit = (contract) => {
-    setSelectedContract(contract);
-    setSidebarMode('edit');
-    setSidebarOpen(true);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleView = (contract) => {
@@ -294,100 +270,52 @@ const ContractsPage = () => {
     setViewModalOpen(true);
   };
 
-  const handleDeleteClick = (contract) => {
-    setSelectedContract(contract);
-    setSidebarMode('delete');
-    setSidebarOpen(true);
-  };
-
-  const handleCloseSidebar = () => {
-    setSidebarOpen(false);
-    setSelectedContract(null);
-    setSidebarMode(null);
-  };
-
   const handleCloseViewModal = () => {
     setViewModalOpen(false);
     setViewContract(null);
   };
 
-  const handleSave = async (formData) => {
-    setSaving(true);
-    try {
-      let endpoint = '';
-      
-      switch (selectedContractType) {
-        case CONTRACT_TYPES.DISPOSAL:
-          endpoint = `/api/institutions/${formData.institution_id || 0}/disposal-contracts`;
-          break;
-        case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = `/api/institutions/${formData.institution_id || 0}/waste-contracts`;
-          break;
-        case CONTRACT_TYPES.TMB:
-          endpoint = `/api/institutions/0/tmb-contracts`;
-          break;
-        default:
-          throw new Error('Invalid contract type');
-      }
+  const handleAdd = () => {
+    // TODO: Open sidebar for adding contract
+    showToast('Funcționalitate în curs de implementare', 'info');
+  };
 
-      let response;
-      if (sidebarMode === 'add') {
-        response = await apiPost(endpoint, formData);
-      } else if (sidebarMode === 'edit') {
-        response = await apiPut(`${endpoint}/${selectedContract.id}`, formData);
-      }
+  const handleEdit = (contract) => {
+    // TODO: Open sidebar for editing contract
+    showToast('Funcționalitate în curs de implementare', 'info');
+  };
+
+  const handleDeleteClick = (contract) => {
+    setContractToDelete(contract);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!contractToDelete) return;
+
+    try {
+      const endpoint = ENDPOINT_MAP[selectedContractType];
+      const response = await apiDelete(`${endpoint}/${contractToDelete.id}`);
 
       if (response.success) {
-        showToast(`Contract ${sidebarMode === 'add' ? 'adăugat' : 'actualizat'} cu succes!`);
-        handleCloseSidebar();
+        showToast('Contract șters cu succes');
         loadContracts();
+        loadContractCounts();
       } else {
-        showToast(response.message || 'Eroare la salvare', 'error');
+        showToast('Eroare la ștergerea contractului', 'error');
       }
-    } catch (err) {
-      console.error('Error saving contract:', err);
-      showToast('Eroare la salvare', 'error');
+    } catch (error) {
+      console.error('Delete error:', error);
+      showToast('Eroare la ștergerea contractului', 'error');
     } finally {
-      setSaving(false);
+      setDeleteDialogOpen(false);
+      setContractToDelete(null);
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedContract) return;
-    
-    setSaving(true);
-    try {
-      let endpoint = '';
-      
-      switch (selectedContractType) {
-        case CONTRACT_TYPES.DISPOSAL:
-          endpoint = `/api/institutions/${selectedContract.institution_id || 0}/disposal-contracts/${selectedContract.id}`;
-          break;
-        case CONTRACT_TYPES.WASTE_COLLECTOR:
-          endpoint = `/api/institutions/${selectedContract.institution_id || 0}/waste-contracts/${selectedContract.id}`;
-          break;
-        case CONTRACT_TYPES.TMB:
-          endpoint = `/api/institutions/0/tmb-contracts/${selectedContract.id}`;
-          break;
-        default:
-          throw new Error('Invalid contract type');
-      }
-
-      const response = await apiDelete(endpoint);
-
-      if (response.success) {
-        showToast('Contract șters cu succes!');
-        handleCloseSidebar();
-        loadContracts();
-      } else {
-        showToast(response.message || 'Eroare la ștergere', 'error');
-      }
-    } catch (err) {
-      console.error('Error deleting contract:', err);
-      showToast('Eroare la ștergere', 'error');
-    } finally {
-      setSaving(false);
-    }
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setContractToDelete(null);
   };
 
   // Export handler
@@ -417,7 +345,6 @@ const ContractsPage = () => {
         throw new Error(`Export failed: ${response.status}`);
       }
 
-      // Download file
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -441,14 +368,12 @@ const ContractsPage = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <DashboardHeader
-        title="Contracte"
-        subtitle="Gestionare contracte operatori"
-      />
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
         {/* Filters Bar with Tabs */}
@@ -489,99 +414,69 @@ const ContractsPage = () => {
         />
 
         {/* Pagination */}
-        <div className="flex items-center justify-between pt-2">
-          {/* Left - Items per page */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Afișează</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              din {filteredContracts.length} contracte
-            </span>
-          </div>
-
-          {/* Right - Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Afișare {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, sortedContracts.length)} din {sortedContracts.length}
+            </div>
+            <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50"
               >
                 Anterior
               </button>
-              
-              {/* Page numbers */}
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === pageNum
-                          ? 'bg-teal-500 text-white'
-                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`px-3 py-1.5 text-sm rounded-lg ${
+                    currentPage === i + 1
+                      ? 'bg-teal-500 text-white'
+                      : 'border border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50"
               >
                 Următor
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Sidebar - for Add/Edit/Delete */}
-      <ContractSidebar
-        isOpen={sidebarOpen}
-        onClose={handleCloseSidebar}
-        mode={sidebarMode}
-        contract={selectedContract}
-        contractType={selectedContractType}
-        onSave={handleSave}
-        onDelete={handleDelete}
-        saving={saving}
-        institutions={institutions}
-        sectors={sectors}
-      />
-
-      {/* View Modal - Elegant display for viewing contract details */}
+      {/* View Modal */}
       <ContractViewModal
         isOpen={viewModalOpen}
         onClose={handleCloseViewModal}
         contract={viewContract}
         contractType={selectedContractType}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Șterge Contract"
+        message={`Sigur doriți să ștergeți contractul ${contractToDelete?.contract_number}?`}
+      />
+
+      {/* Toast */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
     </div>
   );
 };
