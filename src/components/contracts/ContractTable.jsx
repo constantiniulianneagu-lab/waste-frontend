@@ -1,9 +1,10 @@
 // src/components/contracts/ContractTable.jsx
 /**
  * ============================================================================
- * CONTRACT TABLE - WITH ATTRIBUTION TYPE + OPERATOR COLUMN
+ * CONTRACT TABLE - ALL 6 TYPES WITH PROPER COLUMNS
  * ============================================================================
- * Updated: Added attribution_type column for DISPOSAL and TMB
+ * Order: Colectare → Sortare → Aerobă → Anaerobă → TMB → Depozitare
+ * ============================================================================
  */
 
 import {
@@ -84,11 +85,10 @@ const ContractTable = ({
   };
 
   // Check if contract should be displayed as active
-  // Contract is Inactive if: (1) expired OR (2) manually set to inactive
   const isContractActive = (contract) => {
     const endDate = contract.effective_date_end || contract.contract_date_end;
-    if (isExpired(endDate)) return false; // Expired contracts are always inactive
-    return contract.is_active; // Otherwise use manual flag
+    if (isExpired(endDate)) return false;
+    return contract.is_active;
   };
 
   const getAttributionBadge = (type) => {
@@ -106,6 +106,12 @@ const ContractTable = ({
       </span>
     );
   };
+
+  // Show attribution column for DISPOSAL, TMB, AEROBIC, and ANAEROBIC
+  const showAttributionColumn = ['DISPOSAL', 'TMB', 'AEROBIC', 'ANAEROBIC'].includes(contractType);
+  
+  // Show associate column for TMB, AEROBIC, and ANAEROBIC
+  const showAssociateColumn = ['TMB', 'AEROBIC', 'ANAEROBIC'].includes(contractType);
 
   // Loading state
   if (loading) {
@@ -134,9 +140,6 @@ const ContractTable = ({
     );
   }
 
-  // Show attribution column only for DISPOSAL and TMB
-  const showAttributionColumn = contractType === 'DISPOSAL' || contractType === 'TMB';
-
   return (
     <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
@@ -145,7 +148,7 @@ const ContractTable = ({
             <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700/50">
               <SortableHeader column="contract_number">Nr. Contract</SortableHeader>
               
-              {/* ATTRIBUTION TYPE COLUMN - NEW */}
+              {/* ATTRIBUTION TYPE COLUMN - for DISPOSAL, TMB, AEROBIC, ANAEROBIC */}
               {showAttributionColumn && (
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tip Atribuire
@@ -167,8 +170,8 @@ const ContractTable = ({
                 Cantitate / Valoare
               </th>
 
-              {/* TMB specific: Associate */}
-              {contractType === 'TMB' && (
+              {/* ASSOCIATE COLUMN - for TMB, AEROBIC, ANAEROBIC */}
+              {showAssociateColumn && (
                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Asociat
                 </th>
@@ -185,16 +188,14 @@ const ContractTable = ({
               </th>
             </tr>
           </thead>
-          
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
             {contracts.map((contract) => {
               const effectiveDateEnd = contract.effective_date_end || contract.contract_date_end;
               const expired = isExpired(effectiveDateEnd);
-              const expiringSoon = !expired && isExpiringSoon(effectiveDateEnd);
-              
+              const expiringSoon = isExpiringSoon(effectiveDateEnd);
               const effectiveTariff = contract.effective_tariff || contract.tariff_per_ton;
-              const effectiveQuantity = contract.effective_quantity || contract.estimated_quantity_tons || contract.contracted_quantity_tons;
-              const effectiveTotalValue = contract.effective_total_value || contract.total_value;
+              const effectiveQuantity = contract.effective_quantity || contract.estimated_quantity_tons;
+              const effectiveTotalValue = contract.effective_total_value || contract.total_value || contract.contract_value;
               
               return (
                 <tr key={contract.id} className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -291,8 +292,8 @@ const ContractTable = ({
                     )}
                   </td>
 
-                  {/* TMB: Associate */}
-                  {contractType === 'TMB' && (
+                  {/* ASSOCIATE - for TMB, AEROBIC, ANAEROBIC */}
+                  {showAssociateColumn && (
                     <td className="px-4 py-4">
                       {contract.associate_name ? (
                         <div className="flex items-center gap-1.5">
