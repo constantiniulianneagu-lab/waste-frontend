@@ -53,6 +53,15 @@ const ContractViewModal = ({
         case 'TMB':
           endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
           break;
+        case 'SORTING':
+          endpoint = `/api/institutions/0/sorting-contracts/${contract.id}/amendments`;
+          break;
+        case 'AEROBIC':
+          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          break;
+        case 'ANAEROBIC':
+          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          break;
         case 'WASTE_COLLECTOR':
           // For waste collector, amendments come with the contract, no separate endpoint
           // This function won't be called for WASTE_COLLECTOR due to useEffect check
@@ -164,7 +173,7 @@ const ContractViewModal = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-teal-100 uppercase tracking-wider">
-                    Contract {contractType === 'DISPOSAL' ? 'Depozitare' : contractType === 'TMB' ? 'TMB' : contractType === 'WASTE_COLLECTOR' ? 'Colectare' : contractType}
+                    Contract {contractType === 'DISPOSAL' ? 'Depozitare' : contractType === 'TMB' ? 'TMB' : contractType === 'WASTE_COLLECTOR' ? 'Colectare' : contractType === 'SORTING' ? 'Sortare' : contractType === 'AEROBIC' ? 'Aerobă' : contractType === 'ANAEROBIC' ? 'Anaerobă' : contractType}
                   </span>
                   {isContractActive() ? (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100">
@@ -327,6 +336,43 @@ const ContractViewModal = ({
                 </div>
               )}
 
+              {/* Section: Performance Indicator (Aerobic/Anaerobic) */}
+              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && contract.indicator_disposal_percent !== null && contract.indicator_disposal_percent !== undefined && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Percent className="w-4 h-4 text-teal-500" />
+                    Indicator (reziduu la depozitare)
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <IndicatorCard
+                      label="Depozitare"
+                      value={contract.indicator_disposal_percent}
+                      color="slate"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Section: Aerobic/Anaerobic Performance Indicator (Disposal %) */}
+              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && contract.indicator_disposal_percent && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Percent className="w-4 h-4 text-teal-500" />
+                    Indicator (reziduu la depozitare)
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <IndicatorCard
+                      label="Depozitare"
+                      value={contract.indicator_disposal_percent}
+                      color="slate"
+                    />
+                    <div className="col-span-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
+                      Procent estimat al reziduului direcționat la depozitare (conform indicatorului din contract).
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Section: Contract Document */}
               {contract.contract_file_url && (
                 <div>
@@ -366,7 +412,7 @@ const ContractViewModal = ({
               )}
 
               {/* Section: Amendments */}
-              {(contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'WASTE_COLLECTOR') && (
+              {(contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'WASTE_COLLECTOR' || contractType === 'SORTING' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
                   <button
                     onClick={() => setShowAmendments(!showAmendments)}
