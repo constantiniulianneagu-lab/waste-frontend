@@ -441,15 +441,21 @@ const ContractSidebar = ({
       const raw = (num || '').trim();
       if (!raw) return raw;
 
-      // Only enforce prefixes for DISPOSAL and TMB (as requested)
-      const expectedPrefix = type === 'TMB' ? 'TMB-' : type === 'DISPOSAL' ? 'D-' : null;
+      // Enforce prefixes for all contract types
+      const expectedPrefix = 
+        type === 'TMB' ? 'TMB-' : 
+        type === 'DISPOSAL' ? 'D-' : 
+        type === 'AEROBIC' ? 'TA-' :
+        type === 'ANAEROBIC' ? 'TAN-' :
+        null;
+      
       if (!expectedPrefix) return raw;
 
       // If already correct, keep
       if (raw.startsWith(expectedPrefix)) return raw;
 
       // If user typed another known prefix, strip it then add the expected one
-      const base = raw.replace(/^(D-|TMB-)/, '');
+      const base = raw.replace(/^(D-|TMB-|TA-|TAN-|C-)/, '');
       return `${expectedPrefix}${base}`;
     };
 
@@ -1337,8 +1343,8 @@ const ContractSidebar = ({
                                   <input
                                     type="number"
                                     step="0.01"
-                                    name={contractType === 'TMB' ? 'new_estimated_quantity_tons' : 'new_contracted_quantity_tons'}
-                                    value={contractType === 'TMB' ? amendmentForm.new_estimated_quantity_tons : amendmentForm.new_contracted_quantity_tons}
+                                    name={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? 'new_estimated_quantity_tons' : 'new_contracted_quantity_tons'}
+                                    value={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? amendmentForm.new_estimated_quantity_tons : amendmentForm.new_contracted_quantity_tons}
                                     onChange={handleAmendmentInputChange}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
