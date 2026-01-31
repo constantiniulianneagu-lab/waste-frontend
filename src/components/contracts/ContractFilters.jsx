@@ -1,7 +1,7 @@
 // src/components/contracts/ContractFilters.jsx
 /**
  * ============================================================================
- * CONTRACT FILTERS - DROPDOWN SELECTOR (ALL 6 TYPES)
+ * CONTRACT FILTERS - DROPDOWN SELECTOR + HARMONIZED FILTERS
  * ============================================================================
  * Order: Colectare → Sortare → Aerobă → Anaerobă → TMB → Depozitare
  * ============================================================================
@@ -41,8 +41,13 @@ const ContractFilters = ({
 }) => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  
   const dropdownRef = useRef(null);
   const typeDropdownRef = useRef(null);
+  const sectorDropdownRef = useRef(null);
+  const statusDropdownRef = useRef(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -52,6 +57,12 @@ const ContractFilters = ({
       }
       if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
         setIsTypeDropdownOpen(false);
+      }
+      if (sectorDropdownRef.current && !sectorDropdownRef.current.contains(event.target)) {
+        setIsSectorDropdownOpen(false);
+      }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+        setIsStatusDropdownOpen(false);
       }
     };
 
@@ -69,6 +80,16 @@ const ContractFilters = ({
     onContractTypeChange(type);
   };
 
+  const handleSectorSelect = (sector) => {
+    setIsSectorDropdownOpen(false);
+    onSectorChange(sector);
+  };
+
+  const handleStatusSelect = (newStatus) => {
+    setIsStatusDropdownOpen(false);
+    onStatusChange(newStatus);
+  };
+
   const exportOptions = [
     { format: 'pdf', label: 'Export PDF', icon: FileText, color: 'text-red-500', bgColor: 'bg-red-50 dark:bg-red-500/10', hoverColor: 'hover:bg-red-100 dark:hover:bg-red-500/20' },
     { format: 'xlsx', label: 'Export Excel', icon: FileSpreadsheet, color: 'text-green-500', bgColor: 'bg-green-50 dark:bg-green-500/10', hoverColor: 'hover:bg-green-100 dark:hover:bg-green-500/20' },
@@ -77,16 +98,19 @@ const ContractFilters = ({
 
   const selectedType = CONTRACT_TYPE_OPTIONS.find(t => t.value === contractType);
   const selectedCount = contractCounts[contractType] || 0;
+  
+  const selectedSector = sectors.find(s => s.id === sectorId);
+  const statusLabel = status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : 'Toate';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-      {/* Top Row: Type Selector + Actions */}
+      {/* Top Row: Type Selector + Search + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left - Contract Type Dropdown */}
         <div className="relative" ref={typeDropdownRef}>
           <button
             onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-            className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-br from-teal-500 to-emerald-600 text-white rounded-xl shadow-lg shadow-teal-500/30 hover:shadow-teal-500/40 transition-all min-w-[220px]"
+            className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-br from-teal-500 to-emerald-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all min-w-[220px]"
           >
             <span className="text-xl">{selectedType?.icon}</span>
             <div className="flex-1 text-left">
@@ -98,7 +122,7 @@ const ContractFilters = ({
 
           {/* Dropdown Menu */}
           {isTypeDropdownOpen && (
-            <div className="absolute left-0 top-full mt-2 w-[280px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl z-50 overflow-hidden">
+            <div className="absolute left-0 top-full mt-2 w-[280px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
               <div className="p-2 space-y-1">
                 {CONTRACT_TYPE_OPTIONS.map((option) => {
                   const count = contractCounts[option.value] || 0;
@@ -132,7 +156,7 @@ const ContractFilters = ({
           )}
         </div>
 
-        {/* Right - Actions */}
+        {/* Right - Search + Actions */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -157,7 +181,7 @@ const ContractFilters = ({
           {canCreate && (
             <button
               onClick={onAdd}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-teal-500/30 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Adaugă</span>
@@ -169,7 +193,7 @@ const ContractFilters = ({
               <button
                 onClick={() => setIsExportOpen(!isExportOpen)}
                 disabled={exporting}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
                 <span>{exporting ? 'Se exportă...' : 'Export'}</span>
@@ -177,7 +201,7 @@ const ContractFilters = ({
               </button>
 
               {isExportOpen && !exporting && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
                   {exportOptions.map((option) => {
                     const Icon = option.icon;
                     return (
@@ -202,33 +226,103 @@ const ContractFilters = ({
         </div>
       </div>
 
-      {/* Bottom Row: Additional Filters */}
+      {/* Bottom Row: Filters - SAME STYLE AS TYPE DROPDOWN */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
           <Filter className="w-4 h-4" />
           <span className="text-sm font-medium">Filtre:</span>
         </div>
 
-        <select
-          value={sectorId}
-          onChange={(e) => onSectorChange(e.target.value)}
-          className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[140px]"
-        >
-          <option value="">Toate sectoarele</option>
-          {sectors.map(s => (
-            <option key={s.id} value={s.id}>Sectorul {s.sector_number}</option>
-          ))}
-        </select>
+        {/* Sector Dropdown */}
+        <div className="relative" ref={sectorDropdownRef}>
+          <button
+            onClick={() => setIsSectorDropdownOpen(!isSectorDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[160px]"
+          >
+            <span className="flex-1 text-left">
+              {selectedSector ? `Sectorul ${selectedSector.sector_number}` : 'Toate sectoarele'}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isSectorDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-        <select
-          value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all min-w-[120px]"
-        >
-          <option value="">Toate</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+          {isSectorDropdownOpen && (
+            <div className="absolute left-0 top-full mt-2 w-[200px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden max-h-[300px] overflow-y-auto">
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => handleSectorSelect('')}
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                    !sectorId
+                      ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 font-medium'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Toate sectoarele
+                </button>
+                {sectors.map((sector) => (
+                  <button
+                    key={sector.id}
+                    onClick={() => handleSectorSelect(sector.id)}
+                    className={`w-full flex items-center px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                      sectorId === sector.id
+                        ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 font-medium'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Sectorul {sector.sector_number}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Status Dropdown */}
+        <div className="relative" ref={statusDropdownRef}>
+          <button
+            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[140px]"
+          >
+            <span className="flex-1 text-left">{statusLabel}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isStatusDropdownOpen && (
+            <div className="absolute left-0 top-full mt-2 w-[160px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => handleStatusSelect('')}
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                    !status
+                      ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 font-medium'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Toate
+                </button>
+                <button
+                  onClick={() => handleStatusSelect('active')}
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                    status === 'active'
+                      ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 font-medium'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => handleStatusSelect('inactive')}
+                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                    status === 'inactive'
+                      ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 font-medium'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Inactive
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {hasActiveFilters && (
           <button
