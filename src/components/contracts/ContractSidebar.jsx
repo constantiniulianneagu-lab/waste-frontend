@@ -518,12 +518,18 @@ const ContractSidebar = ({
   };
 
   const handleEditAmendment = (a) => {
+    // Format date to YYYY-MM-DD for input[type="date"]
+    const formatDateForInput = (dateStr) => {
+      if (!dateStr) return '';
+      return dateStr.split('T')[0]; // Takes only YYYY-MM-DD part
+    };
+
     setAmendmentForm({
       id: a.id,
       amendment_number: a.amendment_number || '',
-      amendment_date: a.amendment_date || '',
+      amendment_date: formatDateForInput(a.amendment_date),
       amendment_type: a.amendment_type || 'EXTENSION',
-      new_contract_date_end: a.new_contract_date_end || '',
+      new_contract_date_end: formatDateForInput(a.new_contract_date_end),
       new_tariff_per_ton: a.new_tariff_per_ton || '',
       new_cec_tax_per_ton: a.new_cec_tax_per_ton || '',
       new_contracted_quantity_tons: a.new_contracted_quantity_tons || '',
