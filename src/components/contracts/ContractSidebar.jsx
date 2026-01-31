@@ -21,6 +21,7 @@ const AMENDMENT_TYPES = [
   { value: 'TARIFF_CHANGE', label: 'Modificare tarif' },
   { value: 'QUANTITY_CHANGE', label: 'Modificare cantitate' },
   { value: 'MULTIPLE', label: 'Modificări multiple' },
+  { value: 'OTHER', label: 'Alte modificări' },
 ];
 
 // Attribution types for contracts
@@ -200,6 +201,12 @@ const ContractSidebar = ({
     if (contractType === 'TMB') {
       return i.type === 'TMB_OPERATOR';
     }
+    if (contractType === 'AEROBIC') {
+      return i.type === 'AEROBIC_OPERATOR';
+    }
+    if (contractType === 'ANAEROBIC') {
+      return i.type === 'ANAEROBIC_OPERATOR';
+    }
     if (contractType === 'WASTE_COLLECTOR') {
       return i.type === 'WASTE_COLLECTOR';
     }
@@ -209,6 +216,16 @@ const ContractSidebar = ({
   // TMB operators for associate field (exclude selected operator)
   const tmbOperatorsForAssociate = institutions.filter(i => 
     i.type === 'TMB_OPERATOR' && i.id !== formData.institution_id
+  );
+  
+  // AEROBIC operators for associate field (exclude selected operator)
+  const aerobicOperatorsForAssociate = institutions.filter(i => 
+    i.type === 'AEROBIC_OPERATOR' && i.id !== formData.institution_id
+  );
+  
+  // ANAEROBIC operators for associate field (exclude selected operator)
+  const anaerobicOperatorsForAssociate = institutions.filter(i => 
+    i.type === 'ANAEROBIC_OPERATOR' && i.id !== formData.institution_id
   );
 
   // Load contract data when editing/viewing
@@ -280,6 +297,12 @@ const ContractSidebar = ({
         case 'TMB':
           endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
           break;
+        case 'AEROBIC':
+          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          break;
+        case 'ANAEROBIC':
+          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          break;
         default:
           return;
       }
@@ -337,7 +360,7 @@ const ContractSidebar = ({
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.attribution_type && (contractType === 'DISPOSAL' || contractType === 'TMB')) {
+    if (!formData.attribution_type && (contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC')) {
       newErrors.attribution_type = 'Selectați tipul de atribuire';
     }
     if (!formData.institution_id) {
@@ -445,10 +468,15 @@ const ContractSidebar = ({
   const handleConfirmSave = () => {
     setShowValidationModal(false);
 
-    // Keep required prefixes (D- / TMB-) on confirm save as well
-    const expectedPrefix = contractType === 'TMB' ? 'TMB-' : contractType === 'DISPOSAL' ? 'D-' : null;
+    // Keep required prefixes (D- / TMB- / TA- / TAN-) on confirm save as well
+    const expectedPrefix = 
+      contractType === 'TMB' ? 'TMB-' : 
+      contractType === 'DISPOSAL' ? 'D-' :
+      contractType === 'AEROBIC' ? 'TA-' :
+      contractType === 'ANAEROBIC' ? 'TAN-' :
+      null;
     const raw = (formData.contract_number || '').trim();
-    const base = raw.replace(/^(D-|TMB-)/, '');
+    const base = raw.replace(/^(D-|TMB-|TA-|TAN-)/, '');
     const contract_number = expectedPrefix ? (raw.startsWith(expectedPrefix) ? raw : `${expectedPrefix}${base}`) : raw;
 
     onSave({
@@ -466,8 +494,13 @@ const ContractSidebar = ({
         }))
       : 0;
     
-    const baseNumber = formData.contract_number.replace(/^(D-|TMB-|C-)/, '');
-    const prefix = contractType === 'TMB' ? 'TMB' : contractType === 'DISPOSAL' ? 'D' : 'C';
+    const baseNumber = formData.contract_number.replace(/^(D-|TMB-|TA-|TAN-|C-)/, '');
+    const prefix = 
+      contractType === 'TMB' ? 'TMB' : 
+      contractType === 'DISPOSAL' ? 'D' :
+      contractType === 'AEROBIC' ? 'TA' :
+      contractType === 'ANAEROBIC' ? 'TAN' :
+      'C';
     
     setAmendmentForm({
       amendment_number: `${prefix}-${baseNumber}-${lastNum + 1}`,
@@ -538,6 +571,12 @@ const ContractSidebar = ({
         case 'TMB':
           endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
           break;
+        case 'AEROBIC':
+          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          break;
+        case 'ANAEROBIC':
+          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          break;
         default:
           return;
       }
@@ -572,6 +611,12 @@ const ContractSidebar = ({
         case 'TMB':
           endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments/${id}`;
           break;
+        case 'AEROBIC':
+          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments/${id}`;
+          break;
+        case 'ANAEROBIC':
+          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments/${id}`;
+          break;
         default:
           return;
       }
@@ -605,7 +650,14 @@ const ContractSidebar = ({
   };
 
   const getTitle = () => {
-    const labels = { DISPOSAL: 'Depozitare', WASTE_COLLECTOR: 'Colectare', TMB: 'TMB' };
+    const labels = { 
+      DISPOSAL: 'Depozitare', 
+      WASTE_COLLECTOR: 'Colectare', 
+      TMB: 'TMB',
+      AEROBIC: 'Aerobă',
+      ANAEROBIC: 'Anaerobă',
+      SORTING: 'Sortare'
+    };
     const l = labels[contractType] || '';
     switch (mode) {
       case 'add': return `Adaugă Contract ${l}`;
@@ -680,7 +732,7 @@ const ContractSidebar = ({
             <div className="space-y-5">
               
               {/* ================= ATTRIBUTION TYPE (FIRST FIELD) ================= */}
-              {(contractType === 'DISPOSAL' || contractType === 'TMB') && (
+              {(contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <Gavel className="w-4 h-4 inline mr-1" />
@@ -709,7 +761,11 @@ const ContractSidebar = ({
               {/* ================= OPERATOR / INSTITUTION ================= */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {contractType === 'TMB' ? 'Operator TMB' : contractType === 'DISPOSAL' ? 'Operator Depozitare' : 'Instituție'} <span className="text-red-500">*</span>
+                  {contractType === 'TMB' ? 'Operator TMB' : 
+                   contractType === 'DISPOSAL' ? 'Operator Depozitare' : 
+                   contractType === 'AEROBIC' ? 'Operator Aerob' :
+                   contractType === 'ANAEROBIC' ? 'Operator Anaerob' :
+                   'Instituție'} <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="institution_id"
@@ -744,7 +800,13 @@ const ContractSidebar = ({
                   className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
                     errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                   }`}
-                  placeholder={contractType === 'TMB' ? 'TMB-123' : 'D-123'}
+                  placeholder={
+                    contractType === 'TMB' ? 'TMB-123' : 
+                    contractType === 'DISPOSAL' ? 'D-123' :
+                    contractType === 'AEROBIC' ? 'TA-123' :
+                    contractType === 'ANAEROBIC' ? 'TAN-123' :
+                    'C-123'
+                  }
                 />
                 {errors.contract_number && (
                   <p className="mt-1 text-xs text-red-600">{errors.contract_number}</p>
@@ -976,6 +1038,63 @@ const ContractSidebar = ({
                         />
                         <span className="text-sm text-gray-500">%</span>
                       </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ================= AEROBIC & ANAEROBIC FIELDS ================= */}
+              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
+                <>
+                  {/* Associate */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      <Users className="w-4 h-4 inline mr-1" />
+                      Asociat (opțional)
+                    </label>
+                    <select
+                      name="associate_institution_id"
+                      value={formData.associate_institution_id}
+                      onChange={handleInputChange}
+                      disabled={isReadOnly}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    >
+                      <option value="">Fără asociat</option>
+                      {(contractType === 'AEROBIC' ? aerobicOperatorsForAssociate : anaerobicOperatorsForAssociate).map(i => (
+                        <option key={i.id} value={i.id}>{i.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Performance Indicator */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Percent className="w-4 h-4 text-teal-500" />
+                      Indicator de Performanță
+                    </h4>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Cantitatea totală de reziduuri trimisă la depozitare (%)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          name="indicator_disposal_percent"
+                          value={formData.indicator_disposal_percent}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60"
+                          placeholder="0.00"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Ca procent din cantitatea totală de deșeuri biodegradabile receptionate
+                      </p>
                     </div>
                   </div>
                 </>
