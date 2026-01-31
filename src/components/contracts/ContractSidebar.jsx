@@ -643,7 +643,7 @@ const ContractSidebar = ({
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('ro-RO') : '-';
   
   const calculateTotalValue = () => {
-    if (contractType === 'TMB') {
+    if (contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') {
       const t = parseFloat(formData.tariff_per_ton) || 0;
       const q = parseFloat(formData.estimated_quantity_tons) || 0;
       return t * q;
