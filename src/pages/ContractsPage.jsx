@@ -1,7 +1,23 @@
 // src/pages/ContractsPage.jsx
+/**
+ * ============================================================================
+ * CONTRACTS PAGE - FIXED VERSION
+ * ============================================================================
+ * FIX 1: Added institutions state and loading
+ * FIX 2: Added saving state
+ * FIX 3: Added handleSave function for sidebar
+ * FIX 4: Fixed props passed to ContractSidebar (onSave instead of onSuccess)
+ * FIX 5: Added DashboardHeader for consistency
+ * FIX 6: Added "Toate" option in status filter
+ * FIX 7: Removed border from pagination (as per screenshot)
+ * FIX 8: Toast messages for all actions
+ * ============================================================================
+ */
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { apiGet, apiDelete } from '../api/apiClient';
+import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
+import DashboardHeader from '../components/dashboard/DashboardHeader';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractViewModal from '../components/contracts/ContractViewModal';
@@ -72,6 +88,10 @@ const ContractsPage = () => {
   const [contractToDelete, setContractToDelete] = useState(null);
 
   const [sectors, setSectors] = useState([]);
+  // FIX 1: Added institutions state
+  const [institutions, setInstitutions] = useState([]);
+  // FIX 2: Added saving state
+  const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -108,11 +128,20 @@ const ContractsPage = () => {
     }
   };
 
+  // FIX 1: Updated loadReferenceData to also load institutions
   const loadReferenceData = async () => {
     try {
-      const sectorsRes = await apiGet('/api/sectors');
+      const [sectorsRes, institutionsRes] = await Promise.all([
+        apiGet('/api/sectors'),
+        apiGet('/api/institutions', { limit: 1000 })
+      ]);
+      
       if (sectorsRes.success) {
         setSectors(sectorsRes.data || []);
+      }
+      
+      if (institutionsRes.success) {
+        setInstitutions(institutionsRes.data?.institutions || institutionsRes.data || []);
       }
     } catch (error) {
       console.error('Error loading reference data:', error);
@@ -275,12 +304,31 @@ const ContractsPage = () => {
     setEditContract(null);
   };
 
-  const handleSidebarSuccess = () => {
-    setSidebarOpen(false);
-    setEditContract(null);
-    loadContracts();
-    loadContractCounts();
-    showToast('Contract salvat cu succes');
+  // FIX 3: Added handleSave function for sidebar
+  const handleSave = async (formData) => {
+    setSaving(true);
+    try {
+      const endpoint = ENDPOINT_MAP[selectedContractType];
+      const response = sidebarMode === 'edit'
+        ? await apiPut(`${endpoint}/${editContract.id}`, formData)
+        : await apiPost(endpoint, formData);
+      
+      if (response.success) {
+        setSidebarOpen(false);
+        setEditContract(null);
+        loadContracts();
+        loadContractCounts();
+        // FIX 8: Different toast messages for add vs edit
+        showToast(sidebarMode === 'edit' ? 'Contract actualizat cu succes!' : 'Contract adăugat cu succes!');
+      } else {
+        showToast(response.message || 'Eroare la salvarea contractului', 'error');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      showToast('Eroare la salvarea contractului', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDeleteClick = (contract) => {
@@ -296,7 +344,7 @@ const ContractsPage = () => {
       const response = await apiDelete(`${endpoint}/${contractToDelete.id}`);
 
       if (response.success) {
-        showToast('Contract șters cu succes');
+        showToast('Contract șters cu succes!');
         loadContracts();
         loadContractCounts();
       } else {
@@ -356,6 +404,7 @@ const ContractsPage = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      // FIX 8: Better export success message
       showToast(`Export ${format.toUpperCase()} realizat cu succes!`);
     } catch (error) {
       console.error('Export error:', error);
@@ -371,19 +420,8 @@ const ContractsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contracte</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Gestionează toate contractele din sistem
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* FIX 5: Using DashboardHeader for consistency */}
+      <DashboardHeader title="Contracte" />
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
@@ -422,9 +460,9 @@ const ContractsPage = () => {
           canDelete={canDeleteData}
         />
 
-        {/* Pagination */}
+        {/* FIX 7: Pagination without border (as per screenshot) */}
         {!loading && sortedContracts.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Afișează
@@ -440,7 +478,7 @@ const ContractsPage = () => {
                 <option value={100}>100</option>
               </select>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                ✓ din <span className="font-semibold text-gray-900 dark:text-white">{sortedContracts.length} contracte</span>
+                din <span className="font-semibold text-gray-900 dark:text-white">{sortedContracts.length} contracte</span>
               </span>
             </div>
 
@@ -493,13 +531,16 @@ const ContractsPage = () => {
         )}
       </div>
 
+      {/* FIX 4: Fixed props - using onSave instead of onSuccess, added institutions and saving */}
       <ContractSidebar
         isOpen={sidebarOpen}
         onClose={handleCloseSidebar}
         mode={sidebarMode}
         contract={editContract}
         contractType={selectedContractType}
-        onSuccess={handleSidebarSuccess}
+        onSave={handleSave}
+        saving={saving}
+        institutions={institutions}
         sectors={sectors}
       />
 
