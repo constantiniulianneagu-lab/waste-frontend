@@ -13,6 +13,7 @@ import { apiGet, apiDelete } from '../api/apiClient';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractViewModal from '../components/contracts/ContractViewModal';
+import ContractSidebar from '../components/contracts/ContractSidebar';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import Toast from '../components/common/Toast';
 
@@ -75,9 +76,12 @@ const ContractsPage = () => {
   const [sortBy, setSortBy] = useState('contract_date_start');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Modals
+  // Modals & Sidebars
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewContract, setViewContract] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState('create'); // 'create' | 'edit'
+  const [editContract, setEditContract] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
 
@@ -276,13 +280,28 @@ const ContractsPage = () => {
   };
 
   const handleAdd = () => {
-    // TODO: Open sidebar for adding contract
-    showToast('Funcționalitate în curs de implementare', 'info');
+    setSidebarMode('create');
+    setEditContract(null);
+    setSidebarOpen(true);
   };
 
   const handleEdit = (contract) => {
-    // TODO: Open sidebar for editing contract
-    showToast('Funcționalitate în curs de implementare', 'info');
+    setSidebarMode('edit');
+    setEditContract(contract);
+    setSidebarOpen(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+    setEditContract(null);
+  };
+
+  const handleSidebarSuccess = () => {
+    setSidebarOpen(false);
+    setEditContract(null);
+    loadContracts();
+    loadContractCounts();
+    showToast('Contract salvat cu succes');
   };
 
   const handleDeleteClick = (contract) => {
@@ -376,7 +395,7 @@ const ContractsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
-        {/* Filters Bar with Tabs */}
+        {/* Filters Bar with Dropdown */}
         <ContractFilters
           contractType={selectedContractType}
           onContractTypeChange={handleContractTypeChange}
@@ -413,37 +432,68 @@ const ContractsPage = () => {
           canDelete={canDeleteData}
         />
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Afișare {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, sortedContracts.length)} din {sortedContracts.length}
+        {/* Pagination - LA FEL CA ÎN POZĂ */}
+        {!loading && sortedContracts.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            {/* Left - Info */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Afișează <span className="font-semibold text-gray-900 dark:text-white">{itemsPerPage}</span> 
+                {' '}<span className="hidden sm:inline">✓</span> din <span className="font-semibold text-gray-900 dark:text-white">{sortedContracts.length} contracte</span>
+              </span>
             </div>
-            <div className="flex gap-2">
+
+            {/* Right - Pagination */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Anterior
               </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1.5 text-sm rounded-lg ${
-                    currentPage === i + 1
-                      ? 'bg-teal-500 text-white'
-                      : 'border border-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  // Show first, last, current, and adjacent pages
+                  if (
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`min-w-[2.5rem] px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                          currentPage === pageNum
+                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
+                            : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    pageNum === currentPage - 2 ||
+                    pageNum === currentPage + 2
+                  ) {
+                    return (
+                      <span key={pageNum} className="px-2 text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Următor
               </button>
@@ -451,6 +501,17 @@ const ContractsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Sidebar for Create/Edit */}
+      <ContractSidebar
+        isOpen={sidebarOpen}
+        onClose={handleCloseSidebar}
+        mode={sidebarMode}
+        contract={editContract}
+        contractType={selectedContractType}
+        onSuccess={handleSidebarSuccess}
+        sectors={sectors}
+      />
 
       {/* View Modal */}
       <ContractViewModal
