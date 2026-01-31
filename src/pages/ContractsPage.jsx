@@ -401,6 +401,12 @@ const ContractsPage = () => {
   };
 
   const handleExport = async (format) => {
+    // Check if ALL is selected
+    if (selectedContractType === 'ALL') {
+      showToast('error', 'Pentru export, selectați un tip specific de contract');
+      return;
+    }
+
     setExporting(true);
     try {
       const params = new URLSearchParams({
