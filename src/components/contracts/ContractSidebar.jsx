@@ -660,7 +660,8 @@ const ContractSidebar = ({
     };
     const l = labels[contractType] || '';
     switch (mode) {
-      case 'add': return `Adaugă Contract ${l}`;
+      case 'add':
+      case 'create': return `Adaugă Contract ${l}`;
       case 'edit': return `Editează Contract ${l}`;
       case 'view': return `Detalii Contract ${l}`;
       case 'delete': return 'Șterge Contract';
@@ -1440,7 +1441,7 @@ const ContractSidebar = ({
                   ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   : <Save className="w-4 h-4" />
                 }
-                {validating ? 'Se verifică...' : saving ? 'Se salvează...' : (mode === 'add' ? 'Adaugă' : 'Salvează')}
+                {validating ? 'Se verifică...' : saving ? 'Se salvează...' : ((mode === 'add' || mode === 'create') ? 'Adaugă' : 'Salvează')}
               </button>
             )}
           </div>
