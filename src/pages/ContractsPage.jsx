@@ -54,7 +54,7 @@ const ENDPOINT_MAP = {
 
 const ContractsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || 'WASTE_COLLECTOR';
+  const initialContractType = searchParams.get('type') || 'ALL';
   const initialSector = searchParams.get('sector') || '';
 
   const [contracts, setContracts] = useState([]);
@@ -151,23 +151,59 @@ const ContractsPage = () => {
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
-      const endpoint = ENDPOINT_MAP[selectedContractType];
-      const params = {};
+      // If ALL is selected, load all contract types
+      if (selectedContractType === 'ALL') {
+        const params = {};
+        if (selectedSector) {
+          params.sector_id = selectedSector;
+        }
+        if (selectedStatus) {
+          params.is_active = selectedStatus === 'active';
+        }
 
-      if (selectedSector) {
-        params.sector_id = selectedSector;
-      }
-      if (selectedStatus) {
-        params.is_active = selectedStatus === 'active';
-      }
+        const [wasteRes, sortRes, aeroRes, anaeroRes, tmbRes, dispRes] = await Promise.all([
+          apiGet('/api/institutions/0/waste-collector-contracts', params),
+          apiGet('/api/institutions/0/sorting-contracts', params),
+          apiGet('/api/institutions/0/aerobic-contracts', params),
+          apiGet('/api/institutions/0/anaerobic-contracts', params),
+          apiGet('/api/institutions/0/tmb-contracts', params),
+          apiGet('/api/institutions/0/disposal-contracts', params),
+        ]);
 
-      const response = await apiGet(endpoint, params);
+        // Combine all contracts and add type field
+        const allContracts = [
+          ...(wasteRes.success && Array.isArray(wasteRes.data) ? wasteRes.data.map(c => ({ ...c, contract_type: 'WASTE_COLLECTOR' })) : []),
+          ...(sortRes.success && Array.isArray(sortRes.data) ? sortRes.data.map(c => ({ ...c, contract_type: 'SORTING' })) : []),
+          ...(aeroRes.success && Array.isArray(aeroRes.data) ? aeroRes.data.map(c => ({ ...c, contract_type: 'AEROBIC' })) : []),
+          ...(anaeroRes.success && Array.isArray(anaeroRes.data) ? anaeroRes.data.map(c => ({ ...c, contract_type: 'ANAEROBIC' })) : []),
+          ...(tmbRes.success && Array.isArray(tmbRes.data) ? tmbRes.data.map(c => ({ ...c, contract_type: 'TMB' })) : []),
+          ...(dispRes.success && Array.isArray(dispRes.data) ? dispRes.data.map(c => ({ ...c, contract_type: 'DISPOSAL' })) : []),
+        ];
 
-      if (response.success) {
-        const contractsArray = Array.isArray(response.data) ? response.data : [];
-        setContracts(contractsArray);
+        // Sort by contract date start (newest first)
+        allContracts.sort((a, b) => new Date(b.contract_date_start) - new Date(a.contract_date_start));
+
+        setContracts(allContracts);
       } else {
-        setContracts([]);
+        // Single contract type
+        const endpoint = ENDPOINT_MAP[selectedContractType];
+        const params = {};
+
+        if (selectedSector) {
+          params.sector_id = selectedSector;
+        }
+        if (selectedStatus) {
+          params.is_active = selectedStatus === 'active';
+        }
+
+        const response = await apiGet(endpoint, params);
+
+        if (response.success) {
+          const contractsArray = Array.isArray(response.data) ? response.data : [];
+          setContracts(contractsArray);
+        } else {
+          setContracts([]);
+        }
       }
     } catch (err) {
       console.error('Error loading contracts:', err);

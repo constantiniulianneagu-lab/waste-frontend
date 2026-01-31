@@ -9,6 +9,7 @@ import { X, Search, RefreshCw, Plus, Download, FileText, FileSpreadsheet, File, 
 import { useState, useRef, useEffect } from 'react';
 
 const CONTRACT_TYPE_OPTIONS = [
+  { value: 'ALL', label: 'Toate contractele', icon: '📋' },
   { value: 'WASTE_COLLECTOR', label: 'Colectare', icon: '🚛' },
   { value: 'SORTING', label: 'Sortare', icon: '🔄' },
   { value: 'AEROBIC', label: 'Aerobă', icon: '🌱' },
@@ -94,7 +95,9 @@ const ContractFilters = ({
   ];
 
   const selectedType = CONTRACT_TYPE_OPTIONS.find(t => t.value === contractType);
-  const selectedCount = contractCounts[contractType] || 0;
+  const selectedCount = contractType === 'ALL' 
+    ? Object.values(contractCounts).reduce((sum, count) => sum + count, 0)
+    : (contractCounts[contractType] || 0);
   const selectedSector = sectors.find(s => s.id === sectorId);
   const statusLabel = status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : 'Toate';
 
@@ -119,7 +122,9 @@ const ContractFilters = ({
             <div className="absolute left-0 top-full mt-2 w-[280px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
               <div className="p-2 space-y-1">
                 {CONTRACT_TYPE_OPTIONS.map((option) => {
-                  const count = contractCounts[option.value] || 0;
+                  const count = option.value === 'ALL'
+                    ? Object.values(contractCounts).reduce((sum, c) => sum + c, 0)
+                    : (contractCounts[option.value] || 0);
                   const isSelected = contractType === option.value;
                   
                   return (
