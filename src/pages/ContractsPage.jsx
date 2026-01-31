@@ -1,12 +1,4 @@
 // src/pages/ContractsPage.jsx
-/**
- * ============================================================================
- * CONTRACTS PAGE - ALL 6 TYPES
- * ============================================================================
- * Order: Colectare → Sortare → Aerobă → Anaerobă → TMB → Depozitare
- * ============================================================================
- */
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiDelete } from '../api/apiClient';
@@ -17,7 +9,6 @@ import ContractSidebar from '../components/contracts/ContractSidebar';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import Toast from '../components/common/Toast';
 
-// Contract types with labels
 const CONTRACT_TYPES = {
   WASTE_COLLECTOR: 'WASTE_COLLECTOR',
   SORTING: 'SORTING',
@@ -50,7 +41,6 @@ const ContractsPage = () => {
   const initialContractType = searchParams.get('type') || 'WASTE_COLLECTOR';
   const initialSector = searchParams.get('sector') || '';
 
-  // State
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,43 +53,32 @@ const ContractsPage = () => {
     DISPOSAL: 0
   });
 
-  // Filters
   const [selectedContractType, setSelectedContractType] = useState(initialContractType);
   const [selectedSector, setSelectedSector] = useState(initialSector);
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Sorting
   const [sortBy, setSortBy] = useState('contract_date_start');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Modals & Sidebars
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewContract, setViewContract] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState('create'); // 'create' | 'edit'
+  const [sidebarMode, setSidebarMode] = useState('create');
   const [editContract, setEditContract] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
 
-  // Reference data
   const [sectors, setSectors] = useState([]);
-
-  // Export
   const [exporting, setExporting] = useState(false);
-
-  // Toast
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Permissions (simplified)
   const canCreateData = true;
   const canEditData = true;
   const canDeleteData = true;
 
-  // Load reference data and counts
   useEffect(() => {
     loadReferenceData();
     loadContractCounts();
@@ -140,7 +119,6 @@ const ContractsPage = () => {
     }
   };
 
-  // Load contracts for selected type
   const loadContracts = useCallback(async () => {
     setLoading(true);
     try {
@@ -174,7 +152,6 @@ const ContractsPage = () => {
     loadContracts();
   }, [loadContracts]);
 
-  // Filter and search
   const filteredContracts = useMemo(() => {
     let filtered = [...contracts];
 
@@ -190,7 +167,6 @@ const ContractsPage = () => {
     return filtered;
   }, [contracts, searchQuery]);
 
-  // Sort
   const sortedContracts = useMemo(() => {
     const sorted = [...filteredContracts];
     sorted.sort((a, b) => {
@@ -215,15 +191,13 @@ const ContractsPage = () => {
     return sorted;
   }, [filteredContracts, sortBy, sortOrder]);
 
-  // Paginate
   const paginatedContracts = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return sortedContracts.slice(start, start + itemsPerPage);
-  }, [sortedContracts, currentPage]);
+  }, [sortedContracts, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(sortedContracts.length / itemsPerPage);
 
-  // Handlers
   const handleContractTypeChange = (type) => {
     setSelectedContractType(type);
     setSearchParams({ type, sector: selectedSector });
@@ -267,6 +241,11 @@ const ContractsPage = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
   };
 
   const handleView = (contract) => {
@@ -337,7 +316,6 @@ const ContractsPage = () => {
     setContractToDelete(null);
   };
 
-  // Export handler
   const handleExport = async (format) => {
     setExporting(true);
     try {
@@ -393,9 +371,22 @@ const ContractsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      {/* HEADER */}
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700">
+        <div className="px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contracte</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Gestionează toate contractele din sistem
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
-        {/* Filters Bar with Dropdown */}
         <ContractFilters
           contractType={selectedContractType}
           onContractTypeChange={handleContractTypeChange}
@@ -417,7 +408,6 @@ const ContractsPage = () => {
           contractCounts={contractCounts}
         />
 
-        {/* Table */}
         <ContractTable
           contracts={paginatedContracts}
           loading={loading}
@@ -432,18 +422,28 @@ const ContractsPage = () => {
           canDelete={canDeleteData}
         />
 
-        {/* Pagination - LA FEL CA ÎN POZĂ */}
+        {/* Pagination */}
         {!loading && sortedContracts.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            {/* Left - Info */}
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Afișează <span className="font-semibold text-gray-900 dark:text-white">{itemsPerPage}</span> 
-                {' '}<span className="hidden sm:inline">✓</span> din <span className="font-semibold text-gray-900 dark:text-white">{sortedContracts.length} contracte</span>
+                Afișează
+              </span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                ✓ din <span className="font-semibold text-gray-900 dark:text-white">{sortedContracts.length} contracte</span>
               </span>
             </div>
 
-            {/* Right - Pagination */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -453,11 +453,9 @@ const ContractsPage = () => {
                 Anterior
               </button>
 
-              {/* Page numbers */}
               <div className="flex items-center gap-1">
                 {[...Array(totalPages)].map((_, i) => {
                   const pageNum = i + 1;
-                  // Show first, last, current, and adjacent pages
                   if (
                     pageNum === 1 ||
                     pageNum === totalPages ||
@@ -469,22 +467,15 @@ const ContractsPage = () => {
                         onClick={() => handlePageChange(pageNum)}
                         className={`min-w-[2.5rem] px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                           currentPage === pageNum
-                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
+                            ? 'bg-teal-500 text-white shadow-md'
                             : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
                       >
                         {pageNum}
                       </button>
                     );
-                  } else if (
-                    pageNum === currentPage - 2 ||
-                    pageNum === currentPage + 2
-                  ) {
-                    return (
-                      <span key={pageNum} className="px-2 text-gray-500">
-                        ...
-                      </span>
-                    );
+                  } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                    return <span key={pageNum} className="px-2 text-gray-500">...</span>;
                   }
                   return null;
                 })}
@@ -502,7 +493,6 @@ const ContractsPage = () => {
         )}
       </div>
 
-      {/* Sidebar for Create/Edit */}
       <ContractSidebar
         isOpen={sidebarOpen}
         onClose={handleCloseSidebar}
@@ -513,7 +503,6 @@ const ContractsPage = () => {
         sectors={sectors}
       />
 
-      {/* View Modal */}
       <ContractViewModal
         isOpen={viewModalOpen}
         onClose={handleCloseViewModal}
@@ -521,7 +510,6 @@ const ContractsPage = () => {
         contractType={selectedContractType}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         isOpen={deleteDialogOpen}
         onClose={handleDeleteCancel}
@@ -530,7 +518,6 @@ const ContractsPage = () => {
         message={`Sigur doriți să ștergeți contractul ${contractToDelete?.contract_number}?`}
       />
 
-      {/* Toast */}
       {toast.show && (
         <Toast
           message={toast.message}

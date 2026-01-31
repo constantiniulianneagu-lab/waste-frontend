@@ -1,13 +1,11 @@
 // src/components/contracts/ContractFilters.jsx
 /**
  * ============================================================================
- * CONTRACT FILTERS - DROPDOWN SELECTOR + HARMONIZED FILTERS
- * ============================================================================
- * Order: Colectare → Sortare → Aerobă → Anaerobă → TMB → Depozitare
+ * CONTRACT FILTERS - ALL BUTTONS ON SAME ROW
  * ============================================================================
  */
 
-import { Filter, X, Search, RefreshCw, Plus, Download, FileText, FileSpreadsheet, File, ChevronDown } from 'lucide-react';
+import { X, Search, RefreshCw, Plus, Download, FileText, FileSpreadsheet, File, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 const CONTRACT_TYPE_OPTIONS = [
@@ -49,7 +47,6 @@ const ContractFilters = ({
   const sectorDropdownRef = useRef(null);
   const statusDropdownRef = useRef(null);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -98,15 +95,13 @@ const ContractFilters = ({
 
   const selectedType = CONTRACT_TYPE_OPTIONS.find(t => t.value === contractType);
   const selectedCount = contractCounts[contractType] || 0;
-  
   const selectedSector = sectors.find(s => s.id === sectorId);
   const statusLabel = status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : 'Toate';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-      {/* Top Row: Type Selector + Search + Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Left - Contract Type Dropdown */}
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Contract Type Dropdown */}
         <div className="relative" ref={typeDropdownRef}>
           <button
             onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
@@ -120,7 +115,6 @@ const ContractFilters = ({
             <ChevronDown className={`w-5 h-5 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          {/* Dropdown Menu */}
           {isTypeDropdownOpen && (
             <div className="absolute left-0 top-full mt-2 w-[280px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
               <div className="p-2 space-y-1">
@@ -145,9 +139,7 @@ const ContractFilters = ({
                           {count} contracte
                         </div>
                       </div>
-                      {isSelected && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      )}
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                     </button>
                   );
                 })}
@@ -156,90 +148,13 @@ const ContractFilters = ({
           )}
         </div>
 
-        {/* Right - Search + Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Caută contract..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9 pr-4 py-2 w-56 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-            />
-          </div>
-
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-            title="Reîncarcă"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-
-          {canCreate && (
-            <button
-              onClick={onAdd}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Adaugă</span>
-            </button>
-          )}
-
-          {onExport && (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsExportOpen(!isExportOpen)}
-                disabled={exporting}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
-                <span>{exporting ? 'Se exportă...' : 'Export'}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isExportOpen && !exporting && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
-                  {exportOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.format}
-                        onClick={() => handleExportClick(option.format)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${option.hoverColor} first:rounded-t-xl last:rounded-b-xl`}
-                      >
-                        <div className={`w-8 h-8 rounded-lg ${option.bgColor} flex items-center justify-center flex-shrink-0`}>
-                          <Icon className={`w-4 h-4 ${option.color}`} />
-                        </div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          {option.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom Row: Filters - SAME STYLE AS TYPE DROPDOWN */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-          <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">Filtre:</span>
-        </div>
-
         {/* Sector Dropdown */}
         <div className="relative" ref={sectorDropdownRef}>
           <button
             onClick={() => setIsSectorDropdownOpen(!isSectorDropdownOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[160px]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[160px]"
           >
-            <span className="flex-1 text-left">
+            <span className="flex-1 text-left font-medium">
               {selectedSector ? `Sectorul ${selectedSector.sector_number}` : 'Toate sectoarele'}
             </span>
             <ChevronDown className={`w-4 h-4 transition-transform ${isSectorDropdownOpen ? 'rotate-180' : ''}`} />
@@ -280,9 +195,9 @@ const ContractFilters = ({
         <div className="relative" ref={statusDropdownRef}>
           <button
             onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[140px]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[120px]"
           >
-            <span className="flex-1 text-left">{statusLabel}</span>
+            <span className="flex-1 text-left font-medium">{statusLabel}</span>
             <ChevronDown className={`w-4 h-4 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -324,15 +239,87 @@ const ContractFilters = ({
           )}
         </div>
 
+        {/* Spacer */}
+        <div className="flex-1 min-w-[20px]" />
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Caută contract..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9 pr-4 py-2.5 w-56 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+          />
+        </div>
+
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
             title="Resetează filtrele"
           >
             <X className="w-4 h-4" />
-            <span>Resetează</span>
           </button>
+        )}
+
+        {/* Refresh */}
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+          title="Reîncarcă"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+
+        {/* Add */}
+        {canCreate && (
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Adaugă contract</span>
+          </button>
+        )}
+
+        {/* Export */}
+        {onExport && (
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsExportOpen(!isExportOpen)}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
+              <span>{exporting ? 'Se exportă...' : 'Export'}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isExportOpen && !exporting && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
+                {exportOptions.map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.format}
+                      onClick={() => handleExportClick(option.format)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${option.hoverColor}`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg ${option.bgColor} flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`w-4 h-4 ${option.color}`} />
+                      </div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
