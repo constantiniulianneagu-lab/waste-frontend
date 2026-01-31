@@ -54,7 +54,7 @@ const ENDPOINT_MAP = {
 
 const ContractsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || 'ALL';
+  const initialContractType = searchParams.get('type') || 'WASTE_COLLECTOR';
   const initialSector = searchParams.get('sector') || '';
 
   const [contracts, setContracts] = useState([]);
@@ -401,12 +401,6 @@ const ContractsPage = () => {
   };
 
   const handleExport = async (format) => {
-    // Check if ALL is selected
-    if (selectedContractType === 'ALL') {
-      showToast('error', 'Pentru export, selectați un tip specific de contract');
-      return;
-    }
-
     setExporting(true);
     try {
       const params = new URLSearchParams({
@@ -579,7 +573,7 @@ const ContractsPage = () => {
         onClose={handleCloseSidebar}
         mode={sidebarMode}
         contract={editContract}
-        contractType={selectedContractType}
+        contractType={editContract?.contract_type || selectedContractType}
         onSave={handleSave}
         saving={saving}
         institutions={institutions}
@@ -590,7 +584,7 @@ const ContractsPage = () => {
         isOpen={viewModalOpen}
         onClose={handleCloseViewModal}
         contract={viewContract}
-        contractType={selectedContractType}
+        contractType={viewContract?.contract_type || selectedContractType}
       />
 
       <DeleteConfirmDialog

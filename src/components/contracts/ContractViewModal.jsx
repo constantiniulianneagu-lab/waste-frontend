@@ -336,25 +336,8 @@ const ContractViewModal = ({
                 </div>
               )}
 
-              {/* Section: Performance Indicator (Aerobic/Anaerobic) */}
-              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && contract.indicator_disposal_percent !== null && contract.indicator_disposal_percent !== undefined && (
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Percent className="w-4 h-4 text-teal-500" />
-                    Indicator (reziduu la depozitare)
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <IndicatorCard
-                      label="Depozitare"
-                      value={contract.indicator_disposal_percent}
-                      color="slate"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Section: Aerobic/Anaerobic Performance Indicator (Disposal %) */}
-              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && contract.indicator_disposal_percent && (
+              {/* Section: Performance Indicator (Aerobic/Anaerobic) - Unified */}
+              {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (contract.indicator_disposal_percent !== null && contract.indicator_disposal_percent !== undefined) && (
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                     <Percent className="w-4 h-4 text-teal-500" />
@@ -368,6 +351,33 @@ const ContractViewModal = ({
                     />
                     <div className="col-span-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
                       Procent estimat al reziduului direcționat la depozitare (conform indicatorului din contract).
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Section: Waste Codes (Informative) */}
+              {(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-teal-500" />
+                    Coduri Deșeuri (Informativ)
+                  </h3>
+                  <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                          {contractType === 'TMB' && 'Cod deșeu: 20 03 01'}
+                          {contractType === 'AEROBIC' && 'Cod deșeu: 20 02 01'}
+                          {contractType === 'ANAEROBIC' && 'Coduri deșeuri: 20 01 08, 20 03 02'}
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          {contractType === 'TMB' && 'Deșeuri municipale amestecate'}
+                          {contractType === 'AEROBIC' && 'Deșeuri biodegradabile'}
+                          {contractType === 'ANAEROBIC' && 'Deșeuri biodegradabile din bucătărie și deșeuri biodegradabile'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -436,7 +446,7 @@ const ContractViewModal = ({
                   </button>
 
                   {showAmendments && (
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-4 space-y-3 max-h-64 overflow-y-auto pr-2">
                       {loadingAmendments ? (
                         <div className="text-center py-4">
                           <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
