@@ -931,11 +931,11 @@ const ContractSidebar = ({
                 <input
                   type="number"
                   step="0.01"
-                  name={contractType === 'TMB' ? 'estimated_quantity_tons' : 'contracted_quantity_tons'}
-                  value={contractType === 'TMB' ? formData.estimated_quantity_tons : formData.contracted_quantity_tons}
+                  name={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? 'estimated_quantity_tons' : 'contracted_quantity_tons'}
+                  value={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? formData.estimated_quantity_tons : formData.contracted_quantity_tons}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   placeholder="0"
                 />
               </div>

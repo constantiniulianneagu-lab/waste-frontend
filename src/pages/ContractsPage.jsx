@@ -162,7 +162,7 @@ const ContractsPage = () => {
         }
 
         const [wasteRes, sortRes, aeroRes, anaeroRes, tmbRes, dispRes] = await Promise.all([
-          apiGet('/api/institutions/0/waste-collector-contracts', params),
+          apiGet('/api/institutions/0/waste-contracts', params),
           apiGet('/api/institutions/0/sorting-contracts', params),
           apiGet('/api/institutions/0/aerobic-contracts', params),
           apiGet('/api/institutions/0/anaerobic-contracts', params),
