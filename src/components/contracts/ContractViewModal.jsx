@@ -152,7 +152,7 @@ const ContractViewModal = ({
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
         <div 
-          className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Gradient */}
@@ -215,7 +215,7 @@ const ContractViewModal = ({
           </div>
 
           {/* Content */}
-          <div className="px-8 py-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <div className="px-8 py-6 overflow-y-auto flex-1">
             
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-3 gap-4 mb-8">
@@ -343,15 +343,12 @@ const ContractViewModal = ({
                     <Percent className="w-4 h-4 text-teal-500" />
                     Indicator (reziduu la depozitare)
                   </h3>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <IndicatorCard
                       label="Depozitare"
                       value={contract.indicator_disposal_percent}
                       color="slate"
                     />
-                    <div className="col-span-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50">
-                      Procent estimat al reziduului direcționat la depozitare (conform indicatorului din contract).
-                    </div>
                   </div>
                 </div>
               )}
