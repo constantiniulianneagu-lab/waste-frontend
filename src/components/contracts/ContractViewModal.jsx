@@ -260,17 +260,62 @@ const ContractViewModal = ({
 
             {/* Total Value Highlight */}
             <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/10 rounded-2xl p-5 mb-8 border border-teal-100 dark:border-teal-500/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Valoare Totală Contract</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
-                    {amendments.length > 0 ? 'Include modificările din actele adiționale' : 'Conform contractului inițial'}
+              {contractType === 'DISPOSAL' ? (
+                // DISPOSAL: Afișare separată Tarif + CEC
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Valoare Contract</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                      {amendments.length > 0 ? 'Include modificările din actele adiționale' : 'Conform contractului inițial'}
+                    </p>
+                  </div>
+                  
+                  {/* Valoare Tarif */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Valoare Tarif Depozitare:
+                    </span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {formatCurrency((effectiveTariff || 0) * (contract.contracted_quantity_tons || 0))}
+                    </span>
+                  </div>
+                  
+                  {/* Valoare CEC */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Valoare Taxa CEC:
+                    </span>
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {formatCurrency((effectiveCecTax || 0) * (contract.contracted_quantity_tons || 0))}
+                    </span>
+                  </div>
+                  
+                  {/* Total */}
+                  <div className="pt-3 border-t border-teal-200 dark:border-teal-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Total Contract:
+                      </span>
+                      <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">
+                        {formatCurrency(effectiveTotalValue)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // Other types: Single total
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Valoare Totală Contract</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                      {amendments.length > 0 ? 'Include modificările din actele adiționale' : 'Conform contractului inițial'}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">
+                    {formatCurrency(effectiveTotalValue)}
                   </p>
                 </div>
-                <p className="text-2xl font-bold text-teal-700 dark:text-teal-400">
-                  {formatCurrency(effectiveTotalValue)}
-                </p>
-              </div>
+              )}
             </div>
 
             {/* Details Grid */}
