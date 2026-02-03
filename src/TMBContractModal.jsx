@@ -26,6 +26,7 @@ const TMBContractModal = ({
     contract_number: '',
     contract_date_start: '',
     contract_date_end: '',
+    service_start_date: '',
     sector_id: '',
     tariff_per_ton: '',
     estimated_quantity_tons: '',
@@ -49,6 +50,7 @@ const TMBContractModal = ({
           contract_number: contract.contract_number || '',
           contract_date_start: contract.contract_date_start || '',
           contract_date_end: contract.contract_date_end || '',
+          service_start_date: contract.service_start_date || '',
           sector_id: contract.sector_id || '',
           tariff_per_ton: contract.tariff_per_ton || '',
           estimated_quantity_tons: contract.estimated_quantity_tons || '',
@@ -78,6 +80,7 @@ const TMBContractModal = ({
       contract_number: '',
       contract_date_start: '',
       contract_date_end: '',
+      service_start_date: '',
       sector_id: '',
       tariff_per_ton: '',
       estimated_quantity_tons: '',
@@ -222,7 +225,7 @@ const TMBContractModal = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Data Început *
+                Data Început Contract *
               </label>
               <input
                 type="date"
@@ -240,7 +243,7 @@ const TMBContractModal = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Data Sfârșit
+                Data Sfârșit Contract
               </label>
               <input
                 type="date"
@@ -250,6 +253,28 @@ const TMBContractModal = ({
                 className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-gray-900 dark:text-white"
               />
             </div>
+          </div>
+
+          {/* Service Start Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Data Începere Serviciu *
+            </label>
+            <input
+              type="date"
+              name="service_start_date"
+              value={formData.service_start_date}
+              onChange={handleInputChange}
+              className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                errors.service_start_date ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+              } rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-gray-900 dark:text-white`}
+            />
+            {errors.service_start_date && (
+              <p className="mt-1 text-xs text-red-500">{errors.service_start_date}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              📅 Data de la care începe efectiv prestarea serviciului
+            </p>
           </div>
 
           {/* Sector */}

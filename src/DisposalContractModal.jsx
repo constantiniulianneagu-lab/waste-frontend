@@ -26,6 +26,7 @@ const DisposalContractModal = ({
     contract_number: '',
     contract_date_start: '',
     contract_date_end: '',
+    service_start_date: '',
     notes: '',
     is_active: true,
     sectors: [] // { sector_id, tariff_per_ton, cec_tax_per_ton, contracted_quantity_tons }
@@ -46,6 +47,7 @@ const DisposalContractModal = ({
           contract_number: contract.contract_number || '',
           contract_date_start: contract.contract_date_start || '',
           contract_date_end: contract.contract_date_end || '',
+          service_start_date: contract.service_start_date || '',
           notes: contract.notes || '',
           is_active: contract.is_active !== false,
           sectors: contract.sectors || []
@@ -312,7 +314,32 @@ const DisposalContractModal = ({
             </div>
           </div>
 
-          {/* Sectors */}
+          {/* Sector
+          {/* Service Start Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Data Începere Serviciu *
+            </label>
+            <input
+              type="date"
+              name="service_start_date"
+              value={formData.service_start_date}
+              onChange={handleInputChange}
+              className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border ${
+                errors.service_start_date ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+              } rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none text-gray-900 dark:text-white`}
+            />
+            {errors.service_start_date && (
+              <p className="mt-1 text-xs text-red-500">{errors.service_start_date}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              📅 Data de la care începe efectiv prestarea serviciului
+            </p>
+          </div>
+
+          
+
+          s */}
           <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -448,18 +475,65 @@ const DisposalContractModal = ({
               </div>
             )}
 
-            {/* Total Value */}
+            {/* Total Value - SEPARATE TARIF + CEC */}
             {totalValue > 0 && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 space-y-3">
                 <p className="text-sm font-semibold text-red-900 dark:text-red-200">
-                  Valoare Totală Contract (FĂRĂ TVA)
+                  Valoare Contract (FĂRĂ TVA)
                 </p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
-                  {new Intl.NumberFormat('ro-RO', {
-                    style: 'currency',
-                    currency: 'RON'
-                  }).format(totalValue)}
-                </p>
+                
+                {/* Valoare Tarif */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-red-700 dark:text-red-300">
+                    Valoare Tarif Depozitare:
+                  </span>
+                  <span className="font-bold text-red-900 dark:text-red-100">
+                    {new Intl.NumberFormat('ro-RO', {
+                      style: 'currency',
+                      currency: 'RON'
+                    }).format(
+                      formData.sectors.reduce((sum, s) => {
+                        const tariff = parseFloat(s.tariff_per_ton) || 0;
+                        const qty = parseFloat(s.contracted_quantity_tons) || 0;
+                        return sum + (tariff * qty);
+                      }, 0)
+                    )}
+                  </span>
+                </div>
+                
+                {/* Valoare CEC */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-red-700 dark:text-red-300">
+                    Valoare Taxa CEC:
+                  </span>
+                  <span className="font-bold text-red-900 dark:text-red-100">
+                    {new Intl.NumberFormat('ro-RO', {
+                      style: 'currency',
+                      currency: 'RON'
+                    }).format(
+                      formData.sectors.reduce((sum, s) => {
+                        const cec = parseFloat(s.cec_tax_per_ton) || 0;
+                        const qty = parseFloat(s.contracted_quantity_tons) || 0;
+                        return sum + (cec * qty);
+                      }, 0)
+                    )}
+                  </span>
+                </div>
+                
+                {/* Total */}
+                <div className="pt-3 border-t border-red-300 dark:border-red-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-semibold text-red-900 dark:text-red-200">
+                      Total Contract:
+                    </span>
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {new Intl.NumberFormat('ro-RO', {
+                        style: 'currency',
+                        currency: 'RON'
+                      }).format(totalValue)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

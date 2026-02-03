@@ -159,6 +159,7 @@ const ContractSidebar = ({
     contract_number: '',
     contract_date_start: '',
     contract_date_end: '',
+    service_start_date: '',
     notes: '',
     is_active: true,
     sector_id: '',
@@ -861,6 +862,29 @@ const ContractSidebar = ({
                 </div>
               </div>
 
+              {/* Service Start Date */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Data Începere Serviciu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  name="service_start_date"
+                  value={formData.service_start_date}
+                  onChange={handleInputChange}
+                  disabled={isReadOnly}
+                  className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${
+                    errors.service_start_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  }`}
+                />
+                {errors.service_start_date && (
+                  <p className="mt-1 text-xs text-red-600">{errors.service_start_date}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  📅 Data de la care începe efectiv prestarea serviciului
+                </p>
+              </div>
+
               {/* U.A.T. (Sector) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -949,14 +973,51 @@ const ContractSidebar = ({
               {/* Total Value */}
               {(formData.tariff_per_ton && (formData.estimated_quantity_tons || formData.contracted_quantity_tons)) && (
                 <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-xl border border-teal-200 dark:border-teal-500/20">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Valoare Totală:
-                    </span>
-                    <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
-                      {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
-                    </span>
-                  </div>
+                  {contractType === 'DISPOSAL' ? (
+                    // DISPOSAL: Afișare separată Tarif + CEC
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Valoare Tarif:
+                        </span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(
+                            (parseFloat(formData.tariff_per_ton) || 0) * (parseFloat(formData.contracted_quantity_tons) || 0)
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Valoare CEC:
+                        </span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(
+                            (parseFloat(formData.cec_tax_per_ton) || 0) * (parseFloat(formData.contracted_quantity_tons) || 0)
+                          )}
+                        </span>
+                      </div>
+                      <div className="pt-2 border-t border-teal-300 dark:border-teal-600">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Valoare Totală:
+                          </span>
+                          <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
+                            {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Other types: Single total
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Valoare Totală:
+                      </span>
+                      <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
+                        {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
