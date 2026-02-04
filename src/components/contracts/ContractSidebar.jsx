@@ -558,9 +558,76 @@ const ContractSidebar = ({
     });
   };
 
-  const handleAmendmentInputChange = (e) => {
+  const handleAmendmentInputChange = async (e) => {
     const { name, value } = e.target;
+    
+    // Update field
     setAmendmentForm(prev => ({ ...prev, [name]: value }));
+    
+    // CALCUL PROPORȚIONAL ÎN TIMP REAL
+    // Când user schimbă new_contract_date_end pentru EXTENSION
+    if (name === 'new_contract_date_end' && 
+        amendmentForm.amendment_type === 'EXTENSION' && 
+        value && 
+        contract.contract_date_start && 
+        contract.contract_date_end) {
+      
+      // Calculează cantitatea proporțional
+      const calculateProportional = () => {
+        try {
+          const originalStart = new Date(contract.contract_date_start);
+          const originalEnd = new Date(contract.contract_date_end);
+          const newEnd = new Date(value);
+          
+          // Validare
+          if (isNaN(originalStart.getTime()) || isNaN(originalEnd.getTime()) || isNaN(newEnd.getTime())) {
+            return null;
+          }
+          
+          if (newEnd <= originalEnd) {
+            return null; // Nu e prelungire
+          }
+          
+          // Calcul zile
+          const MS_PER_DAY = 1000 * 60 * 60 * 24;
+          const totalDays = Math.round((originalEnd - originalStart) / MS_PER_DAY);
+          const extensionDays = Math.round((newEnd - originalEnd) / MS_PER_DAY);
+          
+          if (totalDays <= 0) return null;
+          
+          // Cantitate originală
+          const originalQty = contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC'
+            ? parseFloat(contract.estimated_quantity_tons || 0)
+            : parseFloat(contract.contracted_quantity_tons || 0);
+          
+          if (originalQty <= 0) return null;
+          
+          // Formula: (cantitate / zile_totale) × zile_prelungire
+          const proportionalQty = (originalQty / totalDays) * extensionDays;
+          return Math.round(proportionalQty * 1000) / 1000; // 3 decimale
+        } catch (err) {
+          console.error('Proportional calculation error:', err);
+          return null;
+        }
+      };
+      
+      const calculatedQty = calculateProportional();
+      
+      if (calculatedQty !== null) {
+        // Auto-populează cantitatea calculată
+        const qtyField = contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC'
+          ? 'new_estimated_quantity_tons'
+          : 'new_contracted_quantity_tons';
+        
+        setAmendmentForm(prev => ({ 
+          ...prev, 
+          [name]: value,
+          [qtyField]: calculatedQty.toString()
+        }));
+        
+        console.log(`💡 Cantitate calculată automat: ${calculatedQty} t`);
+      }
+    }
   };
 
   const handleAmendmentPDFChange = (fileData) => {
@@ -646,18 +713,21 @@ const ContractSidebar = ({
           return;
       }
       
-      // Map amendment types for DISPOSAL (uses Romanian types)
+      // Map amendment types for contracts with Romanian validation
       let payload = { ...amendmentForm };
-      if (contractType === 'DISPOSAL') {
-        const typeMap = {
-          'EXTENSION': 'PRELUNGIRE',
-          'TARIFF_CHANGE': 'MODIFICARE_TARIF',
-          'QUANTITY_CHANGE': 'MODIFICARE_CANTITATE',
-          'MULTIPLE': 'MANUAL'
-        };
-        if (typeMap[payload.amendment_type]) {
-          payload.amendment_type = typeMap[payload.amendment_type];
-        }
+      
+      // Type mapping (English → Romanian)
+      const typeMap = {
+        'EXTENSION': 'PRELUNGIRE',
+        'TARIFF_CHANGE': 'MODIFICARE_TARIF',
+        'QUANTITY_CHANGE': 'MODIFICARE_CANTITATE',
+        'MULTIPLE': 'MANUAL',
+        'TERMINATION': 'INCETARE'
+      };
+      
+      // Apply mapping for all contract types (some may use Romanian types in DB)
+      if (typeMap[payload.amendment_type]) {
+        payload.amendment_type = typeMap[payload.amendment_type];
       }
       
       const response = amendmentForm.id
