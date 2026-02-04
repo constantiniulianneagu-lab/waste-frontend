@@ -283,7 +283,13 @@ const ContractFilters = ({
         {canCreate && (
           <button
             onClick={onAdd}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+            disabled={contractType === 'ALL'}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-lg shadow-md transition-all ${
+              contractType === 'ALL'
+                ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-70'
+                : 'bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 hover:shadow-lg'
+            }`}
+            title={contractType === 'ALL' ? 'Selectează un tip de contract (nu "Toate") pentru a adăuga' : 'Adaugă contract'}
           >
             <Plus className="w-4 h-4" />
             <span>Adaugă contract</span>
