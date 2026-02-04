@@ -536,14 +536,25 @@ const ContractSidebar = ({
       amendment_number: a.amendment_number || '',
       amendment_date: formatDateForInput(a.amendment_date),
       amendment_type: a.amendment_type || 'EXTENSION',
+      new_contract_date_start: formatDateForInput(a.new_contract_date_start),
       new_contract_date_end: formatDateForInput(a.new_contract_date_end),
       new_tariff_per_ton: a.new_tariff_per_ton || '',
       new_cec_tax_per_ton: a.new_cec_tax_per_ton || '',
       new_contracted_quantity_tons: a.new_contracted_quantity_tons || '',
       new_estimated_quantity_tons: a.new_estimated_quantity_tons || '',
+      // TMB specific indicators
+      new_indicator_recycling_percent: a.new_indicator_recycling_percent || '',
+      new_indicator_energy_recovery_percent: a.new_indicator_energy_recovery_percent || '',
+      new_indicator_disposal_percent: a.new_indicator_disposal_percent || '',
+      // Other fields
       changes_description: a.changes_description || '',
+      reason: a.reason || '',
+      notes: a.notes || '',
       amendment_file_url: a.amendment_file_url || '',
       amendment_file_name: a.amendment_file_name || '',
+      amendment_file_size: a.amendment_file_size || '',
+      reference_contract_id: a.reference_contract_id || '',
+      quantity_adjustment_auto: a.quantity_adjustment_auto || '',
     });
   };
 
@@ -566,6 +577,47 @@ const ContractSidebar = ({
         amendment_file_name: '',
       }));
     }
+  };
+
+  // Generate amendment details for preview
+  const getAmendmentDetails = (a) => {
+    const details = [];
+    
+    // Extension - new end date
+    if (a.new_contract_date_end && (a.amendment_type === 'EXTENSION' || a.amendment_type === 'PRELUNGIRE')) {
+      details.push(`Prelungire până: ${formatDate(a.new_contract_date_end)}`);
+    }
+    
+    // Tariff change
+    if (a.new_tariff_per_ton) {
+      details.push(`Nou tarif: ${a.new_tariff_per_ton} lei/t`);
+    }
+    
+    // CEC tax change (DISPOSAL)
+    if (a.new_cec_tax_per_ton) {
+      details.push(`Nou CEC: ${a.new_cec_tax_per_ton} lei/t`);
+    }
+    
+    // Quantity change
+    const qtyField = (contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') 
+      ? a.new_estimated_quantity_tons 
+      : a.new_contracted_quantity_tons;
+    if (qtyField) {
+      details.push(`Nouă cantitate: ${qtyField} t`);
+    }
+    
+    // TMB indicators
+    if (a.new_indicator_recycling_percent) {
+      details.push(`Reciclare: ${a.new_indicator_recycling_percent}%`);
+    }
+    if (a.new_indicator_energy_recovery_percent) {
+      details.push(`Recuperare energetică: ${a.new_indicator_energy_recovery_percent}%`);
+    }
+    if (a.new_indicator_disposal_percent) {
+      details.push(`Depozitare: ${a.new_indicator_disposal_percent}%`);
+    }
+    
+    return details.length > 0 ? details.join(' • ') : null;
   };
 
   const handleSaveAmendment = async () => {
@@ -1285,11 +1337,20 @@ const ContractSidebar = ({
                                       {AMENDMENT_TYPES.find(t => t.value === a.amendment_type)?.label || a.amendment_type}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    <Calendar className="w-3 h-3 inline mr-1" />
-                                    {formatDate(a.amendment_date)}
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">
+                                    <div>
+                                      <Calendar className="w-3 h-3 inline mr-1" />
+                                      {formatDate(a.amendment_date)}
+                                    </div>
+                                    {getAmendmentDetails(a) && (
+                                      <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                        {getAmendmentDetails(a)}
+                                      </div>
+                                    )}
                                     {a.changes_description && (
-                                      <span className="ml-2">• {a.changes_description}</span>
+                                      <div className="text-xs text-gray-600 dark:text-gray-400 italic">
+                                        {a.changes_description}
+                                      </div>
                                     )}
                                   </div>
                                 </div>
