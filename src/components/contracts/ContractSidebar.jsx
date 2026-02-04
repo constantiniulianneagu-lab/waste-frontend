@@ -594,11 +594,34 @@ const ContractSidebar = ({
           return;
       }
       
+      // Map amendment types for DISPOSAL (uses Romanian types)
+      let payload = { ...amendmentForm };
+      if (contractType === 'DISPOSAL') {
+        const typeMap = {
+          'EXTENSION': 'PRELUNGIRE',
+          'TARIFF_CHANGE': 'MODIFICARE_TARIF',
+          'QUANTITY_CHANGE': 'MODIFICARE_CANTITATE',
+          'MULTIPLE': 'MANUAL'
+        };
+        if (typeMap[payload.amendment_type]) {
+          payload.amendment_type = typeMap[payload.amendment_type];
+        }
+      }
+      
       const response = amendmentForm.id
-        ? await apiPut(`${endpoint}/${amendmentForm.id}`, amendmentForm)
-        : await apiPost(endpoint, amendmentForm);
+        ? await apiPut(`${endpoint}/${amendmentForm.id}`, payload)
+        : await apiPost(endpoint, payload);
       
       if (response.success) {
+        // Show message if quantity was auto-calculated
+        if (response.quantity_auto_calculated) {
+          const qtyField = (contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') 
+            ? 'new_estimated_quantity_tons' 
+            : 'new_contracted_quantity_tons';
+          const calculatedQty = response.data[qtyField];
+          alert(`✅ Act adițional salvat cu succes!\n\n💡 Cantitate calculată automat: ${calculatedQty} tone\n(proporțional cu perioada de prelungire)`);
+        }
+        
         setAmendmentForm(null);
         loadAmendments();
       } else {
@@ -1360,6 +1383,12 @@ const ContractSidebar = ({
                                     onChange={handleAmendmentInputChange}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
+                                  {amendmentForm.amendment_type === 'EXTENSION' && (
+                                    <p className="mt-1.5 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-1">
+                                      <span className="mt-0.5">💡</span>
+                                      <span>Pentru prelungiri, cantitatea se calculează automat proporțional cu perioada dacă nu este specificată manual.</span>
+                                    </p>
+                                  )}
                                 </div>
                               )}
 
@@ -1396,10 +1425,13 @@ const ContractSidebar = ({
                                 </div>
                               )}
 
-                              {(amendmentForm.amendment_type === 'QUANTITY_CHANGE' || amendmentForm.amendment_type === 'MULTIPLE') && (
+                              {(amendmentForm.amendment_type === 'QUANTITY_CHANGE' || amendmentForm.amendment_type === 'MULTIPLE' || amendmentForm.amendment_type === 'EXTENSION') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                                     Nouă Cantitate (tone)
+                                    {amendmentForm.amendment_type === 'EXTENSION' && (
+                                      <span className="text-gray-500 ml-1.5">(opțional)</span>
+                                    )}
                                   </label>
                                   <input
                                     type="number"
@@ -1407,8 +1439,14 @@ const ContractSidebar = ({
                                     name={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? 'new_estimated_quantity_tons' : 'new_contracted_quantity_tons'}
                                     value={(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') ? amendmentForm.new_estimated_quantity_tons : amendmentForm.new_contracted_quantity_tons}
                                     onChange={handleAmendmentInputChange}
+                                    placeholder={amendmentForm.amendment_type === 'EXTENSION' ? 'Lasă gol pentru calcul automat' : ''}
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
+                                  {amendmentForm.amendment_type === 'EXTENSION' && (
+                                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                      Se va calcula proporțional: (cantitate_contract / zile_totale) × zile_prelungire
+                                    </p>
+                                  )}
                                 </div>
                               )}
 
