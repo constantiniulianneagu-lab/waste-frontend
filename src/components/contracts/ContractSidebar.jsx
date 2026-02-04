@@ -585,26 +585,51 @@ const ContractSidebar = ({
             return null;
           }
           
-          if (newEnd <= originalEnd) {
-            return null; // Nu e prelungire
+          // Găsește ultima dată de prelungire din amendments existente
+          const lastExtensionEnd = amendments
+            .filter(a => a.amendment_type === 'EXTENSION' || a.amendment_type === 'PRELUNGIRE')
+            .filter(a => a.new_contract_date_end)
+            .map(a => new Date(a.new_contract_date_end))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => b - a)[0]; // Ultima dată (cea mai recentă)
+          
+          // Începutul prelungirii = ultima prelungire SAU data originală
+          const extensionStartDate = lastExtensionEnd || originalEnd;
+          
+          if (newEnd <= extensionStartDate) {
+            return null; // Data nouă trebuie să fie după ultima prelungire
           }
           
           // Calcul zile
           const MS_PER_DAY = 1000 * 60 * 60 * 24;
+          
+          // IMPORTANT: totalDays = perioada ORIGINALĂ (pentru rate zilnic)
           const totalDays = Math.round((originalEnd - originalStart) / MS_PER_DAY);
-          const extensionDays = Math.round((newEnd - originalEnd) / MS_PER_DAY);
           
-          if (totalDays <= 0) return null;
+          // extensionDays = zile de la ultima prelungire până la noua dată
+          const extensionDays = Math.round((newEnd - extensionStartDate) / MS_PER_DAY);
           
-          // Cantitate originală
+          if (totalDays <= 0 || extensionDays <= 0) return null;
+          
+          // Cantitate originală (ÎNTOTDEAUNA din contract inițial)
           const originalQty = contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC'
             ? parseFloat(contract.estimated_quantity_tons || 0)
             : parseFloat(contract.contracted_quantity_tons || 0);
           
           if (originalQty <= 0) return null;
           
-          // Formula: (cantitate / zile_totale) × zile_prelungire
-          const proportionalQty = (originalQty / totalDays) * extensionDays;
+          // Formula: (cantitate_originală / zile_originale) × zile_noi_prelungire
+          const dailyRate = originalQty / totalDays;
+          const proportionalQty = dailyRate * extensionDays;
+          
+          console.log('📊 Calcul Proporțional:');
+          console.log(`  - Perioadă originală: ${totalDays} zile (${originalQty}t)`);
+          console.log(`  - Rate zilnic: ${dailyRate.toFixed(4)} t/zi`);
+          console.log(`  - Prelungire de la: ${extensionStartDate.toISOString().split('T')[0]}`);
+          console.log(`  - Prelungire până la: ${newEnd.toISOString().split('T')[0]}`);
+          console.log(`  - Zile adăugate: ${extensionDays} zile`);
+          console.log(`  - Cantitate calculată: ${proportionalQty.toFixed(3)}t`);
+          
           return Math.round(proportionalQty * 1000) / 1000; // 3 decimale
         } catch (err) {
           console.error('Proportional calculation error:', err);
@@ -626,7 +651,7 @@ const ContractSidebar = ({
           [qtyField]: calculatedQty.toString()
         }));
         
-        console.log(`💡 Cantitate calculată automat: ${calculatedQty} t`);
+        console.log(`💡 Cantitate calculată automat: ${calculatedQty}t pentru ${calculatedQty} zile de prelungire`);
       }
     }
   };
