@@ -521,6 +521,7 @@ const ContractSidebar = ({
       changes_description: '',
       amendment_file_url: '',
       amendment_file_name: '',
+      amendment_file_size: null,
     });
   };
 
@@ -552,7 +553,7 @@ const ContractSidebar = ({
       notes: a.notes || '',
       amendment_file_url: a.amendment_file_url || '',
       amendment_file_name: a.amendment_file_name || '',
-      amendment_file_size: a.amendment_file_size || '',
+      // amendment_file_size removed - doesn't exist in DB
       reference_contract_id: a.reference_contract_id || '',
       quantity_adjustment_auto: a.quantity_adjustment_auto || '',
     });
@@ -636,12 +637,14 @@ const ContractSidebar = ({
         ...prev,
         amendment_file_url: fileData.url,
         amendment_file_name: fileData.fileName,
+        amendment_file_size: fileData.fileSize || null,
       }));
     } else {
       setAmendmentForm(prev => ({
         ...prev,
         amendment_file_url: '',
         amendment_file_name: '',
+        amendment_file_size: null,
       }));
     }
   };
