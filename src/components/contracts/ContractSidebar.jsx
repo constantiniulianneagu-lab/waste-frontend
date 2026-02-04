@@ -391,8 +391,8 @@ const ContractSidebar = ({
       let endpoint = '';
       switch (contractType) {
         case 'DISPOSAL':
-          endpoint = '/api/institutions/0/disposal-contracts/validate';
-          break;
+          // Skip server validation for DISPOSAL (endpoint not implemented yet)
+          return true;
         case 'TMB':
           endpoint = '/api/institutions/0/tmb-contracts/validate';
           break;
