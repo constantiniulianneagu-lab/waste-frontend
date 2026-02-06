@@ -296,13 +296,13 @@ const ContractSidebar = ({
           endpoint = `/api/institutions/${contract.institution_id}/disposal-contracts/${contract.id}/amendments`;
           break;
         case 'TMB':
-          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/tmb-contracts/${contract.id}/amendments`;
           break;
         case 'AEROBIC':
-          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/aerobic-contracts/${contract.id}/amendments`;
           break;
         case 'ANAEROBIC':
-          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/anaerobic-contracts/${contract.id}/amendments`;
           break;
         default:
           return;
@@ -394,7 +394,7 @@ const ContractSidebar = ({
           // Skip server validation for DISPOSAL (endpoint not implemented yet)
           return true;
         case 'TMB':
-          endpoint = '/api/institutions/0/tmb-contracts/validate';
+          endpoint = '/api/institutions/${contract.institution_id}/tmb-contracts/validate';
           break;
         default:
           return true;
@@ -729,13 +729,13 @@ const ContractSidebar = ({
           endpoint = `/api/institutions/${contract.institution_id}/disposal-contracts/${contract.id}/amendments`;
           break;
         case 'TMB':
-          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/tmb-contracts/${contract.id}/amendments`;
           break;
         case 'AEROBIC':
-          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/aerobic-contracts/${contract.id}/amendments`;
           break;
         case 'ANAEROBIC':
-          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/anaerobic-contracts/${contract.id}/amendments`;
           break;
         default:
           return;
@@ -795,13 +795,13 @@ const ContractSidebar = ({
           endpoint = `/api/institutions/${contract.institution_id}/disposal-contracts/${contract.id}/amendments/${id}`;
           break;
         case 'TMB':
-          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments/${id}`;
+          endpoint = `/api/institutions/${contract.institution_id}/tmb-contracts/${contract.id}/amendments/${id}`;
           break;
         case 'AEROBIC':
-          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments/${id}`;
+          endpoint = `/api/institutions/${contract.institution_id}/aerobic-contracts/${contract.id}/amendments/${id}`;
           break;
         case 'ANAEROBIC':
-          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments/${id}`;
+          endpoint = `/api/institutions/${contract.institution_id}/anaerobic-contracts/${contract.id}/amendments/${id}`;
           break;
         default:
           return;

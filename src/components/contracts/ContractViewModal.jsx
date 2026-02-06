@@ -51,16 +51,16 @@ const ContractViewModal = ({
           endpoint = `/api/institutions/${contract.institution_id}/disposal-contracts/${contract.id}/amendments`;
           break;
         case 'TMB':
-          endpoint = `/api/institutions/0/tmb-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/tmb-contracts/${contract.id}/amendments`;
           break;
         case 'SORTING':
-          endpoint = `/api/institutions/0/sorting-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/sorting-contracts/${contract.id}/amendments`;
           break;
         case 'AEROBIC':
-          endpoint = `/api/institutions/0/aerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/aerobic-contracts/${contract.id}/amendments`;
           break;
         case 'ANAEROBIC':
-          endpoint = `/api/institutions/0/anaerobic-contracts/${contract.id}/amendments`;
+          endpoint = `/api/institutions/${contract.institution_id}/anaerobic-contracts/${contract.id}/amendments`;
           break;
         case 'WASTE_COLLECTOR':
           // For waste collector, amendments come with the contract, no separate endpoint
