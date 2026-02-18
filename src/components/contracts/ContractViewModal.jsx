@@ -336,6 +336,14 @@ const ContractViewModal = ({
                     label="Operator" 
                     value={contract.institution_name || '-'}
                   />
+                  {contract.service_start_date && (
+                    <InfoItem 
+                      icon={Calendar} 
+                      label="Data Începere Serviciu" 
+                      value={formatDate(contract.service_start_date)}
+                      iconColor="text-teal-500"
+                    />
+                  )}
                   {contractType === 'TMB' && contract.associate_name && (
                     <InfoItem 
                       icon={Users} 
