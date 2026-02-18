@@ -238,6 +238,7 @@ const ContractSidebar = ({
         contract_number: contract.contract_number || '',
         contract_date_start: contract.contract_date_start?.split('T')[0] || '',
         contract_date_end: contract.contract_date_end?.split('T')[0] || '',
+        service_start_date: contract.service_start_date?.split('T')[0] || '',
         notes: contract.notes || '',
         is_active: contract.is_active ?? true,
         sector_id: contract.sector_id || '',

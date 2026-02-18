@@ -574,10 +574,23 @@ const IndicatorCard = ({ label, value, color }) => {
 
 const AmendmentCard = ({ amendment, index, onViewPDF }) => {
   const AMENDMENT_TYPE_LABELS = {
-    EXTENSION: 'Modificare perioadă',
+    // Tipuri românești (din DB)
+    PRELUNGIRE: 'Prelungire perioadă',
+    INCETARE: 'Încetare contract',
+    AUTO_TERMINATION: 'Încetare automată',
+    MODIFICARE_TARIF: 'Modificare tarif',
+    MODIFICARE_CANTITATE: 'Modificare cantitate',
+    MODIFICARE_INDICATOR: 'Modificare indicator',
+    MODIFICARE_INDICATORI: 'Modificare indicatori',
+    MODIFICARE_VALABILITATE: 'Modificare valabilitate',
+    MODIFICARE_CEC: 'Modificare taxă CEC',
+    MANUAL: 'Modificare manuală',
+    // Tipuri englezești (legacy UI)
+    EXTENSION: 'Prelungire perioadă',
+    TERMINATION: 'Încetare contract',
     TARIFF_CHANGE: 'Modificare tarif',
     QUANTITY_CHANGE: 'Modificare cantitate',
-    MULTIPLE: 'Multiple',
+    MULTIPLE: 'Modificări multiple',
   };
 
   const formatDate = (dateStr) => {
