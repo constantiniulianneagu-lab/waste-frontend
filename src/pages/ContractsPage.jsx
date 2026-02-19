@@ -54,7 +54,7 @@ const ENDPOINT_MAP = {
 
 const ContractsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContractType = searchParams.get('type') || 'WASTE_COLLECTOR';
+  const initialContractType = searchParams.get('type') || 'ALL';
   const initialSector = searchParams.get('sector') || '';
 
   const [contracts, setContracts] = useState([]);
@@ -157,10 +157,6 @@ const ContractsPage = () => {
         if (selectedSector) {
           params.sector_id = selectedSector;
         }
-        if (selectedStatus) {
-          params.is_active = selectedStatus === 'active';
-        }
-
         const [wasteRes, sortRes, aeroRes, anaeroRes, tmbRes, dispRes] = await Promise.all([
           apiGet('/api/institutions/0/waste-contracts', params),
           apiGet('/api/institutions/0/sorting-contracts', params),
@@ -180,10 +176,19 @@ const ContractsPage = () => {
           ...(dispRes.success && Array.isArray(dispRes.data) ? dispRes.data.map(c => ({ ...c, contract_type: 'DISPOSAL' })) : []),
         ];
 
-        // Sort by contract date start (newest first)
-        allContracts.sort((a, b) => new Date(b.contract_date_start) - new Date(a.contract_date_start));
+        // Deduplicare după id+type (disposal poate returna duplicate din JOIN cu sectoare)
+        const seen = new Set();
+        const uniqueContracts = allContracts.filter(c => {
+          const key = `${c.contract_type}-${c.id}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
-        setContracts(allContracts);
+        // Sort by contract date start (newest first)
+        uniqueContracts.sort((a, b) => new Date(b.contract_date_start) - new Date(a.contract_date_start));
+
+        setContracts(uniqueContracts);
       } else {
         // Single contract type
         const endpoint = ENDPOINT_MAP[selectedContractType];
@@ -192,14 +197,17 @@ const ContractsPage = () => {
         if (selectedSector) {
           params.sector_id = selectedSector;
         }
-        if (selectedStatus) {
-          params.is_active = selectedStatus === 'active';
-        }
-
         const response = await apiGet(endpoint, params);
 
         if (response.success) {
-          const contractsArray = Array.isArray(response.data) ? response.data : [];
+          let contractsArray = Array.isArray(response.data) ? response.data : [];
+          // Deduplicare după id (disposal poate returna duplicate din JOIN cu sectoare)
+          const seen = new Set();
+          contractsArray = contractsArray.filter(c => {
+            if (seen.has(c.id)) return false;
+            seen.add(c.id);
+            return true;
+          });
           setContracts(contractsArray);
         } else {
           setContracts([]);
@@ -211,7 +219,7 @@ const ContractsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedContractType, selectedSector, selectedStatus]);
+  }, [selectedContractType, selectedSector]);
 
   useEffect(() => {
     loadContracts();
@@ -229,8 +237,18 @@ const ContractsPage = () => {
       );
     }
 
+    if (selectedStatus) {
+      const isActive = selectedStatus === 'active';
+      filtered = filtered.filter(c => {
+        const endDate = c.effective_date_end || c.contract_date_end;
+        const expired = endDate ? new Date(endDate) < new Date() : false;
+        const contractIsActive = c.is_active && !expired;
+        return isActive ? contractIsActive : !contractIsActive;
+      });
+    }
+
     return filtered;
-  }, [contracts, searchQuery]);
+  }, [contracts, searchQuery, selectedStatus]);
 
   const sortedContracts = useMemo(() => {
     const sorted = [...filteredContracts];

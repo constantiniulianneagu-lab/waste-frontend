@@ -301,7 +301,8 @@ const ContractFilters = ({
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsExportOpen(!isExportOpen)}
-              disabled={exporting}
+              disabled={exporting || contractType === 'ALL'}
+              title={contractType === 'ALL' ? 'Selectează un tip de contract pentru a exporta' : 'Export'}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className={`w-4 h-4 ${exporting ? 'animate-bounce' : ''}`} />
