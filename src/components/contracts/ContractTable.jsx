@@ -167,7 +167,7 @@ const ContractTable = ({
                 Tarif
               </th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Cantitate / Valoare
+              Valoare / Cantitate 
               </th>
 
               {/* ASSOCIATE COLUMN - for TMB, AEROBIC, ANAEROBIC */}
