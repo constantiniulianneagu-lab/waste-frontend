@@ -639,6 +639,12 @@ const AmendmentCard = ({ amendment, index, onViewPDF }) => {
             <span className="font-medium text-gray-900 dark:text-white ml-1">{amendment.new_tariff_per_ton} LEI/t</span>
           </div>
         )}
+        {amendment.new_cec_tax_per_ton && (
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg px-2 py-1.5">
+            <span className="text-gray-500 dark:text-gray-400">Nou CEC:</span>
+            <span className="font-medium text-teal-600 dark:text-teal-400 ml-1">{parseFloat(amendment.new_cec_tax_per_ton).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} lei/t</span>
+          </div>
+        )}
         {(amendment.new_contracted_quantity_tons || amendment.new_estimated_quantity_tons) && (
           <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg px-2 py-1.5">
             <span className="text-gray-500 dark:text-gray-400">Nouă cant.:</span>
