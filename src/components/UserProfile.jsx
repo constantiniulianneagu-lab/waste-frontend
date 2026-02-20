@@ -395,9 +395,137 @@ const UserProfile = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           
           {/* INFO PERSONALE */}
+          <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                        rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                        shadow-sm dark:shadow-none overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700/50">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="w-8 h-8 rounded-[10px] bg-blue-500/10 dark:bg-blue-500/20 
+                              flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                Informații personale
+              </h3>
+              <button
+                onClick={handleEditPersonal}
+                className="p-2.5 text-blue-600 dark:text-blue-400 
+                         hover:bg-blue-500/10 dark:hover:bg-blue-500/20 
+                         rounded-[12px] transition-all duration-300
+                         active:scale-95"
+                title="Editează informații"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <InfoField label="Nume" value={userData?.last_name} />
+              <InfoField label="Prenume" value={userData?.first_name} />
+              <InfoField label="Email" value={userData?.email} />
+              <InfoField label="Telefon" value={userData?.phone} />
+              <InfoField label="Funcția" value={userData?.position} />
+              <InfoField label="Departament" value={userData?.department} />
+            </div>
+
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700/50">
+              <button
+                onClick={handleEditPassword}
+                className="w-full px-5 py-3 
+                         bg-gradient-to-r from-blue-600 to-blue-700 
+                         hover:from-blue-700 hover:to-blue-800 
+                         text-white text-sm font-bold rounded-[16px] 
+                         transition-all duration-300
+                         active:scale-98
+                         flex items-center justify-center gap-2
+                         shadow-lg shadow-blue-500/20"
+              >
+                <Lock className="w-4 h-4" />
+                Schimbă parola
+              </button>
+            </div>
+          </div>
+
+          {/* INFO ORGANIZAȚIE */}
+          {institutionData && (
+            <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl 
+                          rounded-[28px] border border-gray-200 dark:border-gray-700/50 
+                          shadow-sm dark:shadow-none overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700/50">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-[10px] bg-emerald-500/10 dark:bg-emerald-500/20 
+                                flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  Informații organizație
+                </h3>
+              </div>
+              
+              <div className="p-6 space-y-5">
+                <div>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Denumire
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white leading-relaxed">
+                    {institutionData.name}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Adresă
+                  </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 leading-relaxed">
+                    <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+                    {institutionData.address || "-"}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Telefon
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {institutionData.contact_phone || "-"}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Email
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {institutionData.contact_email || "-"}
+                    </p>
+                  </div>
+                </div>
+                
+                {institutionData.website && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Website
+                    </p>
+                    <a 
+                      href={institutionData.website.startsWith('http') ? institutionData.website : `https://${institutionData.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 dark:text-blue-400 
+                               hover:text-blue-700 dark:hover:text-blue-300 
+                               hover:underline font-medium
+                               flex items-center gap-2 transition-colors"
+                    >
+                      <Globe className="w-4 h-4" />
+                      {institutionData.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ✅ CONTRACTE ACTIVE - ProfileContracts */}
+
+        {/* ✅ CONTRACTE ACTIVE */}
         {currentUser?.role !== 'REGULATOR_VIEWER' && (
           <ProfileContracts
             operators={operators}
@@ -405,8 +533,9 @@ const UserProfile = () => {
             userRole={currentUser?.role}
           />
         )}
+      </div>
 
-            {/* SIDEBAR EDITARE - Modern glassmorphism */}
+      {/* SIDEBAR EDITARE - Modern glassmorphism */}
       {sidebarMode && (
         <>
           <div 
