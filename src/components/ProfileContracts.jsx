@@ -76,12 +76,23 @@ const isContractActive = (c) => {
 // Flatten operators → individual contracts with type + operator info
 const flattenContracts = (operators) => {
   const result = [];
+  const seen = new Set();
   for (const op of (operators || [])) {
-    const type = op.operator_type; // WASTE_COLLECTOR, SORTING_OPERATOR, TMB_OPERATOR, DISPOSAL_OPERATOR
+    const type = op.operator_type;
     for (const c of (op.contracts || [])) {
+      // Deduplicate by contract_id + type (TMB returns one row per contract already)
+      const key = `${type}-${c.contract_id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      
+      // For TMB, operator_name comes from primary_operator field on the contract
+      const operatorName = type === 'TMB_OPERATOR'
+        ? [c.primary_operator, c.secondary_operator].filter(Boolean).join(' + ')
+        : op.name;
+      
       result.push({
         ...c,
-        operator_name: op.name,
+        operator_name: operatorName,
         operator_id: op.id,
         contract_type: type,
       });
