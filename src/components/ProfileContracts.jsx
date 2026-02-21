@@ -161,8 +161,10 @@ const exportPDF = (contracts, filename, tabLabel) => {
   const pageH = doc.internal.pageSize.height;
 
   // Font cu suport diacritice românești
+  // Înregistrăm și varianta 'bold' din același fișier - evită fallback la Helvetica în headStyles
   doc.addFileToVFS('DejaVuSans.ttf', DejaVuSans);
   doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+  doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'bold');
   doc.setFont('DejaVuSans', 'normal');
 
   // ── Header ──
