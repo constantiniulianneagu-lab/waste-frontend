@@ -528,8 +528,6 @@ const UserProfile = () => {
         {/* ✅ CONTRACTE ACTIVE */}
         {currentUser?.role !== 'REGULATOR_VIEWER' && (
           <ProfileContracts
-            operators={operators}
-            loading={operatorsLoading}
             userRole={currentUser?.role}
           />
         )}
