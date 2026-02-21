@@ -287,7 +287,7 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div>
         <DashboardHeader title="Profil Utilizator" />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
@@ -306,7 +306,7 @@ const UserProfile = () => {
   // ========================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div>
       <DashboardHeader title="Profil Utilizator" />
 
       <div className="px-6 py-6 max-w-[1600px] mx-auto">
