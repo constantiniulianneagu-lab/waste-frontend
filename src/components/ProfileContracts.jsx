@@ -184,6 +184,11 @@ const exportPDF = (contracts, filename, tabLabel) => {
   doc.setTextColor(0, 0, 0);
 
   // ── Tabel ──
+  // Lățimi coloane adaptate după câmpurile disponibile
+  // Totală disponibilă: 297 - 28 margini = 269mm
+  // Nr(22) Tip(22) TipAtr(44) Operator(40) Sector(14) DataÎnc(23) DataSf(23) Tarif(23) Cant(23) Asociat(35) = 269
+  const colWidths = { 0:22, 1:22, 2:44, 3:40, 4:14, 5:23, 6:23, 7:23, 8:23, 9:35 };
+
   autoTable(doc, {
     startY: 30,
     head: [Object.keys(rows[0])],
@@ -193,6 +198,8 @@ const exportPDF = (contracts, filename, tabLabel) => {
       fontSize: 7.5,
       cellPadding: 2.5,
       textColor: [30, 30, 30],
+      overflow: 'linebreak',
+      halign: 'left',
     },
     headStyles: {
       font: 'DejaVuSans',
@@ -200,10 +207,12 @@ const exportPDF = (contracts, filename, tabLabel) => {
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 7.5,
+      halign: 'left',
     },
     alternateRowStyles: {
       fillColor: [245, 250, 249],
     },
+    columnStyles: Object.fromEntries(Object.entries(colWidths).map(([k,w]) => [k, { cellWidth: w }])),
     margin: { left: 14, right: 14 },
   });
 
@@ -217,7 +226,7 @@ const exportPDF = (contracts, filename, tabLabel) => {
 
     // Stânga: SAMD
     doc.text(
-      'SAMD - Sistem Avansat de Management al Deșeurilor din Municipiul București',
+      'SAMD - Sistem Avansat de Monitorizare a Deșeurilor din Municipiul București',
       14,
       pageH - 8
     );
