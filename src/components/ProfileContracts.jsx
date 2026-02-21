@@ -186,10 +186,9 @@ const exportPDF = (contracts, filename, tabLabel) => {
   doc.setTextColor(0, 0, 0);
 
   // ── Tabel ──
-  // Lățimi coloane adaptate după câmpurile disponibile
-  // Totală disponibilă: 297 - 28 margini = 269mm
-  // Nr(22) Tip(22) TipAtr(44) Operator(40) Sector(14) DataÎnc(23) DataSf(23) Tarif(23) Cant(23) Asociat(35) = 269
-  const colWidths = { 0:22, 1:22, 2:44, 3:40, 4:14, 5:23, 6:23, 7:23, 8:23, 9:35 };
+  // Lățimi coloane calibrate ca headerele să încapă pe un rând (A4 landscape 297-28=269mm)
+  // Nr(24) Tip(20) TipAtr(40) Operator(38) Sector(14) DataÎnc(24) DataSf(24) Tarif(26) Cant(30) Asociat(29) = 269
+  const colWidths = { 0:24, 1:20, 2:40, 3:38, 4:14, 5:24, 6:24, 7:26, 8:30, 9:29 };
 
   autoTable(doc, {
     startY: 30,
