@@ -459,7 +459,7 @@ const ProfileContracts = ({ userRole }) => {
 
   // ── Fetch (identic cu ContractsPage) ──
   useEffect(() => {
-    if (userRole === 'REGULATOR_VIEWER') return;
+
     const load = async () => {
       setLoading(true);
       try {
@@ -549,7 +549,7 @@ const ProfileContracts = ({ userRole }) => {
     navigate(`/contracts?type=${TYPE_TO_ROUTE[contract.contract_type] || 'ALL'}`);
   };
 
-  if (userRole === 'REGULATOR_VIEWER') return null;
+  // Toți utilizatorii autentificați văd contractele (REGULATOR_VIEWER inclusiv)
 
   return (
     <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] border border-gray-200 dark:border-gray-700/50 shadow-sm dark:shadow-none overflow-hidden">

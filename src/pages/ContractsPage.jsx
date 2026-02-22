@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '../AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -95,9 +96,11 @@ const ContractsPage = () => {
   const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  const canCreateData = true;
-  const canEditData = true;
-  const canDeleteData = true;
+  const { user } = useAuth();
+  const isPlatformAdmin = user?.role === 'PLATFORM_ADMIN';
+  const canCreateData = isPlatformAdmin;
+  const canEditData   = isPlatformAdmin;
+  const canDeleteData = isPlatformAdmin;
 
   useEffect(() => {
     loadReferenceData();
