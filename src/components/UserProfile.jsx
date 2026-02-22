@@ -309,7 +309,7 @@ const UserProfile = () => {
     <div>
       <DashboardHeader title="Profil Utilizator" />
 
-      <div className="px-6 py-6 max-w-[1600px] mx-auto">
+      <div className="px-6 py-6">
         
         {/* HEADER CARD - Premium Samsung style */}
         <div className="group relative mb-6">
@@ -525,12 +525,10 @@ const UserProfile = () => {
         </div>
 
 
-        {/* ✅ CONTRACTE ACTIVE */}
-        {currentUser?.role !== 'REGULATOR_VIEWER' && (
-          <ProfileContracts
-            userRole={currentUser?.role}
-          />
-        )}
+        {/* ✅ CONTRACTE ACTIVE - vizibil pentru toți utilizatorii */}
+        <ProfileContracts
+          userRole={currentUser?.role}
+        />
       </div>
 
       {/* SIDEBAR EDITARE - Modern glassmorphism */}
