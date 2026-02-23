@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 
 import { getLandfillStats } from "../../services/dashboardLandfillService.js";
+import { exportLandfillPDF } from "../../utils/exportLandfillPDF.js";
 import { getTodayDate, getYearStart } from "../../utils/dashboardUtils.js";
 
 import DashboardHeader from "./DashboardHeader.jsx";
@@ -85,41 +86,7 @@ const DashboardLandfill = () => {
   const handleExport = async () => {
     try {
       setExporting(true);
-      
-      // Build query params from current filters
-      const params = new URLSearchParams();
-      if (filters.year) params.append('year', filters.year);
-      if (filters.from) params.append('from', filters.from);
-      if (filters.to) params.append('to', filters.to);
-      if (filters.sector_id) params.append('sector_id', filters.sector_id);
-
-      const API_URL = 'https://waste-backend-3u9c.onrender.com';
-      const token = localStorage.getItem('wasteAccessToken');
-      
-      const response = await fetch(
-        `${API_URL}/api/dashboard/landfill/export?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.status}`);
-      }
-
-      // Download PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `raport-depozitare-${filters.year || 'current'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
+      exportLandfillPDF(data, filters);
     } catch (error) {
       console.error('Export error:', error);
       alert('Eroare la generarea raportului PDF. Vă rugăm încercați din nou.');
