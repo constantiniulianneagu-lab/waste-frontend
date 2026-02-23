@@ -471,7 +471,13 @@ const drawBarChartSectors = (doc, sectorData, yStart, boxH) => {
 const drawOperatorsTable = (doc, operators, yStart) => {
   if (!operators || operators.length === 0) return yStart;
 
-  const rows = operators.map(op => {
+  const sortedOperators = [...operators].sort((a, b) => {
+    const sA = Array.isArray(a.sector_numbers) && a.sector_numbers.length ? Number(a.sector_numbers[0]) : 99;
+    const sB = Array.isArray(b.sector_numbers) && b.sector_numbers.length ? Number(b.sector_numbers[0]) : 99;
+    return sA - sB;
+  });
+
+  const rows = sortedOperators.map(op => {
     const sectorNum = Array.isArray(op.sector_numbers) && op.sector_numbers.length
       ? op.sector_numbers[0] : '-';
     return [
@@ -483,8 +489,8 @@ const drawOperatorsTable = (doc, operators, yStart) => {
   });
 
   // Totals row
-  const totalTmb = operators.reduce((s, op) => s + (parseFloat(op.tmb_total_tons) || 0), 0);
-  const totalLand = operators.reduce((s, op) => s + (parseFloat(op.landfill_total_tons) || 0), 0);
+  const totalTmb = sortedOperators.reduce((s, op) => s + (parseFloat(op.tmb_total_tons) || 0), 0);
+  const totalLand = sortedOperators.reduce((s, op) => s + (parseFloat(op.landfill_total_tons) || 0), 0);
   rows.push(['TOTAL', '', `${fmtRO(totalTmb)} t\n100%`, `${fmtRO(totalLand)} t\n100%`]);
 
   autoTable(doc, {
@@ -531,6 +537,67 @@ const drawFooter = (doc) => {
   }
 };
 
+// ---- TABEL DISTRIBUTIE PE SECTOARE ----
+const drawSectorTable = (doc, sectorData, yStart) => {
+  if (!sectorData || sectorData.length === 0) return yStart;
+
+  const totalTmb  = sectorData.reduce((s, d) => s + (parseFloat(d.tmb_tons) || 0), 0);
+  const totalLand = sectorData.reduce((s, d) => s + (parseFloat(d.landfill_tons) || 0), 0);
+  const totalAll  = totalTmb + totalLand;
+
+  const rows = sectorData.map(d => {
+    const tmb  = parseFloat(d.tmb_tons)      || 0;
+    const land = parseFloat(d.landfill_tons) || 0;
+    const total = tmb + land;
+    return [
+      (d.sector_name || d.name || '-').replace('Sectorul ', 'Sectorul '),
+      `${fmtRO(tmb)} t`,
+      total > 0 ? `${((tmb / total) * 100).toFixed(1)}%` : '0%',
+      `${fmtRO(land)} t`,
+      total > 0 ? `${((land / total) * 100).toFixed(1)}%` : '0%',
+      `${fmtRO(total)} t`,
+    ];
+  });
+
+  rows.push([
+    'TOTAL',
+    `${fmtRO(totalTmb)} t`,
+    totalAll > 0 ? `${((totalTmb / totalAll) * 100).toFixed(1)}%` : '0%',
+    `${fmtRO(totalLand)} t`,
+    totalAll > 0 ? `${((totalLand / totalAll) * 100).toFixed(1)}%` : '0%',
+    `${fmtRO(totalAll)} t`,
+  ]);
+
+  autoTable(doc, {
+    startY: yStart,
+    head: [['Sector', 'Trimis la TMB', '%', 'Trimis la Depozitare', '%', 'Total']],
+    body: rows,
+    styles: { font: 'DejaVuSans', fontSize: 7.5, cellPadding: 2, halign: 'center', valign: 'middle' },
+    headStyles: { font: 'DejaVuSans', fillColor: PRIMARY_LIGHT, textColor: PRIMARY_TEXT, fontStyle: 'bold', halign: 'center', lineWidth: 0 },
+    alternateRowStyles: { fillColor: [248, 250, 255] },
+    columnStyles: {
+      0: { halign: 'left',   cellWidth: 38 },
+      1: { halign: 'center', cellWidth: 34, textColor: [...CYAN] },
+      2: { halign: 'center', cellWidth: 18, textColor: [...CYAN] },
+      3: { halign: 'center', cellWidth: 34, textColor: [...RED] },
+      4: { halign: 'center', cellWidth: 18, textColor: [...RED] },
+      5: { halign: 'center', cellWidth: 40, fontStyle: 'bold' },
+    },
+    margin: { left: 14, right: 14 },
+    tableLineColor: [180, 205, 245],
+    tableLineWidth: 0.2,
+    didParseCell: (h) => {
+      if (h.row.index === rows.length - 1) {
+        h.cell.styles.fontStyle = 'bold';
+        h.cell.styles.fillColor = [219, 234, 254];
+        h.cell.styles.textColor = [...PRIMARY_TEXT];
+      }
+    },
+  });
+
+  return doc.lastAutoTable?.finalY || yStart;
+};
+
 // ==========================================
 // MAIN EXPORT
 // ==========================================
@@ -572,6 +639,13 @@ export const exportTmbPDF = (data, filters) => {
     drawOperatorsTable(doc, operators, y);
 
   } else {
+    // Tabel distributie pe sectoare sub cardurile output - PAGINA 1
+    y = drawSectionTitle(doc,
+      'Gestionarea pe sectoare a de\u0219eurilor municipale amestecate',
+      'Cod de\u0219eu: 20 03 01', y
+    );
+    y = drawSectorTable(doc, sectorData, y) + 5;
+
     // =====================
     // PAGINA 2 - BUCURESTI
     // =====================
