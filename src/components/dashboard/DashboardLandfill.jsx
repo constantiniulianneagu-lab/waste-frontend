@@ -25,7 +25,6 @@ const DashboardLandfill = () => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationCount] = useState(3);
   const [exporting, setExporting] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -98,8 +97,7 @@ const DashboardLandfill = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader 
-          notificationCount={notificationCount}
+        <DashboardHeader
           onSearchChange={handleSearchChange}
         />
         <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
@@ -117,8 +115,7 @@ const DashboardLandfill = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader 
-          notificationCount={notificationCount}
+        <DashboardHeader
           onSearchChange={handleSearchChange}
         />
         <div className="p-6">
@@ -157,8 +154,7 @@ const DashboardLandfill = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
-      <DashboardHeader 
-        notificationCount={notificationCount}
+      <DashboardHeader
         onSearchChange={handleSearchChange}
         onExport={handleExport}
         exporting={exporting}

@@ -478,7 +478,7 @@ const ContractsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* FIX 5: Using DashboardHeader for consistency */}
-      <DashboardHeader title="Contracte" />
+      <DashboardHeader title="Contracte" onSearchChange={setSearchQuery} />
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">

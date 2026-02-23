@@ -49,7 +49,6 @@ const DashboardTmb = () => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationCount] = useState(3);
   const [chartType, setChartType] = useState('bar'); // Pentru "Evoluția cantităților"
   const [chartType2, setChartType2] = useState('bar'); // Pentru "Distribuția pe sectoare"
   const [exporting, setExporting] = useState(false);
@@ -190,7 +189,6 @@ const DashboardTmb = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <DashboardHeader
-          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratarea mecano-biologică"
         />
@@ -214,7 +212,6 @@ const DashboardTmb = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <DashboardHeader
-          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratarea mecano-biologică"
         />
@@ -438,7 +435,6 @@ const DashboardTmb = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <DashboardHeader
-        notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
         onExport={handleExport}
         exporting={exporting}
