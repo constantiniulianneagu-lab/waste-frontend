@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, Factory, Trash2, Package, Activity } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
+import { exportTmbPDF } from "../../utils/exportTmbPDF.js";
 
 import DashboardHeader from "./DashboardHeader.jsx";
 import DashboardFilters from "./DashboardFilters.jsx";
@@ -169,47 +170,13 @@ const DashboardTmb = () => {
     console.log("🔍 Search query:", query);
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
       setExporting(true);
-      
-      // Build query params from current filters
-      const params = new URLSearchParams();
-      if (filters.year) params.append('year', filters.year);
-      if (filters.from) params.append('start_date', filters.from);
-      if (filters.to) params.append('end_date', filters.to);
-      if (filters.sector_id) params.append('sector_id', filters.sector_id);
-
-      const API_URL = 'https://waste-backend-3u9c.onrender.com';
-      const token = localStorage.getItem('wasteAccessToken');
-      
-      const response = await fetch(
-        `${API_URL}/api/dashboard/tmb/export?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.status}`);
-      }
-
-      // Download PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `raport-tmb-${filters.year || 'current'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
+      exportTmbPDF(data, filters);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Eroare la generarea raportului PDF. Vă rugăm încercați din nou.');
+      alert('Eroare la generarea raportului PDF.');
     } finally {
       setExporting(false);
     }
