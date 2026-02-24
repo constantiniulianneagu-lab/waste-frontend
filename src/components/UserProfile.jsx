@@ -39,10 +39,12 @@ import {
 } from "lucide-react";
 import DashboardHeader from "./dashboard/DashboardHeader";
 import ProfileContracts from "./ProfileContracts";
+import { useToast } from '../contexts/ToastContext';
 
 const UserProfile = () => {
   const { user: currentUser } = useAuth();
   
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [institutionData, setInstitutionData] = useState(null);
@@ -199,13 +201,13 @@ const UserProfile = () => {
       if (response.success) {
         await loadUserProfile();
         handleCloseSidebar();
-        alert("Profil actualizat cu succes!");
+        toast.success("Profil actualizat", "Datele tale au fost salvate cu succes.");
       } else {
-        alert(response.message || "Eroare la actualizare");
+        toast.error("Eroare la actualizare", response.message || "A apărut o eroare.");
       }
     } catch (err) {
       console.error("Error updating profile:", err);
-      alert("Eroare la salvare");
+      toast.error("Eroare la salvare", "A apărut o eroare neașteptată.");
     } finally {
       setSaving(false);
     }
@@ -223,13 +225,13 @@ const UserProfile = () => {
 
       if (response.success) {
         handleCloseSidebar();
-        alert("Parola schimbată cu succes!");
+        toast.success("Parolă schimbată", "Parola ta a fost actualizată cu succes.");
       } else {
         setErrors({ currentPassword: response.message });
       }
     } catch (err) {
       console.error("Error updating password:", err);
-      alert("Eroare la schimbarea parolei");
+      toast.error("Eroare parolă", "A apărut o eroare la schimbarea parolei.");
     } finally {
       setSaving(false);
     }

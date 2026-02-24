@@ -18,6 +18,7 @@ import InstitutionFilters from '../components/institutions/InstitutionFilters';
 import InstitutionTable from '../components/institutions/InstitutionTable';
 import InstitutionSidebar from '../components/institutions/InstitutionSidebar';
 import InstitutionViewModal from '../components/institutions/InstitutionViewModal';
+import { useToast } from '../contexts/ToastContext';
 
 // Institution types with colors - ORDERED AS REQUESTED
 const INSTITUTION_TYPES = {
@@ -61,7 +62,7 @@ const DROPDOWN_ORDER = [
 const showToast = (message, type = 'success') => {
   if (type === 'error') {
     console.error(message);
-    alert(message);
+    toast.error("Eroare", message);
   } else {
     console.log(message);
   }
@@ -69,6 +70,7 @@ const showToast = (message, type = 'success') => {
 
 const InstitutionsPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const permissions = usePermissions();
   const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
   const navigate = useNavigate();

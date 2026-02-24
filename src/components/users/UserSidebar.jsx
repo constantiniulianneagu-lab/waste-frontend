@@ -8,6 +8,7 @@
 import { X, Eye, EyeOff, Save, User } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { INSTITUTION_TYPES } from '../../constants/institutionTypes';
+import { useToast } from '../../contexts/ToastContext';
 
 const UserSidebar = ({
   mode = 'create',
@@ -23,6 +24,7 @@ const UserSidebar = ({
   roleTypes = {},
   roleOrder = [],
 }) => {
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   const isEditMode = mode === 'edit';
@@ -106,7 +108,7 @@ const UserSidebar = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.institutionId) {
-      alert('Vă rugăm să selectați o instituție!');
+      toast.warning('Câmp obligatoriu', 'Vă rugăm să selectați o instituție.');
       return;
     }
     onSubmit(formData);

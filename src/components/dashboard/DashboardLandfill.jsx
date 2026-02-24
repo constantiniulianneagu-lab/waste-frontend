@@ -19,12 +19,15 @@ import MonthlyEvolutionChart from "./MonthlyEvolutionChart.jsx";
 import SectorStatsTable from "./SectorStatsTable.jsx";
 import RecentTicketsTable from "./RecentTicketsTable.jsx";
 import TopOperatorsTable from "./TopOperatorsTable.jsx";
+import { useToast } from '../../contexts/ToastContext';
 
 const DashboardLandfill = () => {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notificationCount] = useState(3);
   const [exporting, setExporting] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -88,7 +91,7 @@ const DashboardLandfill = () => {
       exportLandfillPDF(data, filters);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Eroare la generarea raportului PDF. Vă rugăm încercați din nou.');
+      toast.error('Eroare export PDF', 'Vă rugăm încercați din nou.');
     } finally {
       setExporting(false);
     }
@@ -97,7 +100,8 @@ const DashboardLandfill = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader
+        <DashboardHeader 
+          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
         />
         <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
@@ -115,7 +119,8 @@ const DashboardLandfill = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader
+        <DashboardHeader 
+          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
         />
         <div className="p-6">
@@ -154,7 +159,8 @@ const DashboardLandfill = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       
-      <DashboardHeader
+      <DashboardHeader 
+        notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
         onExport={handleExport}
         exporting={exporting}

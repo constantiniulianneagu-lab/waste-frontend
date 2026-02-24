@@ -24,6 +24,7 @@ import { exportTmbPDF } from "../../utils/exportTmbPDF.js";
 import DashboardHeader from "./DashboardHeader.jsx";
 import DashboardFilters from "./DashboardFilters.jsx";
 
+import { useToast } from '../../contexts/ToastContext';
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -44,11 +45,13 @@ const ProgressBar = ({ value, gradient }) => (
 );
 
 const DashboardTmb = () => {
+  const toast = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notificationCount] = useState(3);
   const [chartType, setChartType] = useState('bar'); // Pentru "Evoluția cantităților"
   const [chartType2, setChartType2] = useState('bar'); // Pentru "Distribuția pe sectoare"
   const [exporting, setExporting] = useState(false);
@@ -175,7 +178,7 @@ const DashboardTmb = () => {
       exportTmbPDF(data, filters);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Eroare la generarea raportului PDF.');
+      toast.error('Eroare export PDF', 'Vă rugăm încercați din nou.');
     } finally {
       setExporting(false);
     }
@@ -189,6 +192,7 @@ const DashboardTmb = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <DashboardHeader
+          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratarea mecano-biologică"
         />
@@ -212,6 +216,7 @@ const DashboardTmb = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <DashboardHeader
+          notificationCount={notificationCount}
           onSearchChange={handleSearchChange}
           title="Dashboard Tratarea mecano-biologică"
         />
@@ -435,6 +440,7 @@ const DashboardTmb = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <DashboardHeader
+        notificationCount={notificationCount}
         onSearchChange={handleSearchChange}
         onExport={handleExport}
         exporting={exporting}

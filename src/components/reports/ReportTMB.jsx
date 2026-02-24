@@ -26,8 +26,10 @@ import {
   getAuxiliaryData 
 } from '../../services/reportsService';
 import { handleExport } from '../../services/exportService';
+import { useToast } from '../../contexts/ToastContext';
 
 const ReportTMB = () => {
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -286,11 +288,11 @@ const ReportTMB = () => {
       if (response.success) {
         await fetchReports();
       } else {
-        alert(response.message || 'Eroare la ștergerea tichetului');
+        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
       console.error('Error deleting ticket:', err);
-      alert('A apărut o eroare la ștergerea tichetului');
+      toast.error('Eroare la ștergere', 'A apărut o eroare neașteptată.');
     }
   };
 
@@ -364,13 +366,13 @@ const ReportTMB = () => {
       const result = await handleExport(format, allTickets, summaryData, filters, activeTab);
 
       if (result.success) {
-        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
+        toast.success(`Export ${format.toUpperCase()} realizat`, `${allTickets.length} înregistrări exportate cu succes.`);
       } else {
-        alert(`❌ Eroare la export: ${result.error}`);
+        toast.error('Eroare la export', result.error);
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert(`❌ Eroare la export: ${error.message}`);
+      toast.error('Eroare la export', error.message);
     } finally {
       setExporting(false);
     }

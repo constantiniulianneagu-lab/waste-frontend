@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
 
 const RejectedSidebar = ({ 
   isOpen, 
@@ -21,6 +22,7 @@ const RejectedSidebar = ({
   onClose, 
   onSuccess 
 }) => {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -107,7 +109,7 @@ const RejectedSidebar = ({
       };
 
       console.log('Submit rejected:', submitData);
-      alert('Funcția va fi implementată cu API real');
+      toast.info('În dezvoltare', 'Această funcție va fi disponibilă în curând.');
       onSuccess();
     } catch (err) {
       console.error('Submit error:', err);

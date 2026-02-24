@@ -15,6 +15,7 @@ import {
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
+import { useToast } from '../../contexts/ToastContext';
 
 const AMENDMENT_TYPES = [
   { value: 'EXTENSION', label: 'Modificare perioadă (Prelungire)' },
@@ -154,6 +155,7 @@ const ContractSidebar = ({
   sectors = [],
 }) => {
   // Form state
+  const toast = useToast();
   const [formData, setFormData] = useState({
     attribution_type: '', // NEW: first field
     institution_id: '',
@@ -712,7 +714,7 @@ const ContractSidebar = ({
 
   const handleSaveAmendment = async () => {
     if (!amendmentForm.amendment_number || !amendmentForm.amendment_date) {
-      alert('Numărul și data sunt obligatorii');
+      toast.warning('Câmpuri obligatorii', 'Numărul și data actului adițional sunt obligatorii.');
       return;
     }
     
@@ -764,17 +766,17 @@ const ContractSidebar = ({
             ? 'new_estimated_quantity_tons' 
             : 'new_contracted_quantity_tons';
           const calculatedQty = response.data[qtyField];
-          alert(`✅ Act adițional salvat cu succes!\n\n💡 Cantitate calculată automat: ${calculatedQty} tone\n(proporțional cu perioada de prelungire)`);
+          toast.success('Act adițional salvat', `Cantitate calculată automat: ${calculatedQty} tone (proporțional cu perioada de prelungire).`);
         }
         
         setAmendmentForm(null);
         loadAmendments();
       } else {
-        alert(response.message || 'Eroare la salvare');
+        toast.error('Eroare la salvare', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
       console.error('Save amendment error:', err);
-      alert('Eroare la salvare');
+      toast.error('Eroare la salvare', 'A apărut o eroare neașteptată.');
     } finally {
       setSavingAmendment(false);
     }
@@ -806,7 +808,7 @@ const ContractSidebar = ({
       if (response.success) {
         loadAmendments();
       } else {
-        alert(response.message || 'Eroare la ștergere');
+        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
       console.error('Delete amendment error:', err);

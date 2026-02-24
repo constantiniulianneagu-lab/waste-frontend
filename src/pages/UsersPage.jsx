@@ -1,114 +1,139 @@
-// src/pages/InstitutionsPage.jsx
+// src/pages/UsersPage.jsx
 /**
  * ============================================================================
- * INSTITUTIONS PAGE - MODERN REDESIGN v2
+ * USERS PAGE - MODERN REDESIGN
  * ============================================================================
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { Users as UsersIcon } from 'lucide-react';
 
-import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { userService } from '../userService';
+import { apiGet } from '../api/apiClient';
 
 import DashboardHeader from '../components/dashboard/DashboardHeader';
-import InstitutionFilters from '../components/institutions/InstitutionFilters';
-import InstitutionTable from '../components/institutions/InstitutionTable';
-import InstitutionSidebar from '../components/institutions/InstitutionSidebar';
-import InstitutionViewModal from '../components/institutions/InstitutionViewModal';
+import UserFilters from '../components/users/UserFilters';
+import UserTable from '../components/users/UserTable';
+import UserSidebar from '../components/users/UserSidebar';
+import UserViewModal from '../components/users/UserViewModal';
+import { useToast } from '../contexts/ToastContext';
 
-// Institution types with colors - ORDERED AS REQUESTED
-const INSTITUTION_TYPES = {
-    // Main types from database
-    ASSOCIATION: { label: 'Asociație', color: 'slate' },
-    MUNICIPALITY: { label: 'U.A.T.', color: 'gray' },
-    WASTE_COLLECTOR: { label: 'Colectare', color: 'teal' },
-    SORTING_OPERATOR: { label: 'Sortare', color: 'pink' },
-    TMB_OPERATOR: { label: 'Tratare mecano-biologică', color: 'blue' },
-    AEROBIC_OPERATOR: { label: 'Tratare aerobă', color: 'cyan' },
-    ANAEROBIC_OPERATOR: { label: 'Tratare anaerobă', color: 'indigo' },
-    DISPOSAL_CLIENT: { label: 'Depozitare', color: 'orange' },
-    RECYCLING_CLIENT: { label: 'Reciclare', color: 'purple' },
-    RECOVERY_CLIENT: { label: 'Valorificare', color: 'yellow' },
-    REGULATOR: { label: 'Autoritate publică', color: 'stone' },
-    
-    // Legacy/alternative types (map to same labels for display)
-    UAT: { label: 'U.A.T.', color: 'gray' },
-    PUBLIC_AUTHORITY: { label: 'Autoritate publică', color: 'stone' },
-    LANDFILL: { label: 'Depozitare', color: 'orange' },
-    RECYCLING_OPERATOR: { label: 'Reciclare', color: 'purple' },
-    RECOVERY_OPERATOR: { label: 'Valorificare', color: 'yellow' },
-  };
+// Role definitions
+const ROLE_TYPES = {
+  PLATFORM_ADMIN: { label: 'Administrator Platformă', color: 'red' },
+  ADMIN_INSTITUTION: { label: 'Administrator Instituție', color: 'blue' },
+  EDITOR_INSTITUTION: { label: 'Editor Instituție', color: 'emerald' },
+  REGULATOR_VIEWER: { label: 'Autoritate publică', color: 'purple' },
+};
 
-// Dropdown order
-const DROPDOWN_ORDER = [
-    'ASSOCIATION',
-    'MUNICIPALITY',
-    'WASTE_COLLECTOR',
-    'SORTING_OPERATOR',
-    'TMB_OPERATOR',
-    'AEROBIC_OPERATOR',
-    'ANAEROBIC_OPERATOR',
-    'DISPOSAL_CLIENT',
-    'RECYCLING_CLIENT',
-    'RECOVERY_CLIENT',
-    'REGULATOR',
-  ];
+const ROLE_ORDER = [
+  'PLATFORM_ADMIN',
+  'ADMIN_INSTITUTION',
+  'EDITOR_INSTITUTION',
+  'REGULATOR_VIEWER',
+];
 
 // Toast notification helper
 const showToast = (message, type = 'success') => {
   if (type === 'error') {
     console.error(message);
-    alert(message);
+    toast.error("Eroare", message);
   } else {
     console.log(message);
   }
 };
 
-const InstitutionsPage = () => {
-  const { user } = useAuth();
+const UsersPage = () => {
+  const { user: currentUser } = useAuth();
+  const toast = useToast();
   const permissions = usePermissions();
-  const { canCreateData, canEditData, canDeleteData, hasAccess } = permissions;
-  const navigate = useNavigate();
+  const { canCreateData, canEditData, canDeleteData, hasAccess, isPlatformAdmin, isInstitutionAdmin } = permissions;
+
+  const myInstitutionId = currentUser?.institution?.id || null;
 
   // State
+  const [users, setUsers] = useState([]);
   const [institutions, setInstitutions] = useState([]);
+  const [sectors, setSectors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingInstitutions, setLoadingInstitutions] = useState(true);
 
   // Filters
-  const [selectedType, setSelectedType] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedSector, setSelectedSector] = useState('');
-
-  // Reference data
-  const [sectors, setSectors] = useState([]);
+  const [selectedInstitution, setSelectedInstitution] = useState('');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('last_name');
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // Sidebar (add/edit/delete)
+  // Sidebar (add/edit)
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMode, setSidebarMode] = useState(null);
-  const [selectedInstitution, setSelectedInstitution] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [formError, setFormError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    position: '',
+    department: '',
+    role: 'EDITOR_INSTITUTION',
+    isActive: true,
+    institutionId: isInstitutionAdmin ? myInstitutionId : null,
+  });
 
   // View Modal
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [viewInstitution, setViewInstitution] = useState(null);
+  const [viewUser, setViewUser] = useState(null);
+
+  // Delete confirmation
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // Load data
   useEffect(() => {
+    loadUsers();
     loadInstitutions();
     loadSectors();
   }, []);
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await userService.getAllUsers({ limit: 500 });
+      if (response.success) {
+        setUsers(response.data.users || []);
+      }
+    } catch (err) {
+      console.error('Error loading users:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadInstitutions = async () => {
+    setLoadingInstitutions(true);
+    try {
+      const response = await apiGet('/api/institutions', { limit: 1000 });
+      if (response.success) {
+        setInstitutions(response.data?.institutions || []);
+      }
+    } catch (err) {
+      console.error('Error loading institutions:', err);
+      setInstitutions([]);
+    } finally {
+      setLoadingInstitutions(false);
+    }
+  };
 
   const loadSectors = async () => {
     try {
@@ -121,104 +146,85 @@ const InstitutionsPage = () => {
     }
   };
 
-  const loadInstitutions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiGet('/api/institutions', { limit: 1000 });
-      if (response.success) {
-        const institutionsArray = Array.isArray(response.data?.institutions)
-          ? response.data.institutions
-          : [];
-        setInstitutions(institutionsArray);
-      } else {
-        setInstitutions([]);
-      }
-    } catch (err) {
-      console.error('Error loading institutions:', err);
-      setInstitutions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Permissions check
+  const canManageTargetUser = (target) => {
+    if (isPlatformAdmin) return true;
+    if (!isInstitutionAdmin) return false;
+    const sameInstitution = Number(target?.institution?.id) === Number(myInstitutionId);
+    const isEditor = target?.role === 'EDITOR_INSTITUTION';
+    return sameInstitution && isEditor;
+  };
 
   // Filtering
-const filteredInstitutions = useMemo(() => {
-  return institutions.filter(inst => {
-    // Search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch = 
-        inst.name?.toLowerCase().includes(query) ||
-        inst.short_name?.toLowerCase().includes(query) ||
-        inst.email?.toLowerCase().includes(query) ||
-        inst.contact_email?.toLowerCase().includes(query) ||
-        inst.phone?.toLowerCase().includes(query) ||
-        inst.fiscal_code?.toLowerCase().includes(query) ||
-        inst.representative_name?.toLowerCase().includes(query);
-      if (!matchesSearch) return false;
-    }
-
-    // Type filter - handle equivalent types
-    if (selectedType) {
-      const typeEquivalents = {
-        'MUNICIPALITY': ['MUNICIPALITY', 'UAT'],
-        'UAT': ['MUNICIPALITY', 'UAT'],
-        'DISPOSAL_CLIENT': ['DISPOSAL_CLIENT', 'LANDFILL'],
-        'LANDFILL': ['DISPOSAL_CLIENT', 'LANDFILL'],
-        'RECYCLING_CLIENT': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
-        'RECYCLING_OPERATOR': ['RECYCLING_CLIENT', 'RECYCLING_OPERATOR'],
-        'RECOVERY_CLIENT': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
-        'RECOVERY_OPERATOR': ['RECOVERY_CLIENT', 'RECOVERY_OPERATOR'],
-        'REGULATOR': ['REGULATOR', 'PUBLIC_AUTHORITY'],
-        'PUBLIC_AUTHORITY': ['REGULATOR', 'PUBLIC_AUTHORITY'],
-      };
-      
-      const equivalents = typeEquivalents[selectedType] || [selectedType];
-      if (!equivalents.includes(inst.type)) {
-        return false;
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      // Search
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const searchable = `${user.first_name || ''} ${user.last_name || ''} ${user.email || ''}`.toLowerCase();
+        if (!searchable.includes(query)) return false;
       }
-    }
 
-    // Status filter
-    if (selectedStatus === 'active' && !inst.is_active) return false;
-    if (selectedStatus === 'inactive' && inst.is_active) return false;
+      // Role filter
+      if (selectedRole && user.role !== selectedRole) return false;
 
-    // Sector filter - compare as strings (UUID)
-    if (selectedSector) {
-      const instSectors = inst.sectors || [];
-      const hasSector = instSectors.some(s => String(s.id) === String(selectedSector));
-      if (!hasSector) return false;
-    }
+      // Status filter
+      if (selectedStatus === 'active' && !user.is_active) return false;
+      if (selectedStatus === 'inactive' && user.is_active) return false;
 
-    return true;
-  });
-}, [institutions, searchQuery, selectedType, selectedStatus, selectedSector]);
+      // Institution filter
+      if (selectedInstitution) {
+        if (String(user.institution?.id) !== String(selectedInstitution)) return false;
+      }
+
+      return true;
+    });
+  }, [users, searchQuery, selectedRole, selectedStatus, selectedInstitution]);
 
   // Sorting
-  const sortedInstitutions = useMemo(() => {
-    return [...filteredInstitutions].sort((a, b) => {
-      let aValue = a[sortBy] || '';
-      let bValue = b[sortBy] || '';
-      
-      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
-      
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortBy) {
+        case 'name':
+        case 'last_name':
+          aValue = `${a.last_name || ''} ${a.first_name || ''}`.toLowerCase();
+          bValue = `${b.last_name || ''} ${b.first_name || ''}`.toLowerCase();
+          break;
+        case 'email':
+          aValue = (a.email || '').toLowerCase();
+          bValue = (b.email || '').toLowerCase();
+          break;
+        case 'role':
+          aValue = a.role || '';
+          bValue = b.role || '';
+          break;
+        case 'institution':
+          aValue = (a.institution?.name || '').toLowerCase();
+          bValue = (b.institution?.name || '').toLowerCase();
+          break;
+        default:
+          aValue = `${a.last_name || ''} ${a.first_name || ''}`.toLowerCase();
+          bValue = `${b.last_name || ''} ${b.first_name || ''}`.toLowerCase();
+      }
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredInstitutions, sortBy, sortOrder]);
+  }, [filteredUsers, sortBy, sortOrder]);
 
   // Pagination
-  const totalPages = Math.ceil(sortedInstitutions.length / itemsPerPage);
-  const paginatedInstitutions = sortedInstitutions.slice(
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  const paginatedUsers = sortedUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedType, selectedStatus, selectedSector, itemsPerPage]);
+  }, [searchQuery, selectedRole, selectedStatus, selectedInstitution, itemsPerPage]);
 
   // Handlers
   const handleSort = (column) => {
@@ -231,96 +237,167 @@ const filteredInstitutions = useMemo(() => {
   };
 
   const handleResetFilters = () => {
-    setSelectedType('');
+    setSelectedRole('');
     setSelectedStatus('');
-    setSelectedSector('');
+    setSelectedInstitution('');
     setSearchQuery('');
   };
 
-  const hasActiveFilters = selectedType || selectedStatus || selectedSector || searchQuery;
+  const hasActiveFilters = searchQuery || selectedRole || selectedStatus || selectedInstitution;
 
   // CRUD handlers
   const handleAdd = () => {
-    setSelectedInstitution(null);
-    setSidebarMode('add');
+    setSelectedUser(null);
+    setSidebarMode('create');
+    setFormData({
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      position: '',
+      department: '',
+      role: 'EDITOR_INSTITUTION',
+      isActive: true,
+      institutionId: isInstitutionAdmin ? myInstitutionId : null,
+    });
+    setFormError('');
     setSidebarOpen(true);
   };
 
-  const handleEdit = (institution) => {
-    setSelectedInstitution(institution);
+  const handleEdit = (user) => {
+    if (!canManageTargetUser(user)) return;
+    
+    setSelectedUser(user);
     setSidebarMode('edit');
+    setFormData({
+      email: user.email,
+      password: '',
+      firstName: user.first_name,
+      lastName: user.last_name,
+      phone: user.phone || '',
+      position: user.position || '',
+      department: user.department || '',
+      role: user.role,
+      isActive: user.is_active,
+      institutionId: isInstitutionAdmin ? myInstitutionId : user.institution?.id || null,
+    });
+    setFormError('');
     setSidebarOpen(true);
   };
 
-  const handleView = (institution) => {
-    setViewInstitution(institution);
+  const handleView = (user) => {
+    setViewUser(user);
     setViewModalOpen(true);
   };
 
-  const handleDeleteClick = (institution) => {
-    setSelectedInstitution(institution);
-    setSidebarMode('delete');
-    setSidebarOpen(true);
+  const handleDeleteClick = (user) => {
+    setDeleteConfirm(user);
   };
 
   const handleCloseSidebar = () => {
     setSidebarOpen(false);
-    setSelectedInstitution(null);
+    setSelectedUser(null);
     setSidebarMode(null);
+    setFormError('');
   };
 
-  const handleSave = async (formData) => {
-    setSaving(true);
+  const handleSubmit = async (data) => {
+    setFormError('');
+
+    // Normalize data for institution admin
+    const normalized = { ...data };
+    if (isInstitutionAdmin) {
+      normalized.role = 'EDITOR_INSTITUTION';
+      normalized.institutionId = myInstitutionId;
+    }
+
+    if (!normalized.institutionId) {
+      setFormError('Vă rugăm să selectați o instituție!');
+      return;
+    }
+
     try {
       let response;
-      if (sidebarMode === 'add') {
-        response = await apiPost('/api/institutions', formData);
-      } else {
-        response = await apiPut(`/api/institutions/${selectedInstitution.id}`, formData);
+
+      if (sidebarMode === 'create') {
+        const payload = {
+          email: normalized.email,
+          password: normalized.password,
+          firstName: normalized.firstName,
+          lastName: normalized.lastName,
+          phone: normalized.phone || null,
+          position: normalized.position || null,
+          department: normalized.department || null,
+          role: normalized.role,
+          isActive: normalized.isActive,
+          institutionIds: [normalized.institutionId],
+        };
+        response = await userService.createUser(payload);
+      } else if (sidebarMode === 'edit') {
+        if (isInstitutionAdmin && !canManageTargetUser(selectedUser)) {
+          setFormError('Nu ai voie să editezi acest utilizator.');
+          return;
+        }
+
+        const payload = {
+          email: normalized.email,
+          firstName: normalized.firstName,
+          lastName: normalized.lastName,
+          role: normalized.role,
+          isActive: normalized.isActive,
+          institutionIds: [normalized.institutionId],
+        };
+
+        if (normalized.phone?.trim()) payload.phone = normalized.phone;
+        if (normalized.position?.trim()) payload.position = normalized.position;
+        if (normalized.department?.trim()) payload.department = normalized.department;
+        if (normalized.password?.trim()) payload.password = normalized.password;
+
+        response = await userService.updateUser(selectedUser.id, payload);
       }
 
-      if (response.success) {
-        showToast(sidebarMode === 'add' ? 'Instituție adăugată cu succes' : 'Instituție actualizată cu succes');
+      if (response?.success) {
+        showToast(sidebarMode === 'create' ? 'Utilizator creat cu succes' : 'Utilizator actualizat cu succes');
         handleCloseSidebar();
-        loadInstitutions();
+        loadUsers();
       } else {
-        showToast(response.message || 'Eroare la salvare', 'error');
+        setFormError(response?.message || 'Eroare la salvarea utilizatorului.');
       }
     } catch (err) {
-      console.error('Save error:', err);
-      showToast('Eroare la salvare', 'error');
-    } finally {
-      setSaving(false);
+      setFormError(err.message || 'Eroare la salvarea utilizatorului.');
     }
   };
 
-  const handleDelete = async (institution) => {
-    setSaving(true);
+  const handleDelete = async (userId) => {
+    const target = users.find(u => u.id === userId);
+    if (!isPlatformAdmin && isInstitutionAdmin && !canManageTargetUser(target)) {
+      toast.error('Acțiune interzisă', 'Nu ai voie să ștergi acest utilizator.');
+      return;
+    }
+
     try {
-      const response = await apiDelete(`/api/institutions/${institution.id}`);
+      const response = await userService.deleteUser(userId);
       if (response.success) {
-        showToast('Instituție ștearsă cu succes');
-        handleCloseSidebar();
-        loadInstitutions();
+        showToast('Utilizator șters cu succes');
+        setDeleteConfirm(null);
+        loadUsers();
       } else {
-        showToast(response.message || 'Eroare la ștergere', 'error');
+        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
-      console.error('Delete error:', err);
-      showToast('Eroare la ștergere', 'error');
-    } finally {
-      setSaving(false);
+      toast.error('Eroare la ștergere', err.message || 'A apărut o eroare.');
     }
   };
 
   // Access guard
-  if (!hasAccess('institutions')) {
+  if (!hasAccess('users')) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center">
-          <Building2 className="w-16 h-16 text-teal-500 mx-auto mb-4" />
+          <UsersIcon className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acces restricționat</h1>
-          <p className="text-gray-600 dark:text-gray-400">Nu ai permisiuni pentru pagina „Instituții".</p>
+          <p className="text-gray-600 dark:text-gray-400">Nu ai permisiuni pentru pagina „Utilizatori".</p>
         </div>
       </div>
     );
@@ -328,38 +405,40 @@ const filteredInstitutions = useMemo(() => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header - Standard cu User Profile */}
+      {/* Header */}
       <DashboardHeader
-        title="Instituții"
-        onSearchChange={setSearchQuery}
+        title="Utilizatori"
+        subtitle="Gestionare utilizatori platformă"
       />
 
       {/* Content */}
       <div className="px-6 lg:px-8 py-6 space-y-4">
         {/* Filters Bar */}
-        <InstitutionFilters
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
+        <UserFilters
+          selectedRole={selectedRole}
+          onRoleChange={setSelectedRole}
           selectedStatus={selectedStatus}
           onStatusChange={setSelectedStatus}
-          selectedSector={selectedSector}
-          onSectorChange={setSelectedSector}
-          sectors={sectors}
+          selectedInstitution={selectedInstitution}
+          onInstitutionChange={setSelectedInstitution}
+          institutions={institutions}
+          loadingInstitutions={loadingInstitutions}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onReset={handleResetFilters}
           hasActiveFilters={hasActiveFilters}
           onAdd={handleAdd}
-          onRefresh={loadInstitutions}
+          onRefresh={loadUsers}
           loading={loading}
           canCreate={canCreateData}
-          institutionTypes={INSTITUTION_TYPES}
-          dropdownOrder={DROPDOWN_ORDER}
+          isPlatformAdmin={isPlatformAdmin}
+          roleTypes={ROLE_TYPES}
+          roleOrder={ROLE_ORDER}
         />
 
         {/* Table */}
-        <InstitutionTable
-          institutions={paginatedInstitutions}
+        <UserTable
+          users={paginatedUsers}
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
@@ -369,7 +448,9 @@ const filteredInstitutions = useMemo(() => {
           onSort={handleSort}
           canEdit={canEditData}
           canDelete={canDeleteData}
-          institutionTypes={INSTITUTION_TYPES}
+          canManageUser={canManageTargetUser}
+          isPlatformAdmin={isPlatformAdmin}
+          roleTypes={ROLE_TYPES}
         />
 
         {/* Pagination */}
@@ -380,7 +461,7 @@ const filteredInstitutions = useMemo(() => {
             <select
               value={itemsPerPage}
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -388,7 +469,7 @@ const filteredInstitutions = useMemo(() => {
               <option value={100}>100</option>
             </select>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              din {filteredInstitutions.length} instituții
+              din {filteredUsers.length} utilizatori
             </span>
           </div>
 
@@ -423,7 +504,7 @@ const filteredInstitutions = useMemo(() => {
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === pageNum
-                          ? 'bg-teal-500 text-white'
+                          ? 'bg-emerald-500 text-white'
                           : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
@@ -445,32 +526,69 @@ const filteredInstitutions = useMemo(() => {
         </div>
       </div>
 
-      {/* Sidebar - Add/Edit/Delete */}
-      <InstitutionSidebar
-        isOpen={sidebarOpen}
-        onClose={handleCloseSidebar}
-        mode={sidebarMode}
-        institution={selectedInstitution}
-        onSave={handleSave}
-        onDelete={handleDelete}
-        saving={saving}
-        sectors={sectors}
-        institutionTypes={INSTITUTION_TYPES}
-        dropdownOrder={DROPDOWN_ORDER}
-      />
+      {/* Sidebar - Add/Edit */}
+      {sidebarOpen && (
+        <UserSidebar
+          mode={sidebarMode}
+          user={selectedUser}
+          formData={formData}
+          institutions={institutions}
+          sectors={sectors}
+          currentUser={currentUser}
+          onClose={handleCloseSidebar}
+          onSubmit={handleSubmit}
+          onFormChange={setFormData}
+          formError={formError}
+          roleTypes={ROLE_TYPES}
+          roleOrder={ROLE_ORDER}
+        />
+      )}
 
       {/* View Modal */}
-      <InstitutionViewModal
+      <UserViewModal
         isOpen={viewModalOpen}
         onClose={() => {
           setViewModalOpen(false);
-          setViewInstitution(null);
+          setViewUser(null);
         }}
-        institution={viewInstitution}
-        institutionTypes={INSTITUTION_TYPES}
+        user={viewUser}
+        roleTypes={ROLE_TYPES}
       />
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+            onClick={() => setDeleteConfirm(null)} 
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              Confirmare Ștergere
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Sigur vrei să ștergi utilizatorul{' '}
+              <strong>{deleteConfirm.first_name} {deleteConfirm.last_name}</strong>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDelete(deleteConfirm.id)}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors"
+              >
+                Șterge
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Anulează
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default InstitutionsPage;
+export default UsersPage;

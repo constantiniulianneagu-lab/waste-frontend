@@ -24,11 +24,13 @@ import {
 } from '../../services/reportsService';
 
 import { handleExport } from '../../services/exportService';
+import { useToast } from '../../contexts/ToastContext';
 
 const ReportsLandfill = () => {
   // ========================================================================
   // STATE
   // ========================================================================
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
@@ -228,13 +230,13 @@ const ReportsLandfill = () => {
     try {
       const response = await deleteLandfillTicket(ticketId);
       if (response.success) {
-        alert('Înregistrare ștearsă cu succes!');
+        toast.success('Înregistrare ștearsă', 'Operațiunea s-a realizat cu succes.');
         fetchReports();
       } else {
-        alert('Eroare la ștergere: ' + response.message);
+        toast.error('Eroare la ștergere', response.message);
       }
     } catch (err) {
-      alert('Eroare la ștergere: ' + err.message);
+      toast.error('Eroare la ștergere', err.message);
     }
   };
 
@@ -276,13 +278,13 @@ const ReportsLandfill = () => {
       const result = await handleExport(format, allTickets, summaryData, filters, 'landfill', sectors);
 
       if (result.success) {
-        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
+        toast.success(`Export ${format.toUpperCase()} realizat`, `${allTickets.length} înregistrări exportate cu succes.`);
       } else {
-        alert(`❌ Eroare la export: ${result.error}`);
+        toast.error('Eroare la export', result.error);
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert(`❌ Eroare la export: ${error.message}`);
+      toast.error('Eroare la export', error.message);
     } finally {
       setExporting(false);
     }

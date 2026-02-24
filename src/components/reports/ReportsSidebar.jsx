@@ -11,6 +11,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { createLandfillTicket, updateLandfillTicket } from '../../services/reportsService';
+import { useToast } from '../../contexts/ToastContext';
 
 const toNumber = (v) => {
   const n = typeof v === 'string' ? parseFloat(v) : Number(v);
@@ -45,6 +46,7 @@ const ReportsSidebar = ({
   onClose,
   onSuccess
 }) => {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -237,7 +239,7 @@ const ReportsSidebar = ({
       }
 
       if (response.success) {
-        alert(mode === 'edit' ? 'Tichet actualizat cu succes!' : 'Tichet creat cu succes!');
+        toast.success(mode === 'edit' ? 'Tichet actualizat' : 'Tichet creat', 'Operațiunea s-a realizat cu succes.');
         onSuccess();
       } else {
         throw new Error(response.message || 'Operație eșuată');
