@@ -19,12 +19,12 @@ import { useAuth } from '../AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
+import { useToast } from '../contexts/ToastContext';
 import ContractFilters from '../components/contracts/ContractFilters';
 import ContractTable from '../components/contracts/ContractTable';
 import ContractViewModal from '../components/contracts/ContractViewModal';
 import ContractSidebar from '../components/contracts/ContractSidebar';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
-import Toast from '../components/common/Toast';
 
 const CONTRACT_TYPES = {
   WASTE_COLLECTOR: 'WASTE_COLLECTOR',
@@ -54,6 +54,7 @@ const ENDPOINT_MAP = {
 };
 
 const ContractsPage = () => {
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialContractType = searchParams.get('type') || 'ALL';
   const initialSector = searchParams.get('sector') || '';
@@ -94,7 +95,6 @@ const ContractsPage = () => {
   // FIX 2: Added saving state
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const { user } = useAuth();
   const isPlatformAdmin = user?.role === 'PLATFORM_ADMIN';
@@ -376,13 +376,13 @@ const ContractsPage = () => {
         loadContracts();
         loadContractCounts();
         // FIX 8: Different toast messages for add vs edit
-        showToast(sidebarMode === 'edit' ? 'Contract actualizat cu succes!' : 'Contract adăugat cu succes!');
+        toast.success(sidebarMode === 'edit' ? 'Contract actualizat' : 'Contract adăugat', 'Operațiunea s-a realizat cu succes.');
       } else {
-        showToast(response.message || 'Eroare la salvarea contractului', 'error');
+        toast.error('Eroare la salvare', response.message || 'A apărut o eroare.');
       }
     } catch (error) {
       console.error('Save error:', error);
-      showToast('Eroare la salvarea contractului', 'error');
+      toast.error('Eroare la salvare', 'A apărut o eroare neașteptată.');
     } finally {
       setSaving(false);
     }
@@ -401,15 +401,15 @@ const ContractsPage = () => {
       const response = await apiDelete(`${endpoint}/${contractToDelete.id}`);
 
       if (response.success) {
-        showToast('Contract șters cu succes!');
+        toast.success('Contract șters', 'Contractul a fost șters cu succes.');
         loadContracts();
         loadContractCounts();
       } else {
-        showToast('Eroare la ștergerea contractului', 'error');
+        toast.error('Eroare la ștergere', 'A apărut o eroare.');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      showToast('Eroare la ștergerea contractului', 'error');
+      toast.error('Eroare la ștergere', 'A apărut o eroare.');
     } finally {
       setDeleteDialogOpen(false);
       setContractToDelete(null);
@@ -462,18 +462,15 @@ const ContractsPage = () => {
       document.body.removeChild(a);
 
       // FIX 8: Better export success message
-      showToast(`Export ${format.toUpperCase()} realizat cu succes!`);
+      toast.success(`Export ${format.toUpperCase()} realizat`, 'Fișierul a fost generat cu succes.');
     } catch (error) {
       console.error('Export error:', error);
-      showToast(`Eroare la generarea ${format.toUpperCase()}. Vă rugăm încercați din nou.`, 'error');
+      toast.error(`Eroare export ${format.toUpperCase()}`, 'Vă rugăm încercați din nou.');
     } finally {
       setExporting(false);
     }
   };
 
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -616,13 +613,6 @@ const ContractsPage = () => {
         message={`Sigur doriți să ștergeți contractul ${contractToDelete?.contract_number}?`}
       />
 
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
-      )}
     </div>
   );
 };

@@ -282,15 +282,15 @@ const filteredInstitutions = useMemo(() => {
       }
 
       if (response.success) {
-        showToast(sidebarMode === 'add' ? 'Instituție adăugată cu succes' : 'Instituție actualizată cu succes');
+        toast.success(sidebarMode === 'add' ? 'Instituție adăugată' : 'Instituție actualizată', 'Operațiunea s-a realizat cu succes.');
         handleCloseSidebar();
         loadInstitutions();
       } else {
-        showToast(response.message || 'Eroare la salvare', 'error');
+        toast.error('Eroare la salvare', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
       console.error('Save error:', err);
-      showToast('Eroare la salvare', 'error');
+      toast.error('Eroare la salvare', 'A apărut o eroare neașteptată.');
     } finally {
       setSaving(false);
     }
@@ -301,15 +301,15 @@ const filteredInstitutions = useMemo(() => {
     try {
       const response = await apiDelete(`/api/institutions/${institution.id}`);
       if (response.success) {
-        showToast('Instituție ștearsă cu succes');
+        toast.success('Instituție ștearsă', 'Instituția a fost ștearsă cu succes.');
         handleCloseSidebar();
         loadInstitutions();
       } else {
-        showToast(response.message || 'Eroare la ștergere', 'error');
+        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
       }
     } catch (err) {
       console.error('Delete error:', err);
-      showToast('Eroare la ștergere', 'error');
+      toast.error('Eroare la ștergere', 'A apărut o eroare neașteptată.');
     } finally {
       setSaving(false);
     }

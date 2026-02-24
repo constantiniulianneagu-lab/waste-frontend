@@ -358,7 +358,7 @@ const UsersPage = () => {
       }
 
       if (response?.success) {
-        showToast(sidebarMode === 'create' ? 'Utilizator creat cu succes' : 'Utilizator actualizat cu succes');
+        toast.success(sidebarMode === 'create' ? 'Utilizator creat' : 'Utilizator actualizat', 'Operațiunea s-a realizat cu succes.');
         handleCloseSidebar();
         loadUsers();
       } else {
@@ -379,7 +379,7 @@ const UsersPage = () => {
     try {
       const response = await userService.deleteUser(userId);
       if (response.success) {
-        showToast('Utilizator șters cu succes');
+        toast.success('Utilizator șters', 'Utilizatorul a fost șters cu succes.');
         setDeleteConfirm(null);
         loadUsers();
       } else {
