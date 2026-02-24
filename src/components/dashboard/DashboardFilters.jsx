@@ -6,6 +6,7 @@
  * 
  * ✅ FIXES:
  * - Auto-apply filters when year changes (no need to click "Aplică")
+ * - Auto-apply filters when location changes (no need to click "Aplică")
  * - Improved UX for year selection
  * 
  * ============================================================================
@@ -111,31 +112,30 @@ const DashboardFilters = ({
   };
 
   // ========================================================================
-  // HANDLE SECTOR CHANGE
+  // ✅ HANDLE SECTOR CHANGE - AUTO-APPLY
   // ========================================================================
 
   const handleSectorChange = (e) => {
     const value = e.target.value;
 
+    let newFilters;
+
     if (value === "" || value === "all") {
-      setLocalFilters({
-        ...localFilters,
-        sector_id: null,
-      });
-      return;
-    }
-
-    const sectorId = parseInt(value, 10);
-
-    if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
-      console.log('✅ Valid sector selected:', sectorId);
-      setLocalFilters({
-        ...localFilters,
-        sector_id: sectorId,
-      });
+      newFilters = { ...localFilters, sector_id: null };
     } else {
-      console.warn('⚠️ Invalid sector value:', value);
+      const sectorId = parseInt(value, 10);
+      if (!isNaN(sectorId) && sectorId >= 1 && sectorId <= 6) {
+        console.log('✅ Valid sector selected:', sectorId);
+        newFilters = { ...localFilters, sector_id: sectorId };
+      } else {
+        console.warn('⚠️ Invalid sector value:', value);
+        return;
+      }
     }
+
+    setLocalFilters(newFilters);
+    // ✅ AUTO-APPLY: la fel ca la an
+    onFilterChange(newFilters);
   };
 
   // ========================================================================
