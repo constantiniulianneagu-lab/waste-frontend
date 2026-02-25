@@ -368,8 +368,13 @@ const DashboardTmb = () => {
   }));
 
   // Chart data
+  const MONTHS_RO = {
+    Jan: 'Ian', Feb: 'Feb', Mar: 'Mar', Apr: 'Apr', May: 'Mai', Jun: 'Iun',
+    Jul: 'Iul', Aug: 'Aug', Sep: 'Sep', Oct: 'Oct', Nov: 'Nov', Dec: 'Dec',
+  };
+
   const monthlyChartData = (data?.monthly_evolution || []).map(item => ({
-    month: item.month,
+    month: MONTHS_RO[item.month] || item.month,
     'Deșeuri tratate': parseFloat(item.tmb_total) || 0,
     'Deșeuri depozitate': parseFloat(item.landfill_total) || 0,
   }));
