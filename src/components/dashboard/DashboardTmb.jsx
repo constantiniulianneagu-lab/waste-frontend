@@ -535,73 +535,147 @@ const DashboardTmb = () => {
         ) : (
           <>
             {/* ================================================================
-                RÂD 1: 6 SUMMARY CARDS (stânga) + GRAFIC EVOLUTIE (dreapta)
+                RÂD 1: SUMMARY CARDS (stânga) + GRAFIC EVOLUTIE (dreapta)
             ================================================================ */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
-              {/* STÂNGA: 6 carduri — 5 coloane, height 600px */}
-              <div className="lg:col-span-5 flex flex-col gap-4 h-[600px]">
+              {/* STÂNGA: 3 carduri stacked — 4 coloane */}
+              <div className="lg:col-span-4 flex flex-col gap-4">
 
-                {/* 2x2 top */}
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  <SummaryCard
-                    title="TOTAL COLECTAT"
-                    value={formatNumberRO(data.summary.total_collected)}
-                    subtitle="tone deșeuri colectate"
-                    gradient="from-cyan-500 to-blue-600"
-                    icon="🏭"
-                    highlighted={true}
-                  />
-                  <SummaryCard
-                    title="TRIMISE LA TMB"
-                    value={formatNumberRO(data.summary.total_tmb_input)}
-                    subtitle="tone intrate în TMB"
-                    gradient="from-teal-500 to-cyan-600"
-                    icon="⚙️"
-                  />
-                  <SummaryCard
-                    title="DEPOZITATE DIRECT"
-                    value={formatNumberRO(data.summary.total_landfill_direct)}
-                    subtitle="tone fără tratare"
-                    gradient="from-red-500 to-rose-600"
-                    icon="🗑️"
-                  />
-                  <SummaryCard
-                    title="STOC / DIFERENȚĂ"
-                    value={formatNumberRO(data.summary.stock_difference)}
-                    subtitle="tone necontabilizate"
-                    gradient="from-amber-500 to-orange-600"
-                    icon="📦"
-                  />
+                {/* CARD 1 — Total Colectat */}
+                <div className="group relative flex-1">
+                  <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                                border-2 border-cyan-400/60 dark:border-cyan-500/50
+                                rounded-[24px] p-5 overflow-hidden flex flex-col justify-between
+                                hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-blue-500/10
+                                  dark:from-cyan-500/10 dark:to-blue-500/10 rounded-[24px]" />
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-600
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
+                          Total Colectat
+                        </p>
+                        <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-cyan-500 to-blue-600
+                                      flex items-center justify-center shadow-md text-lg">
+                          🏭
+                        </div>
+                      </div>
+
+                      <p className="text-3xl font-black text-gray-900 dark:text-white mb-1">
+                        {formatNumberRO(data.summary.total_collected)}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">tone deșeuri colectate</p>
+
+                      {/* Cod deșeu */}
+                      <div className="flex items-center gap-2 bg-cyan-50 dark:bg-cyan-900/20
+                                    border border-cyan-200 dark:border-cyan-500/20
+                                    rounded-xl px-3 py-2">
+                        <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 tracking-wider uppercase">
+                          Cod
+                        </span>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">20 03 01</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">
+                          — Deșeuri municipale amestecate
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* 2x1 bottom — cu progress bar */}
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  <SummaryCard
-                    title="RATĂ TMB"
-                    value={`${data.summary.tmb_percent}%`}
-                    subtitle="din total colectat"
-                    gradient="from-cyan-500 to-teal-600"
-                    icon="📊"
-                    showProgressBar={true}
-                    percentage={data.summary.tmb_percent}
-                  />
-                  <SummaryCard
-                    title="RATĂ DEPOZITARE"
-                    value={`${data.summary.landfill_percent}%`}
-                    subtitle="din total colectat"
-                    gradient="from-red-500 to-rose-600"
-                    icon="📉"
-                    showProgressBar={true}
-                    percentage={data.summary.landfill_percent}
-                  />
+                {/* CARD 2 — Depozitate Direct */}
+                <div className="group relative flex-1">
+                  <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                                border border-gray-200 dark:border-gray-700/50
+                                rounded-[24px] p-5 overflow-hidden flex flex-col justify-between
+                                hover:border-red-300 dark:hover:border-red-500/40
+                                hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+
+                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                                  bg-gradient-to-b from-red-500 to-rose-600
+                                  group-hover:w-1.5 transition-all duration-300" />
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-rose-600
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
+                          Depozitate Direct
+                        </p>
+                        <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-red-500 to-rose-600
+                                      flex items-center justify-center shadow-md text-lg">
+                          🗑️
+                        </div>
+                      </div>
+
+                      <p className="text-3xl font-black text-gray-900 dark:text-white mb-1">
+                        {formatNumberRO(data.summary.total_landfill_direct)}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">tone fără tratare prealabilă</p>
+
+                      {/* % + progress bar */}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">% din total colectat</span>
+                        <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                          {data.summary.landfill_percent}%
+                        </span>
+                      </div>
+                      <ProgressBar value={parseFloat(data.summary.landfill_percent)} gradient="from-red-500 to-rose-600" />
+                    </div>
+                  </div>
                 </div>
+
+                {/* CARD 3 — Trimise la TMB */}
+                <div className="group relative flex-1">
+                  <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                                border border-gray-200 dark:border-gray-700/50
+                                rounded-[24px] p-5 overflow-hidden flex flex-col justify-between
+                                hover:border-teal-300 dark:hover:border-teal-500/40
+                                hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+
+                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                                  bg-gradient-to-b from-teal-500 to-cyan-600
+                                  group-hover:w-1.5 transition-all duration-300" />
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 to-cyan-600
+                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
+                          Trimise la TMB
+                        </p>
+                        <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-teal-500 to-cyan-600
+                                      flex items-center justify-center shadow-md text-lg">
+                          ⚙️
+                        </div>
+                      </div>
+
+                      <p className="text-3xl font-black text-gray-900 dark:text-white mb-1">
+                        {formatNumberRO(data.summary.total_tmb_input)}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">tone intrate în instalație TMB</p>
+
+                      {/* % + progress bar */}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">% din total colectat</span>
+                        <span className="text-sm font-bold text-teal-600 dark:text-teal-400">
+                          {data.summary.tmb_percent}%
+                        </span>
+                      </div>
+                      <ProgressBar value={parseFloat(data.summary.tmb_percent)} gradient="from-teal-500 to-cyan-600" />
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
-              {/* DREAPTA: Grafic evoluție lunară — 7 coloane */}
-              <div className="lg:col-span-7 bg-white dark:bg-gray-800/50 backdrop-blur-xl
+              {/* DREAPTA: Grafic evoluție lunară — 8 coloane */}
+              <div className="lg:col-span-8 bg-white dark:bg-gray-800/50 backdrop-blur-xl
                             rounded-[28px] border border-gray-200 dark:border-gray-700/50
-                            p-6 shadow-sm dark:shadow-none flex flex-col h-[600px]">
+                            p-6 shadow-sm dark:shadow-none flex flex-col">
 
                 <div className="flex items-center justify-between mb-5 flex-shrink-0">
                   <div>
@@ -632,7 +706,11 @@ const DashboardTmb = () => {
             {/* ================================================================
                 RÂD 2: 4 OUTPUT CARDS
             ================================================================ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">
+                Rezultatele procesului de tratare mecano-biologică (TMB)
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <OutputCard
                 label="Reciclabile"
                 icon={<Recycle className="w-4 h-4 text-white" />}
@@ -709,6 +787,7 @@ const DashboardTmb = () => {
                     />
                   </div>
                 </div>
+              </div>
               </div>
             </div>
 
