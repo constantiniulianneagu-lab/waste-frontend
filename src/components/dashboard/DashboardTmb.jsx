@@ -920,11 +920,11 @@ const DashboardTmb = () => {
                                     </td>
                                     <td className="py-1.5 text-right">
                                       <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{formatNumberRO(op.tmb_total_tons)} t</span>
-                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.tmb_total_tons)||0, totalTmb + totalLandfill)}%</span>
+                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.tmb_total_tons)||0, sectorTmb)}%</span>
                                     </td>
                                     <td className="py-1.5 text-right">
                                       <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{formatNumberRO(op.landfill_total_tons)} t</span>
-                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.landfill_total_tons)||0, totalTmb + totalLandfill)}%</span>
+                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.landfill_total_tons)||0, sectorLandfill)}%</span>
                                     </td>
                                   </tr>
                                 )),
