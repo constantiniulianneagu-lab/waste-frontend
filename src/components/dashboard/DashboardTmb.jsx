@@ -3,47 +3,239 @@
  * ============================================================================
  * DASHBOARD TMB - 2026 SAMSUNG/APPLE STYLE
  * ============================================================================
- * 
- * Modern UI with glassmorphism, perfect light/dark mode, and premium gradients
- * 
- * ✅ Ani: Array de 2 ani (2025, 2024)
- * ✅ Filtre: start_date / end_date (nu from/to)
- * ✅ Sectoare: Hardcoded București + Sector 1-6
- * ✅ Default: An curent, startOfYear, today
- * 
+ * Redesigned to match DashboardLandfill structure & design language
  * ============================================================================
  */
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Factory, Trash2, Package, Activity } from "lucide-react";
+import { AlertCircle, Factory, Trash2, Package, Activity, TrendingUp, TrendingDown, Recycle, Zap, BarChart3 } from "lucide-react";
 
 import { getTmbStats } from "../../services/dashboardTmbService.js";
 import { exportTmbPDF } from "../../utils/exportTmbPDF.js";
 
 import DashboardHeader from "./DashboardHeader.jsx";
 import DashboardFilters from "./DashboardFilters.jsx";
-
 import { useToast } from '../../contexts/ToastContext';
+
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer
 } from 'recharts';
 
-/**
- * ============================================================================
- * PROGRESS BAR COMPONENT - MODERN STYLE
- * ============================================================================
- */
+// ============================================================================
+// PROGRESS BAR
+// ============================================================================
 const ProgressBar = ({ value, gradient }) => (
-  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+  <div className="w-full bg-gray-200 dark:bg-gray-700/50 rounded-full h-2 overflow-hidden">
     <div
-      className={`h-2 rounded-full bg-gradient-to-r ${gradient} transition-all duration-700 ease-out`}
-      style={{ width: `${Math.min(value, 100)}%` }}
+      className={`h-2 rounded-full bg-gradient-to-r ${gradient} transition-all duration-1000 ease-out`}
+      style={{ width: `${Math.min(Math.max(value, 0), 100)}%`, transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }}
     />
   </div>
 );
 
+// ============================================================================
+// SUMMARY CARD — identic cu Depozitare
+// ============================================================================
+const SummaryCard = ({ title, value, subtitle, gradient, icon, highlighted = false, showProgressBar = false, percentage = 0 }) => (
+  <div className="group relative h-full">
+    {highlighted && (
+      <>
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-blue-500/20
+                      dark:from-cyan-500/15 dark:to-blue-500/15
+                      rounded-[24px] blur-md" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-blue-500/10
+                      dark:from-cyan-500/10 dark:to-blue-500/10
+                      rounded-[24px]" />
+      </>
+    )}
+    <div className={`relative h-full
+                  bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                  ${highlighted
+                    ? 'border-2 border-cyan-400/60 dark:border-cyan-500/50'
+                    : 'border border-gray-200 dark:border-gray-700/50'}
+                  rounded-[24px] p-5
+                  shadow-sm dark:shadow-none
+                  hover:shadow-lg dark:hover:shadow-xl
+                  ${highlighted
+                    ? 'hover:border-cyan-500/80 dark:hover:border-cyan-400/70'
+                    : 'hover:border-gray-300 dark:hover:border-gray-600'}
+                  hover:-translate-y-1
+                  transition-all duration-300 ease-out
+                  overflow-hidden flex flex-col justify-between`}>
+
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-3">
+          <p className="text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase leading-tight">
+            {title}
+          </p>
+          <div className={`w-11 h-11 rounded-[14px] bg-gradient-to-br ${gradient}
+                        flex items-center justify-center flex-shrink-0
+                        shadow-md group-hover:scale-110 transition-all duration-300`}>
+            <span className="text-xl">{icon}</span>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center">
+          <p className={`${highlighted ? 'text-3xl' : 'text-2xl'} font-black
+                      text-gray-900 dark:text-white leading-none
+                      group-hover:scale-105 transition-transform duration-300`}>
+            {value}
+          </p>
+        </div>
+
+        <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-2">
+          {subtitle}
+        </p>
+
+        {showProgressBar && (
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-end">
+              <span className={`text-sm font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+                {percentage}%
+              </span>
+            </div>
+            <ProgressBar value={parseFloat(percentage)} gradient={gradient} />
+          </div>
+        )}
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent
+                    pointer-events-none rounded-[24px]" />
+    </div>
+  </div>
+);
+
+// ============================================================================
+// OUTPUT CARD — redesigned compact
+// ============================================================================
+const OutputCard = ({ label, icon, value, percentage, percentageValue, sent, accepted, acceptanceRate, gradient, badgeColor, onReportClick }) => (
+  <div className="group relative">
+    <div className={`relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                  rounded-[24px] p-5 border border-gray-200 dark:border-gray-700/50
+                  hover:border-gray-300 dark:hover:border-gray-600
+                  hover:-translate-y-1 hover:shadow-xl
+                  transition-all duration-300 overflow-hidden`}>
+
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
+                    bg-gradient-to-b ${gradient}
+                    group-hover:w-1.5 transition-all duration-300`} />
+
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}
+                    opacity-[0.02] dark:opacity-[0.04] group-hover:opacity-[0.06]
+                    transition-opacity duration-500`} />
+
+      <div className="relative z-10">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-[12px] bg-gradient-to-br ${gradient}
+                          flex items-center justify-center shadow-md`}>
+              {icon}
+            </div>
+            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              {label}
+            </p>
+          </div>
+          <button
+            onClick={onReportClick}
+            className={`px-2.5 py-1 ${badgeColor} text-white text-[10px] font-bold rounded-[8px]
+                      hover:scale-105 active:scale-95 transition-all shadow-sm`}
+          >
+            Detalii →
+          </button>
+        </div>
+
+        {/* Value */}
+        <p className={`text-2xl font-black bg-gradient-to-r ${gradient}
+                    bg-clip-text text-transparent mb-1`}>
+          {value}
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1">t</span>
+        </p>
+
+        {/* Procent din total TMB + progress bar imediat sub */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{percentage}</p>
+        <ProgressBar value={parseFloat(percentageValue)} gradient={gradient} />
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 gap-2 text-xs mt-3 mb-3">
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl px-3 py-2">
+            <p className="text-gray-500 dark:text-gray-400 mb-0.5">Trimisă</p>
+            <p className="font-bold text-gray-900 dark:text-white">{sent} t</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl px-3 py-2">
+            <p className="text-gray-500 dark:text-gray-400 mb-0.5">Acceptată</p>
+            <p className="font-bold text-gray-900 dark:text-white">{accepted} t</p>
+          </div>
+        </div>
+
+        {/* Rată acceptare — fără progress bar, doar text */}
+        <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <Activity className="w-3 h-3" />
+          Rată acceptare: <span className="font-semibold ml-0.5">{acceptanceRate}%</span>
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// CHART SWITCHER BUTTON GROUP
+// ============================================================================
+const ChartSwitcher = ({ value, onChange, options, colorActive = "from-cyan-500 to-blue-600" }) => (
+  <div className="flex gap-1.5">
+    {options.map(({ type, label }) => (
+      <button
+        key={type}
+        onClick={() => onChange(type)}
+        className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300
+          ${value === type
+            ? `bg-gradient-to-r ${colorActive} text-white shadow-md scale-105`
+            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+);
+
+// ============================================================================
+// CUSTOM TOOLTIP
+// ============================================================================
+const CustomTooltip = ({ active, payload, label, formatFn }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
+                    border border-gray-200 dark:border-gray-700/50
+                    rounded-[16px] px-4 py-3 shadow-xl min-w-[200px]">
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{label}</p>
+      <div className="space-y-1.5">
+        {[...payload].sort((a,b) => (b.value||0)-(a.value||0)).map((p) => (
+          <div key={p.dataKey} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{p.name}</span>
+            </div>
+            <span className="text-xs font-bold text-gray-900 dark:text-white">
+              {formatFn ? formatFn(p.value) : p.value}{' '}
+              <span className="font-medium text-gray-500">t</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 const DashboardTmb = () => {
   const toast = useToast();
   const navigate = useNavigate();
@@ -51,133 +243,76 @@ const DashboardTmb = () => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationCount] = useState(3);
-  const [chartType, setChartType] = useState('bar'); // Pentru "Evoluția cantităților"
-  const [chartType2, setChartType2] = useState('bar'); // Pentru "Distribuția pe sectoare"
   const [exporting, setExporting] = useState(false);
-
-  // ========================================================================
-  // FILTRE - CONFORM COD VECHI TMB
-  // ========================================================================
+  const [chartType, setChartType] = useState('bar');
+  const [chartType2, setChartType2] = useState('bar');
 
   const currentYear = new Date().getFullYear();
-  const startOfYear = `${currentYear}-01-01`;
-  const today = new Date().toISOString().split('T')[0];
-
   const [filters, setFilters] = useState({
     year: currentYear,
-    from: startOfYear,
-    to: today,
+    from: `${currentYear}-01-01`,
+    to: new Date().toISOString().split('T')[0],
     sector_id: null,
   });
-
-  // ========================================================================
-  // FORMAT NUMBER RO
-  // ========================================================================
 
   const formatNumberRO = (number) => {
     if (!number && number !== 0) return '0,00';
     const num = typeof number === 'string' ? parseFloat(number) : number;
-    const formatted = num.toFixed(2);
-    const [intPart, decPart] = formatted.split('.');
-    const intWithDots = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `${intWithDots},${decPart}`;
+    const [intPart, decPart] = num.toFixed(2).split('.');
+    return `${intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${decPart}`;
   };
 
-  // ========================================================================
-  // SECTOR COLOR THEMES (badge stânga tabel) - aceeași idee ca la Depozitare
-  // ========================================================================
   const sectorColorThemes = {
-    1: { badge: "bg-gradient-to-br from-blue-500 to-indigo-600" },
-    2: { badge: "bg-gradient-to-br from-emerald-500 to-teal-600" },
-    3: { badge: "bg-gradient-to-br from-yellow-500 to-orange-600" },
-    4: { badge: "bg-gradient-to-br from-red-500 to-rose-600" },
-    5: { badge: "bg-gradient-to-br from-purple-500 to-pink-600" },
+    1: { badge: "bg-gradient-to-br from-violet-500 to-purple-600" },
+    2: { badge: "bg-gradient-to-br from-slate-400 to-gray-500" },
+    3: { badge: "bg-gradient-to-br from-emerald-500 to-teal-600" },
+    4: { badge: "bg-gradient-to-br from-amber-500 to-orange-600" },
+    5: { badge: "bg-gradient-to-br from-pink-500 to-rose-600" },
     6: { badge: "bg-gradient-to-br from-cyan-500 to-blue-600" },
   };
 
-  const getSectorBadgeClass = (sectorNum) => {
-    const n = Number(sectorNum);
-    return (sectorColorThemes[n] || sectorColorThemes[1]).badge;
-  };
-
   // ========================================================================
-  // FETCH DATA
+  // FETCH
   // ========================================================================
-
   const fetchDashboardData = async (filterParams = filters) => {
     try {
       setLoading(true);
       setError(null);
-
-      console.log("📊 Fetching TMB dashboard data with filters:", filterParams);
-
-      // Adaptare filtre pentru API TMB
       const tmbFilters = {
         year: filterParams.year?.toString(),
         start_date: filterParams.from,
         end_date: filterParams.to,
       };
-
-      // Adaugă sector_id doar dacă e selectat
       if (filterParams.sector_id && filterParams.sector_id >= 1 && filterParams.sector_id <= 6) {
         tmbFilters.sector_id = filterParams.sector_id.toString();
       }
-
-      console.log("🔄 TMB Filters sent to API:", tmbFilters);
-
       const res = await getTmbStats(tmbFilters);
-
-      console.log("✅ Raw response from TMB API:", res);
-
-      if (!res) {
-        throw new Error("Empty response from API");
-      }
-
+      if (!res) throw new Error("Empty response from API");
       if (typeof res === "object" && "success" in res) {
-        if (!res.success) {
-          throw new Error(res.message || "API responded with success=false");
-        }
-        console.log("✅ Using res.data for TMB dashboard:", res.data);
+        if (!res.success) throw new Error(res.message || "API error");
         setData(res.data);
       } else {
-        console.log("⚠️ Using response as data directly");
         setData(res);
       }
     } catch (err) {
-      console.error("❌ TMB Dashboard fetch error:", err);
       setError(err.message || "Failed to load TMB dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ========================================================================
-  // HANDLERS
-  // ========================================================================
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const handleFilterChange = (newFilters) => {
-    console.log('🔄 TMB Filter change requested:', newFilters);
     setFilters(newFilters);
     fetchDashboardData(newFilters);
-  };
-
-  const handleSearchChange = (query) => {
-    setSearchQuery(query);
-    console.log("🔍 Search query:", query);
   };
 
   const handleExport = () => {
     try {
       setExporting(true);
       exportTmbPDF(data, filters);
-    } catch (error) {
-      console.error('Export error:', error);
+    } catch (err) {
       toast.error('Eroare export PDF', 'Vă rugăm încercați din nou.');
     } finally {
       setExporting(false);
@@ -185,263 +320,190 @@ const DashboardTmb = () => {
   };
 
   // ========================================================================
-  // LOADING STATE
+  // LOADING
   // ========================================================================
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader
-          notificationCount={notificationCount}
-          onSearchChange={handleSearchChange}
-          title="Dashboard Tratarea mecano-biologică"
-        />
-        <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Se încarcă datele...
-            </p>
-          </div>
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <DashboardHeader onSearchChange={setSearchQuery} title="Dashboard Tratarea mecano-biologică" />
+      <div className="flex items-center justify-center" style={{ height: "calc(100vh - 73px)" }}>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Se încarcă datele...</p>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   // ========================================================================
-  // ERROR STATE
+  // ERROR
   // ========================================================================
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <DashboardHeader
-          notificationCount={notificationCount}
-          onSearchChange={handleSearchChange}
-          title="Dashboard Tratarea mecano-biologică"
-        />
-        <div className="p-6">
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-red-900 dark:text-red-100 mb-2">
-                    Eroare la încărcarea datelor
-                  </h3>
-                  <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-                    {error}
-                  </p>
-                  <button
-                    onClick={() => fetchDashboardData()}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all"
-                  >
-                    Încearcă din nou
-                  </button>
-                </div>
-              </div>
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <DashboardHeader onSearchChange={setSearchQuery} title="Dashboard Tratarea mecano-biologică" />
+      <div className="p-6">
+        <div className="max-w-3xl mx-auto bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-bold text-red-900 dark:text-red-100 mb-2">Eroare la încărcarea datelor</h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-4">{error}</p>
+              <button onClick={() => fetchDashboardData()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all">
+                Încearcă din nou
+              </button>
             </div>
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   if (!data) return null;
 
-  // ========================================================================
-  // ANI - ARRAY DE 2 ANI (CA LA DEPOZITARE)
-  // ========================================================================
+  const availableYears = data?.available_years || [currentYear, currentYear - 1];
+  const sectors = data?.all_sectors || Array.from({ length: 6 }, (_, i) => ({
+    sector_id: i + 1, sector_number: i + 1, sector_name: `Sector ${i + 1}`
+  }));
 
-  const availableYears = data?.available_years || Array.from({ length: 2 }, (_, i) => currentYear - i);
-  console.log("📅 Available years from API:", availableYears);
-
-  // ========================================================================
-  // SECTOARE - DIN API (nu mai hardcoded)
-  // ========================================================================
-
-  const sectors = data?.all_sectors || [
-    { sector_id: 1, sector_number: 1, sector_name: "Sector 1" },
-    { sector_id: 2, sector_number: 2, sector_name: "Sector 2" },
-    { sector_id: 3, sector_number: 3, sector_name: "Sector 3" },
-    { sector_id: 4, sector_number: 4, sector_name: "Sector 4" },
-    { sector_id: 5, sector_number: 5, sector_name: "Sector 5" },
-    { sector_id: 6, sector_number: 6, sector_name: "Sector 6" },
-  ];
-
-  console.log("🗺️ Sectors from API:", sectors);
-
-  // ========================================================================
-  // PREPARE DATA PENTRU GRAFICE
-  // ========================================================================
-
-  const monthlyChartData = data?.monthly_evolution?.map(item => ({
+  // Chart data
+  const monthlyChartData = (data?.monthly_evolution || []).map(item => ({
     month: item.month,
     'Deșeuri tratate': parseFloat(item.tmb_total) || 0,
-    'Deșeuri depozitate': parseFloat(item.landfill_total) || 0
-  })) || [];
+    'Deșeuri depozitate': parseFloat(item.landfill_total) || 0,
+  }));
 
-  const sectorPieData = data?.sector_distribution?.map(item => ({
+  const sectorChartData = (data?.sector_distribution || []).map(item => ({
     name: item.sector_name,
     tratate: parseFloat(item.tmb_tons) || 0,
-    depozitate: parseFloat(item.landfill_tons) || 0
-  })) || [];
+    depozitate: parseFloat(item.landfill_tons) || 0,
+  }));
 
-  // ========================================================================
-  // RENDER CHART WITH MODERN TOOLTIP
-  // ========================================================================
+  const CYAN  = '#06b6d4';
+  const RED  = '#ef4444';
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-[16px] p-4 shadow-xl">
-          <p className="text-xs font-bold text-gray-900 dark:text-white mb-2">{label}</p>
-          {payload.map((entry, index) => (
-            <div key={index} className="flex items-center gap-2 text-xs">
-              <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: entry.color }} />
-              <span className="text-gray-600 dark:text-gray-400">{entry.name}:</span>
-              <span className="font-bold text-gray-900 dark:text-white">
-                {formatNumberRO(entry.value)} tone
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
+  const chartOptions = [
+    { type: 'bar',  label: 'Bare'  },
+    { type: 'line', label: 'Linie' },
+    { type: 'area', label: 'Area'  },
+  ];
+
+  const renderEvolutionChart = () => {
+    const common = { data: monthlyChartData, margin: { top: 5, right: 20, left: 10, bottom: 5 } };
+    const axes = (
+      <>
+        <CartesianGrid strokeDasharray="3 3" stroke="currentColor"
+          className="text-gray-200 dark:text-gray-700/50" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false}
+          tick={{ fill: "currentColor", fontSize: 11, fontWeight: 500 }}
+          className="text-gray-600 dark:text-gray-400" />
+        <YAxis tickLine={false} axisLine={false}
+          tick={{ fill: "currentColor", fontSize: 11, fontWeight: 500 }}
+          className="text-gray-600 dark:text-gray-400"
+          tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+        <Tooltip content={<CustomTooltip formatFn={formatNumberRO} />} cursor={{ opacity: 0.05 }} />
+        <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }} />
+      </>
+    );
+    if (chartType === 'bar') return (
+      <BarChart {...common} barCategoryGap="30%">
+        {axes}
+        <Bar dataKey="Deșeuri tratate" fill={CYAN} radius={[6,6,0,0]} />
+        <Bar dataKey="Deșeuri depozitate" fill={RED} radius={[6,6,0,0]} />
+      </BarChart>
+    );
+    if (chartType === 'line') return (
+      <LineChart {...common}>
+        {axes}
+        <Line type="monotone" dataKey="Deșeuri tratate" stroke={CYAN} strokeWidth={2.5}
+          dot={{ r: 3, fill: CYAN, strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+        <Line type="monotone" dataKey="Deșeuri depozitate" stroke={RED} strokeWidth={2.5}
+          dot={{ r: 3, fill: RED, strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+      </LineChart>
+    );
+    return (
+      <AreaChart {...common}>
+        <defs>
+          <linearGradient id="gradTratate" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={CYAN} stopOpacity={0.4} />
+            <stop offset="95%" stopColor={CYAN} stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="gradDepozitate" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={RED} stopOpacity={0.4} />
+            <stop offset="95%" stopColor={RED} stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+        {axes}
+        <Area type="monotone" dataKey="Deșeuri tratate" stroke={CYAN} strokeWidth={2} fill="url(#gradTratate)" />
+        <Area type="monotone" dataKey="Deșeuri depozitate" stroke={RED} strokeWidth={2} fill="url(#gradDepozitate)" />
+      </AreaChart>
+    );
   };
 
-  const renderChart = () => {
-    const commonProps = {
-      data: monthlyChartData,
-      margin: { top: 5, right: 30, left: 20, bottom: 5 }
-    };
+  const INDIGO = '#10b981'; // emerald
+  const AMBER  = '#f43f5e'; // rose
 
-    // CYAN/TEAL for "Deșeuri tratate" instead of green
-    const CYAN_COLOR = '#06b6d4'; // cyan-500
-
-    if (chartType === 'bar') {
-      return (
-        <BarChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Bar dataKey="Deșeuri tratate" fill={CYAN_COLOR} radius={[8, 8, 0, 0]} />
-          <Bar dataKey="Deșeuri depozitate" fill="#ef4444" radius={[8, 8, 0, 0]} />
-        </BarChart>
-      );
-    } else if (chartType === 'line') {
-      return (
-        <LineChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Line type="monotone" dataKey="Deșeuri tratate" stroke={CYAN_COLOR} strokeWidth={3} dot={{ fill: CYAN_COLOR, r: 4 }} />
-          <Line type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 4 }} />
-        </LineChart>
-      );
-    } else {
-      return (
-        <AreaChart {...commonProps}>
-          <defs>
-            <linearGradient id="colorTratate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={CYAN_COLOR} stopOpacity={0.4} />
-              <stop offset="95%" stopColor={CYAN_COLOR} stopOpacity={0.05} />
-            </linearGradient>
-            <linearGradient id="colorDepozitate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '12px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '13px', paddingTop: '15px' }} />
-          <Area type="monotone" dataKey="Deșeuri tratate" stroke={CYAN_COLOR} strokeWidth={2} fill="url(#colorTratate)" />
-          <Area type="monotone" dataKey="Deșeuri depozitate" stroke="#ef4444" strokeWidth={2} fill="url(#colorDepozitate)" />
-        </AreaChart>
-      );
-    }
-  };
-
-  // ========================================================================
-  // RENDER CHART 2 - Distribuția pe sectoare (cu switcher Area/Bare/Linie)
-  // ========================================================================
-  const renderChart2 = () => {
-    const commonProps = {
-      data: sectorPieData,
-      margin: { top: 5, right: 30, left: 20, bottom: 5 }
-    };
-
-    const CYAN_COLOR = '#06b6d4'; // cyan-500 for "Tratate"
-    const RED_COLOR = '#ef4444'; // red-500 for "Depozitate"
-
-    if (chartType2 === 'bar') {
-      return (
-        <BarChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-          <Bar dataKey="tratate" name="Tratate" fill={CYAN_COLOR} radius={[8, 8, 0, 0]} />
-          <Bar dataKey="depozitate" name="Depozitate" fill={RED_COLOR} radius={[8, 8, 0, 0]} />
-        </BarChart>
-      );
-    } else if (chartType2 === 'line') {
-      return (
-        <LineChart {...commonProps}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-          <Line type="monotone" dataKey="tratate" name="Tratate" stroke={CYAN_COLOR} strokeWidth={3} dot={{ fill: CYAN_COLOR, r: 4 }} />
-          <Line type="monotone" dataKey="depozitate" name="Depozitate" stroke={RED_COLOR} strokeWidth={3} dot={{ fill: RED_COLOR, r: 4 }} />
-        </LineChart>
-      );
-    } else {
-      return (
-        <AreaChart {...commonProps}>
-          <defs>
-            <linearGradient id="colorTratate2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={CYAN_COLOR} stopOpacity={0.4} />
-              <stop offset="95%" stopColor={CYAN_COLOR} stopOpacity={0.05} />
-            </linearGradient>
-            <linearGradient id="colorDepozitate2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={RED_COLOR} stopOpacity={0.4} />
-              <stop offset="95%" stopColor={RED_COLOR} stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" opacity={0.3} />
-          <XAxis dataKey="name" className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <YAxis className="text-gray-600 dark:text-gray-400" style={{ fontSize: '11px' }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-          <Area type="monotone" dataKey="tratate" name="Tratate" stroke={CYAN_COLOR} strokeWidth={2} fill="url(#colorTratate2)" />
-          <Area type="monotone" dataKey="depozitate" name="Depozitate" stroke={RED_COLOR} strokeWidth={2} fill="url(#colorDepozitate2)" />
-        </AreaChart>
-      );
-    }
+  const renderSectorChart = () => {
+    const common = { data: sectorChartData, margin: { top: 5, right: 20, left: 10, bottom: 5 } };
+    const axes = (
+      <>
+        <CartesianGrid strokeDasharray="3 3" stroke="currentColor"
+          className="text-gray-200 dark:text-gray-700/50" vertical={false} />
+        <XAxis dataKey="name" tickLine={false} axisLine={false}
+          tick={{ fill: "currentColor", fontSize: 11, fontWeight: 500 }}
+          className="text-gray-600 dark:text-gray-400" />
+        <YAxis tickLine={false} axisLine={false}
+          tick={{ fill: "currentColor", fontSize: 11, fontWeight: 500 }}
+          className="text-gray-600 dark:text-gray-400"
+          tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+        <Tooltip content={<CustomTooltip formatFn={formatNumberRO} />} cursor={{ opacity: 0.05 }} />
+        <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }} />
+      </>
+    );
+    if (chartType2 === 'bar') return (
+      <BarChart {...common} barCategoryGap="30%">
+        {axes}
+        <Bar dataKey="tratate" name="Tratate" fill={INDIGO} radius={[6,6,0,0]} />
+        <Bar dataKey="depozitate" name="Depozitate" fill={AMBER} radius={[6,6,0,0]} />
+      </BarChart>
+    );
+    if (chartType2 === 'line') return (
+      <LineChart {...common}>
+        {axes}
+        <Line type="monotone" dataKey="tratate" name="Tratate" stroke={INDIGO} strokeWidth={2.5}
+          dot={{ r: 3, fill: INDIGO, strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+        <Line type="monotone" dataKey="depozitate" name="Depozitate" stroke={AMBER} strokeWidth={2.5}
+          dot={{ r: 3, fill: AMBER, strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+      </LineChart>
+    );
+    return (
+      <AreaChart {...common}>
+        <defs>
+          <linearGradient id="gradTratate2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={INDIGO} stopOpacity={0.4} />
+            <stop offset="95%" stopColor={INDIGO} stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="gradDepozitate2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={AMBER} stopOpacity={0.4} />
+            <stop offset="95%" stopColor={AMBER} stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+        {axes}
+        <Area type="monotone" dataKey="tratate" name="Tratate" stroke={INDIGO} strokeWidth={2} fill="url(#gradTratate2)" />
+        <Area type="monotone" dataKey="depozitate" name="Depozitate" stroke={AMBER} strokeWidth={2} fill="url(#gradDepozitate2)" />
+      </AreaChart>
+    );
   };
 
   // ========================================================================
   // RENDER MAIN
   // ========================================================================
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <DashboardHeader
-        notificationCount={notificationCount}
-        onSearchChange={handleSearchChange}
+        onSearchChange={setSearchQuery}
         onExport={handleExport}
         exporting={exporting}
         title="Dashboard Tratarea mecano-biologică"
@@ -462,422 +524,367 @@ const DashboardTmb = () => {
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              Nu există date pentru perioada selectată
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Încearcă să selectezi o perioadă diferită.
-            </p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nu există date pentru perioada selectată</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Încearcă să selectezi o perioadă diferită.</p>
           </div>
         ) : (
           <>
-            {/* LINIA 1: CARDS + GRAFIC */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* ================================================================
+                RÂD 1: 6 SUMMARY CARDS (stânga) + GRAFIC EVOLUTIE (dreapta)
+            ================================================================ */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              {/* LEFT COLUMN - 3 MODERN CARDS */}
-              <div className="space-y-4">
-                <StatCard
-                  icon={<Trash2 className="w-5 h-5" />}
-                  iconGradient="from-emerald-500 to-teal-600"
-                  label="Deșeuri total colectate"
-                  value={`${formatNumberRO(data.summary.total_collected)} tone`}
-                  subtitle="Cod deșeu: 20 03 01"
-                  percentage="100% din total"
-                  percentageColor="text-emerald-600 dark:text-emerald-400"
-                />
+              {/* STÂNGA: 6 carduri — 5 coloane, height 600px */}
+              <div className="lg:col-span-5 flex flex-col gap-4 h-[600px]">
 
-                <StatCard
-                  icon={<Package className="w-5 h-5" />}
-                  iconGradient="from-red-500 to-rose-600"
-                  label="Deșeuri depozitate"
-                  value={`${formatNumberRO(data.summary.total_landfill_direct)} tone`}
-                  subtitle="Cod deșeu: 20 03 01"
-                  percentage={`${data.summary.landfill_percent}% din total`}
-                  percentageColor="text-red-600 dark:text-red-400"
-                />
-
-                <StatCard
-                  icon={<Factory className="w-5 h-5" />}
-                  iconGradient="from-cyan-500 to-blue-600"
-                  label="Trimise la TMB"
-                  value={`${formatNumberRO(data.summary.total_tmb_input)} tone`}
-                  subtitle="Cod deșeu: 20 03 01"
-                  percentage={`${data.summary.tmb_percent}% din total`}
-                  percentageColor="text-cyan-600 dark:text-cyan-400"
-                />
-              </div>
-
-              {/* RIGHT COLUMN - CHART */}
-              <div className="lg:col-span-3 bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] border border-gray-200 dark:border-gray-700/50 p-6 shadow-sm dark:shadow-none">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                    Evoluția cantităților de deșeuri
-                  </h3>
-
-                  <div className="flex gap-2">
-                    {[
-                      { type: 'bar', label: 'Bare' },
-                      { type: 'line', label: 'Linii' },
-                      { type: 'area', label: 'Arie' }
-                    ].map(({ type, label }) => (
-                      <button
-                        key={type}
-                        onClick={() => setChartType(type)}
-                        className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ${chartType === type
-                          ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg scale-105'
-                          : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                          }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+                {/* 2x2 top */}
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  <SummaryCard
+                    title="TOTAL COLECTAT"
+                    value={formatNumberRO(data.summary.total_collected)}
+                    subtitle="tone deșeuri colectate"
+                    gradient="from-cyan-500 to-blue-600"
+                    icon="🏭"
+                    highlighted={true}
+                  />
+                  <SummaryCard
+                    title="TRIMISE LA TMB"
+                    value={formatNumberRO(data.summary.total_tmb_input)}
+                    subtitle="tone intrate în TMB"
+                    gradient="from-teal-500 to-cyan-600"
+                    icon="⚙️"
+                  />
+                  <SummaryCard
+                    title="DEPOZITATE DIRECT"
+                    value={formatNumberRO(data.summary.total_landfill_direct)}
+                    subtitle="tone fără tratare"
+                    gradient="from-red-500 to-rose-600"
+                    icon="🗑️"
+                  />
+                  <SummaryCard
+                    title="STOC / DIFERENȚĂ"
+                    value={formatNumberRO(data.summary.stock_difference)}
+                    subtitle="tone necontabilizate"
+                    gradient="from-amber-500 to-orange-600"
+                    icon="📦"
+                  />
                 </div>
 
-                <ResponsiveContainer width="100%" height={400}>
-                  {renderChart()}
-                </ResponsiveContainer>
+                {/* 2x1 bottom — cu progress bar */}
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  <SummaryCard
+                    title="RATĂ TMB"
+                    value={`${data.summary.tmb_percent}%`}
+                    subtitle="din total colectat"
+                    gradient="from-cyan-500 to-teal-600"
+                    icon="📊"
+                    showProgressBar={true}
+                    percentage={data.summary.tmb_percent}
+                  />
+                  <SummaryCard
+                    title="RATĂ DEPOZITARE"
+                    value={`${data.summary.landfill_percent}%`}
+                    subtitle="din total colectat"
+                    gradient="from-red-500 to-rose-600"
+                    icon="📉"
+                    showProgressBar={true}
+                    percentage={data.summary.landfill_percent}
+                  />
+                </div>
+              </div>
+
+              {/* DREAPTA: Grafic evoluție lunară — 7 coloane */}
+              <div className="lg:col-span-7 bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                            rounded-[28px] border border-gray-200 dark:border-gray-700/50
+                            p-6 shadow-sm dark:shadow-none flex flex-col h-[600px]">
+
+                <div className="flex items-center justify-between mb-5 flex-shrink-0">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                      Evoluția lunară a cantităților
+                    </h3>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5" />
+                      Tratate vs. Depozitate direct · {filters.year}
+                    </p>
+                  </div>
+                  <ChartSwitcher
+                    value={chartType}
+                    onChange={setChartType}
+                    options={chartOptions}
+                    colorActive="from-cyan-500 to-blue-600"
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {renderEvolutionChart()}
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
-            {/* OUTPUT CARDS */}
+            {/* ================================================================
+                RÂD 2: 4 OUTPUT CARDS
+            ================================================================ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <OutputCard
                 label="Reciclabile"
-                badgeColor="bg-emerald-500"
+                icon={<Recycle className="w-4 h-4 text-white" />}
                 value={formatNumberRO(data.outputs.recycling.sent)}
                 percentage={`${data.outputs.percentages.recycling}% din total TMB`}
-                percentageFromTotal={data.outputs.percentages.recycling}
+                percentageValue={data.outputs.percentages.recycling}
                 sent={formatNumberRO(data.outputs.recycling.sent)}
                 accepted={formatNumberRO(data.outputs.recycling.accepted)}
                 acceptanceRate={data.outputs.recycling.acceptance_rate}
                 gradient="from-emerald-500 to-teal-600"
+                badgeColor="bg-emerald-500"
                 onReportClick={() => navigate('/reports/tmb?view=recycling')}
               />
-
               <OutputCard
                 label="Valorificare energetică"
-                badgeColor="bg-red-500"
+                icon={<Zap className="w-4 h-4 text-white" />}
                 value={formatNumberRO(data.outputs.recovery.sent)}
                 percentage={`${data.outputs.percentages.recovery}% din total TMB`}
-                percentageFromTotal={data.outputs.percentages.recovery}
+                percentageValue={data.outputs.percentages.recovery}
                 sent={formatNumberRO(data.outputs.recovery.sent)}
                 accepted={formatNumberRO(data.outputs.recovery.accepted)}
                 acceptanceRate={data.outputs.recovery.acceptance_rate}
-                gradient="from-red-500 to-rose-600"
+                gradient="from-orange-500 to-red-600"
+                badgeColor="bg-orange-500"
                 onReportClick={() => navigate('/reports/tmb?view=recovery')}
               />
-
               <OutputCard
                 label="Depozitat"
-                badgeColor="bg-purple-500"
+                icon={<Package className="w-4 h-4 text-white" />}
                 value={formatNumberRO(data.outputs.disposal.sent)}
                 percentage={`${data.outputs.percentages.disposal}% din total TMB`}
-                percentageFromTotal={data.outputs.percentages.disposal}
+                percentageValue={data.outputs.percentages.disposal}
                 sent={formatNumberRO(data.outputs.disposal.sent)}
                 accepted={formatNumberRO(data.outputs.disposal.accepted)}
                 acceptanceRate={data.outputs.disposal.acceptance_rate}
                 gradient="from-purple-500 to-violet-600"
+                badgeColor="bg-purple-500"
                 onReportClick={() => navigate('/reports/tmb?view=disposal')}
               />
-
+              {/* Card stoc */}
               <div className="group relative">
-                <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
-                              rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
-                              hover:border-amber-300 dark:hover:border-amber-500/50
+                <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                              rounded-[24px] p-5 border border-gray-200 dark:border-gray-700/50
+                              hover:border-gray-300 dark:hover:border-gray-600
                               hover:-translate-y-1 hover:shadow-xl
                               transition-all duration-300 overflow-hidden">
-
                   <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
                                 bg-gradient-to-b from-amber-500 to-orange-600
                                 group-hover:w-1.5 transition-all duration-300" />
-
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600
-                                opacity-[0.02] dark:opacity-[0.04]
-                                group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
+                                opacity-[0.02] dark:opacity-[0.04] group-hover:opacity-[0.06]
                                 transition-opacity duration-500" />
-
                   <div className="relative z-10">
-                    <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-4">
-                      Stoc/Diferență
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-amber-500 to-orange-600
+                                    flex items-center justify-center shadow-md">
+                        <BarChart3 className="w-4 h-4 text-white" />
+                      </div>
+                      <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Stoc / Diferență
+                      </p>
+                    </div>
+                    <p className="text-2xl font-black bg-gradient-to-r from-amber-500 to-orange-600
+                                bg-clip-text text-transparent mb-1">
+                      {formatNumberRO(data.summary.stock_difference)}
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ml-1">t</span>
                     </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 
-                                bg-clip-text text-transparent mb-2">
-                      {formatNumberRO(data.summary.stock_difference)} tone
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                       {((parseFloat(data.summary.stock_difference) / parseFloat(data.summary.total_tmb_input)) * 100).toFixed(2)}% din total TMB
                     </p>
+                    <ProgressBar
+                      value={((parseFloat(data.summary.stock_difference) / parseFloat(data.summary.total_tmb_input)) * 100)}
+                      gradient="from-amber-500 to-orange-600"
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* BOTTOM ROW - CHART + TABLE */}
+            {/* ================================================================
+                RÂD 3: GRAFIC SECTOARE (stânga) + TABEL OPERATORI (dreapta)
+            ================================================================ */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              {/* SECTOR DISTRIBUTION CHART */}
-              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
-                            border border-gray-200 dark:border-gray-700/50 p-6 
-                            shadow-sm dark:shadow-none">
-                
-                {/* HEADER cu Switcher */}
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                    Distribuția pe sectoare
-                  </h3>
+              {/* GRAFIC DISTRIBUȚIE SECTOARE */}
+              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                            rounded-[28px] border border-gray-200 dark:border-gray-700/50
+                            p-6 shadow-sm dark:shadow-none flex flex-col">
 
-                  {/* SWITCHER Area/Bare/Linie */}
-                  <div className="flex gap-2">
-                    {[
-                      { type: 'area', label: 'Area', icon: '📊' },
-                      { type: 'bar', label: 'Bare', icon: '📊' },
-                      { type: 'line', label: 'Linie', icon: '📈' }
-                    ].map(({ type, label }) => (
-                      <button
-                        key={type}
-                        onClick={() => setChartType2(type)}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 
-                                  ${chartType2 === type
-                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg scale-105'
-                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                          }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                      Distribuția pe sectoare
+                    </h3>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5" />
+                      Tratate vs. Depozitate per sector
+                    </p>
                   </div>
+                  <ChartSwitcher
+                    value={chartType2}
+                    onChange={setChartType2}
+                    options={chartOptions}
+                    colorActive="from-cyan-500 to-blue-600"
+                  />
                 </div>
 
-                {/* CHART */}
-                <ResponsiveContainer width="100%" height={350}>
-                  {renderChart2()}
-                </ResponsiveContainer>
-
-                {/* CARDURI SUB GRAFIC - 4 STATS */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700/50">
-                  
-                  {/* Card 1: TOTAL DEPOZITATE */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-600 
-                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
-                    <div className="relative p-4 rounded-[20px] border border-red-200 dark:border-red-500/20
-                                  hover:border-red-300 dark:hover:border-red-500/40 transition-all">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-red-500 to-rose-600 
-                                      flex items-center justify-center shadow-md">
-                          <Trash2 className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
-                          Total Depozitate
-                        </span>
-                      </div>
-                      <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                        {formatNumberRO(sectorPieData.reduce((sum, s) => sum + (s.depozitate || 0), 0))}
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                        tone
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card 2: TOTAL TRATATE */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 
-                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
-                    <div className="relative p-4 rounded-[20px] border border-cyan-200 dark:border-cyan-500/20
-                                  hover:border-cyan-300 dark:hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-cyan-500 to-blue-600 
-                                      flex items-center justify-center shadow-md">
-                          <Factory className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
-                          Total Tratate
-                        </span>
-                      </div>
-                      <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
-                        {formatNumberRO(sectorPieData.reduce((sum, s) => sum + (s.tratate || 0), 0))}
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                        tone
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card 3: RATA TRATARE */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 
-                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
-                    <div className="relative p-4 rounded-[20px] border border-violet-200 dark:border-violet-500/20
-                                  hover:border-violet-300 dark:hover:border-violet-500/40 transition-all">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-violet-500 to-purple-600 
-                                      flex items-center justify-center shadow-md">
-                          <Activity className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
-                          Rată Tratare
-                        </span>
-                      </div>
-                      <p className="text-xl font-bold text-violet-600 dark:text-violet-400">
-                        {(() => {
-                          const totalTratate = sectorPieData.reduce((sum, s) => sum + (s.tratate || 0), 0);
-                          const totalDepozitate = sectorPieData.reduce((sum, s) => sum + (s.depozitate || 0), 0);
-                          const total = totalTratate + totalDepozitate;
-                          return total > 0 ? ((totalTratate / total) * 100).toFixed(1) : '0.0';
-                        })()}%
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                        din total
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card 4: SECTOR LIDER */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 
-                                  rounded-[20px] opacity-5 group-hover:opacity-10 transition-opacity" />
-                    <div className="relative p-4 rounded-[20px] border border-cyan-200 dark:border-cyan-500/20
-                                  hover:border-cyan-300 dark:hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-cyan-500 to-blue-600 
-                                      flex items-center justify-center shadow-md">
-                          <span className="text-white text-sm font-bold">🏆</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase">
-                          Sector Lider
-                        </span>
-                      </div>
-                      <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
-                        {(() => {
-                          const leader = sectorPieData.reduce((max, s) => 
-                            (s.tratate || 0) > (max.tratate || 0) ? s : max, 
-                            sectorPieData[0] || {}
-                          );
-                          return leader.name || '-';
-                        })()}
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                        {(() => {
-                          const leader = sectorPieData.reduce((max, s) => 
-                            (s.tratate || 0) > (max.tratate || 0) ? s : max, 
-                            sectorPieData[0] || {}
-                          );
-                          return formatNumberRO(leader.tratate || 0) + ' t';
-                        })()}
-                      </p>
-                    </div>
-                  </div>
-
+                <div className="flex-1" style={{minHeight: 0}}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    {renderSectorChart()}
+                  </ResponsiveContainer>
                 </div>
+
               </div>
 
-              {/* OPERATORS TABLE */}
-              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[28px] 
-                            border border-gray-200 dark:border-gray-700/50 p-6 
-                            shadow-sm dark:shadow-none">
-                <h3 className="text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 
-                            bg-clip-text text-transparent mb-6">
+              {/* OPERATORI — tabel compact grupat pe sector, un singur tabel cu thead sticky */}
+              <div className="bg-white dark:bg-gray-800/50 backdrop-blur-xl
+                            rounded-[28px] border border-gray-200 dark:border-gray-700/50
+                            p-6 shadow-sm dark:shadow-none flex flex-col">
+
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
                   Cantități gestionate de operatori
                 </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="border-b border-gray-200 dark:border-gray-700">
-                      <tr className="text-left text-xs text-gray-600 dark:text-gray-400">
-                        <th className="pb-3 font-bold uppercase tracking-wider">Sector</th>
-                        <th className="pb-3 font-bold uppercase tracking-wider">Operator</th>
-                        <th className="pb-3 font-bold uppercase tracking-wider text-right">TMB</th>
-                        <th className="pb-3 font-bold uppercase tracking-wider text-right">Depozitat</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {data.operators && data.operators.slice(0, 6).map((op, idx) => {
-                        const sectorNum = Array.isArray(op.sector_numbers) && op.sector_numbers.length
-                          ? op.sector_numbers[0]
-                          : null;
 
-                        const badgeClass = getSectorBadgeClass(sectorNum || 1);
-                        const tooltip = Array.isArray(op.sector_numbers) && op.sector_numbers.length
-                          ? `Sectoare: ${op.sector_numbers.join(", ")}`
-                          : '';
+                {(() => {
+                  const operators = data.operators || [];
+                  const totalTmb = operators.reduce((s, op) => s + (parseFloat(op.tmb_total_tons) || 0), 0);
+                  const totalLandfill = operators.reduce((s, op) => s + (parseFloat(op.landfill_total_tons) || 0), 0);
 
-                        return (
-                          <tr key={idx} className="group hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-all">
-                            <td className="py-4">
-                              <div
-                                className={`w-8 h-8 rounded-[12px] ${badgeClass}
-                                          flex items-center justify-center text-white text-xs font-bold
-                                          shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all`}
-                                title={tooltip}
-                              >
-                                {sectorNum ?? "-"}
-                              </div>
-                            </td>
-                            <td className="py-4">
-                              <span className="text-gray-900 dark:text-white font-medium">
-                                {op.name}
-                              </span>
-                            </td>
-                            <td className="py-4 text-right">
-                              <div className="text-emerald-600 dark:text-emerald-400 font-bold">
-                                {formatNumberRO(op.tmb_total_tons)} t
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {op.tmb_percent}%
-                              </div>
-                            </td>
-                            <td className="py-4 text-right">
-                              <div className="text-red-600 dark:text-red-400 font-bold">
-                                {formatNumberRO(op.landfill_total_tons)} t
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {op.landfill_percent}%
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    
-                    {/* FOOTER cu TOTALE */}
-                    <tfoot className="border-t-2 border-gray-300 dark:border-gray-600">
-                      <tr className="bg-gray-50 dark:bg-gray-900/30">
-                        <td colSpan="2" className="py-4 pl-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-[12px] bg-gradient-to-br from-indigo-500 to-purple-600
-                                          flex items-center justify-center text-white text-xs font-bold shadow-lg">
-                              Σ
-                            </div>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">
-                              TOTAL GENERAL
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="text-cyan-600 dark:text-cyan-400 font-bold text-base">
-                            {formatNumberRO(
-                              data.operators.reduce((sum, op) => sum + (parseFloat(op.tmb_total_tons) || 0), 0)
-                            )} t
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
-                            100%
-                          </div>
-                        </td>
-                        <td className="py-4 text-right pr-4">
-                          <div className="text-red-600 dark:text-red-400 font-bold text-base">
-                            {formatNumberRO(
-                              data.operators.reduce((sum, op) => sum + (parseFloat(op.landfill_total_tons) || 0), 0)
-                            )} t
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
-                            100%
-                          </div>
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                  const grouped = {};
+                  operators.forEach(op => {
+                    const sNum = Array.isArray(op.sector_numbers) && op.sector_numbers.length
+                      ? op.sector_numbers[0] : 0;
+                    if (!grouped[sNum]) grouped[sNum] = [];
+                    grouped[sNum].push(op);
+                  });
+
+                  const pct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+
+                  return (
+                    <div className="flex flex-col min-h-0">
+                      {/* SCROLL WRAPPER — un singur tabel, thead sticky */}
+                      <div className="overflow-y-auto max-h-[360px] pr-1
+                                      scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600
+                                      scrollbar-track-transparent">
+                        <table className="w-full table-fixed">
+                          <colgroup>
+                            <col className="w-8" />
+                            <col />
+                            <col className="w-[115px]" />
+                            <col className="w-[115px]" />
+                          </colgroup>
+
+                          <thead className="sticky top-0 z-10 bg-white dark:bg-gray-800">
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                              <th className="pb-2 text-left text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"></th>
+                              <th className="pb-2 text-left text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Operator</th>
+                              <th className="pb-2 text-right text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">TMB</th>
+                              <th className="pb-2 text-right text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider">Depozitat</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {Object.keys(grouped).map(Number).sort((a, b) => a - b).flatMap(sNum => {
+                              const ops = grouped[sNum];
+                              const badge = (sectorColorThemes[sNum] || sectorColorThemes[1]).badge;
+                              const sectorTmb      = ops.reduce((s, op) => s + (parseFloat(op.tmb_total_tons) || 0), 0);
+                              const sectorLandfill = ops.reduce((s, op) => s + (parseFloat(op.landfill_total_tons) || 0), 0);
+
+                              return [
+                                // ── HEADER SECTOR ──
+                                <tr key={`s-${sNum}`} className="bg-gray-50/80 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700/50">
+                                  <td className="py-1.5">
+                                    <div className={`w-6 h-6 rounded-[8px] ${badge} flex items-center justify-center text-white text-[10px] font-bold shadow-sm`}>
+                                      {sNum}
+                                    </div>
+                                  </td>
+                                  <td className="py-1.5">
+                                    <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                      Sector {sNum}
+                                      <span className="normal-case font-normal ml-1 text-gray-400 dark:text-gray-500">· {ops.length} op.</span>
+                                    </span>
+                                  </td>
+                                  <td className="py-1.5 text-right">
+                                    <span className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400">{formatNumberRO(sectorTmb)} t</span>
+                                  </td>
+                                  <td className="py-1.5 text-right">
+                                    <span className="text-[11px] font-bold text-red-500 dark:text-red-400">{formatNumberRO(sectorLandfill)} t</span>
+                                  </td>
+                                </tr>,
+
+                                // ── OPERATORI ──
+                                ...ops.map((op, i) => (
+                                  <tr key={`op-${sNum}-${i}`}
+                                    className="border-t border-gray-100 dark:border-gray-700/30
+                                              hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                                    <td className="py-1.5">
+                                      <div className="flex justify-center">
+                                        <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-br ${badge} opacity-50`} />
+                                      </div>
+                                    </td>
+                                    <td className="py-1.5 pr-2">
+                                      <span className="text-xs text-gray-700 dark:text-gray-300 truncate block">
+                                        {op.name}
+                                      </span>
+                                    </td>
+                                    <td className="py-1.5 text-right">
+                                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{formatNumberRO(op.tmb_total_tons)} t</span>
+                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.tmb_total_tons)||0, totalTmb + totalLandfill)}%</span>
+                                    </td>
+                                    <td className="py-1.5 text-right">
+                                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{formatNumberRO(op.landfill_total_tons)} t</span>
+                                      <span className="block text-[9px] text-gray-400">{pct(parseFloat(op.landfill_total_tons)||0, totalTmb + totalLandfill)}%</span>
+                                    </td>
+                                  </tr>
+                                )),
+                              ];
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* TOTAL — fix sub scroll */}
+                      <div className="border-t-2 border-gray-200 dark:border-gray-600 mt-2 pt-2">
+                        <table className="w-full table-fixed">
+                          <colgroup>
+                            <col className="w-8" />
+                            <col />
+                            <col className="w-[115px]" />
+                            <col className="w-[115px]" />
+                          </colgroup>
+                          <tbody>
+                            <tr>
+                              <td>
+                                <div className="w-6 h-6 rounded-[8px] bg-gradient-to-br from-indigo-500 to-purple-600
+                                              flex items-center justify-center text-white text-[10px] font-bold shadow-sm">
+                                  Σ
+                                </div>
+                              </td>
+                              <td>
+                                <span className="text-xs font-bold text-gray-900 dark:text-white">Total general</span>
+                              </td>
+                              <td className="text-right">
+                                <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">{formatNumberRO(totalTmb)} t</span>
+                                <span className="block text-[9px] text-gray-400">{pct(totalTmb, totalTmb + totalLandfill)}% din total</span>
+                              </td>
+                              <td className="text-right">
+                                <span className="text-xs font-bold text-red-500 dark:text-red-400">{formatNumberRO(totalLandfill)} t</span>
+                                <span className="block text-[9px] text-gray-400">{pct(totalLandfill, totalTmb + totalLandfill)}% din total</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </>
@@ -886,141 +893,5 @@ const DashboardTmb = () => {
     </div>
   );
 };
-
-/**
- * ============================================================================
- * STAT CARD - 2026 SAMSUNG/APPLE STYLE
- * ============================================================================
- */
-const StatCard = ({ icon, iconGradient, label, value, subtitle, percentage, percentageColor }) => (
-  <div className="group relative">
-    <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
-                  rounded-[24px] p-5 border border-gray-200 dark:border-gray-700/50
-                  hover:border-gray-300 dark:hover:border-gray-600
-                  hover:-translate-y-1 hover:shadow-xl
-                  transition-all duration-300 overflow-hidden">
-
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
-                    bg-gradient-to-b ${iconGradient}
-                    group-hover:w-1.5 transition-all duration-300`} />
-
-      <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient}
-                    opacity-[0.02] dark:opacity-[0.04]
-                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
-                    transition-opacity duration-500`} />
-
-      <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-[14px] bg-gradient-to-br ${iconGradient}
-                        flex items-center justify-center text-white shadow-lg
-                        group-hover:scale-110 group-hover:rotate-3 transition-all`}>
-            {icon}
-          </div>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {label}
-          </p>
-        </div>
-
-        <p className={`text-2xl font-bold bg-gradient-to-r ${iconGradient} 
-                    bg-clip-text text-transparent mb-1`}>
-          {value}
-        </p>
-
-        <p className="text-[10px] text-gray-500 dark:text-gray-500 mb-2">
-          {subtitle}
-        </p>
-
-        <p className={`text-xs font-bold ${percentageColor}`}>
-          {percentage}
-        </p>
-      </div>
-
-      <div className={`absolute top-4 right-4 w-1.5 h-1.5 rounded-full
-                    bg-gradient-to-br ${iconGradient}
-                    opacity-40 dark:opacity-60 animate-pulse`} />
-    </div>
-  </div>
-);
-
-/**
- * ============================================================================
- * OUTPUT CARD - 2026 SAMSUNG/APPLE STYLE
- * ============================================================================
- */
-const OutputCard = ({ 
-  label, 
-  badgeColor, 
-  value, 
-  percentage, 
-  sent, 
-  accepted, 
-  acceptanceRate, 
-  gradient,
-  percentageFromTotal, // % din total TMB (pentru progress bar)
-  onReportClick // callback pentru click pe Raport
-}) => (
-  <div className="group relative">
-    <div className="relative h-full bg-white dark:bg-gray-800/50 backdrop-blur-xl 
-                  rounded-[24px] p-6 border border-gray-200 dark:border-gray-700/50
-                  hover:border-gray-300 dark:hover:border-gray-600
-                  hover:-translate-y-1 hover:shadow-xl
-                  transition-all duration-300 overflow-hidden">
-
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-[24px]
-                    bg-gradient-to-b ${gradient}
-                    group-hover:w-1.5 transition-all duration-300`} />
-
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}
-                    opacity-[0.02] dark:opacity-[0.04]
-                    group-hover:opacity-[0.04] dark:group-hover:opacity-[0.08]
-                    transition-opacity duration-500`} />
-
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-            {label}
-          </p>
-          <button
-            onClick={onReportClick}
-            className={`px-3 py-1.5 ${badgeColor} text-white text-[10px] font-bold rounded-[10px] shadow-lg
-                      group-hover:scale-110 transition-all cursor-pointer
-                      hover:shadow-xl active:scale-95`}
-          >
-            Raport
-          </button>
-        </div>
-
-        <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} 
-                    bg-clip-text text-transparent mb-2`}>
-          {value} tone
-        </p>
-
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {percentage}
-        </p>
-
-        <div className="space-y-2 text-xs mb-4">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">Trimisă:</span>
-            <span className="font-bold text-gray-900 dark:text-white">{sent} t</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">Acceptată:</span>
-            <span className="font-bold text-gray-900 dark:text-white">{accepted} t</span>
-          </div>
-        </div>
-
-        <div>
-          {/* Progress bar bazat pe % din total TMB, NU rata de acceptare */}
-          <ProgressBar value={parseFloat(percentageFromTotal)} gradient={gradient} />
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
-            <Activity className="w-3 h-3" />
-            Rata acceptare: {acceptanceRate}%
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 export default DashboardTmb;
