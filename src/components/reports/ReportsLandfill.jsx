@@ -24,13 +24,11 @@ import {
 } from '../../services/reportsService';
 
 import { handleExport } from '../../services/exportService';
-import { useToast } from '../../contexts/ToastContext';
 
 const ReportsLandfill = () => {
   // ========================================================================
   // STATE
   // ========================================================================
-  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
@@ -230,13 +228,13 @@ const ReportsLandfill = () => {
     try {
       const response = await deleteLandfillTicket(ticketId);
       if (response.success) {
-        toast.success('Înregistrare ștearsă', 'Operațiunea s-a realizat cu succes.');
+        alert('Înregistrare ștearsă cu succes!');
         fetchReports();
       } else {
-        toast.error('Eroare la ștergere', response.message);
+        alert('Eroare la ștergere: ' + response.message);
       }
     } catch (err) {
-      toast.error('Eroare la ștergere', err.message);
+      alert('Eroare la ștergere: ' + err.message);
     }
   };
 
@@ -278,13 +276,13 @@ const ReportsLandfill = () => {
       const result = await handleExport(format, allTickets, summaryData, filters, 'landfill', sectors);
 
       if (result.success) {
-        toast.success(`Export ${format.toUpperCase()} realizat`, `${allTickets.length} înregistrări exportate cu succes.`);
+        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
       } else {
-        toast.error('Eroare la export', result.error);
+        alert(`❌ Eroare la export: ${result.error}`);
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Eroare la export', error.message);
+      alert(`❌ Eroare la export: ${error.message}`);
     } finally {
       setExporting(false);
     }
@@ -445,8 +443,8 @@ const ReportsLandfill = () => {
                     {supplier.codes && supplier.codes.length > 0 && (
                       <div className="space-y-2">
                         {supplier.codes.map((code, codeIdx) => {
-                          const percentage = summaryData.total_quantity > 0 
-                            ? ((code.quantity / summaryData.total_quantity) * 100).toFixed(1)
+                          const percentage = supplier.total > 0 
+                            ? ((code.quantity / supplier.total) * 100).toFixed(1)
                             : '0.0';
                           return (
                             <div key={codeIdx}>
@@ -454,8 +452,11 @@ const ReportsLandfill = () => {
                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                   {code.code}
                                 </span>
-                                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  {percentage}%
+                                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                                  {formatNumberRO(code.quantity)} t
+                                  <span className="text-slate-500 dark:text-slate-400 ml-1">
+                                    ({percentage}%)
+                                  </span>
                                 </span>
                               </div>
                               <div className="w-full bg-amber-100 dark:bg-amber-800/30 rounded-full h-1.5">
