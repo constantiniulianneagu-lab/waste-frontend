@@ -166,8 +166,9 @@ const RecyclingReportView = ({
                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                   {codeData.code}
                                 </span>
-                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                <span className="text-xs font-medium">
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatNumberRO(codeQty)} t</span>
+                                  <span className="text-gray-500 dark:text-gray-400 ml-1">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -233,8 +234,9 @@ const RecyclingReportView = ({
                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                   {codeData.code}
                                 </span>
-                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> ({codePercent}%)
+                                <span className="text-xs font-medium">
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatNumberRO(codeQty)} t</span>
+                                  <span className="text-gray-500 dark:text-gray-400 ml-1">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">

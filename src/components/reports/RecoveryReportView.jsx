@@ -164,7 +164,7 @@ const RecoveryReportView = ({
                                   {codeData.code}
                                 </span>
                                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                  <span className="font-bold text-rose-600 dark:text-rose-400">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -231,7 +231,7 @@ const RecoveryReportView = ({
                                   {codeData.code}
                                 </span>
                                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                  <span className="font-bold text-rose-600 dark:text-rose-400">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -303,7 +303,7 @@ const RecoveryReportView = ({
                 tickets.map((ticket) => (
                   <React.Fragment key={ticket.id}>
                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-rose-600 dark:text-rose-400">{ticket.ticket_number || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.recipient_name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
@@ -329,7 +329,7 @@ const RecoveryReportView = ({
                           <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</p>
+                              <p className="font-semibold text-rose-600 dark:text-rose-400">{ticket.ticket_number || 'N/A'}</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Data:</span>
@@ -387,7 +387,7 @@ const RecoveryReportView = ({
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2 mt-4 justify-end">
+                          <div className="flex gap-2 mt-4 justify-end border-t border-rose-200 dark:border-rose-800/30 pt-4">
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"

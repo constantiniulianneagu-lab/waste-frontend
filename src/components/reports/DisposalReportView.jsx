@@ -164,7 +164,7 @@ const DisposalReportView = ({
                                   {codeData.code}
                                 </span>
                                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                  <span className="font-bold text-amber-500 dark:text-amber-400">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -231,7 +231,7 @@ const DisposalReportView = ({
                                   {codeData.code}
                                 </span>
                                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  <span className="font-bold">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
+                                  <span className="font-bold text-amber-500 dark:text-amber-400">{formatNumberRO(codeQty)} t</span> <span className="text-gray-600 dark:text-gray-400">({codePercent}%)</span>
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
