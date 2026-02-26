@@ -48,7 +48,7 @@ const ReportsMain = () => {
               className={`
                 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2
                 ${activeTab === 'landfill'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30'
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }
               `}

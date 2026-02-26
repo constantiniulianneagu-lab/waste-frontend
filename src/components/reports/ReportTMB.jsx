@@ -26,10 +26,8 @@ import {
   getAuxiliaryData 
 } from '../../services/reportsService';
 import { handleExport } from '../../services/exportService';
-import { useToast } from '../../contexts/ToastContext';
 
 const ReportTMB = () => {
-  const toast = useToast();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -288,11 +286,11 @@ const ReportTMB = () => {
       if (response.success) {
         await fetchReports();
       } else {
-        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
+        alert(response.message || 'Eroare la ștergerea tichetului');
       }
     } catch (err) {
       console.error('Error deleting ticket:', err);
-      toast.error('Eroare la ștergere', 'A apărut o eroare neașteptată.');
+      alert('A apărut o eroare la ștergerea tichetului');
     }
   };
 
@@ -366,13 +364,13 @@ const ReportTMB = () => {
       const result = await handleExport(format, allTickets, summaryData, filters, activeTab);
 
       if (result.success) {
-        toast.success(`Export ${format.toUpperCase()} realizat`, `${allTickets.length} înregistrări exportate cu succes.`);
+        alert(`✅ Export ${format.toUpperCase()} realizat cu succes!\n\n${allTickets.length} înregistrări exportate.`);
       } else {
-        toast.error('Eroare la export', result.error);
+        alert(`❌ Eroare la export: ${result.error}`);
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Eroare la export', error.message);
+      alert(`❌ Eroare la export: ${error.message}`);
     } finally {
       setExporting(false);
     }
@@ -669,7 +667,7 @@ const ReportTMB = () => {
                 tickets.map((ticket) => (
                   <React.Fragment key={ticket.id}>
                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">{ticket.ticket_number}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">{ticket.ticket_number}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{ticket.supplier_name}</td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -700,7 +698,7 @@ const ReportTMB = () => {
                             {/* Row 1 */}
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet Cântar:</span>
-                              <p className="font-medium text-gray-900 dark:text-white">{ticket.ticket_number}</p>
+                              <p className="font-bold text-slate-600 dark:text-slate-400">{ticket.ticket_number}</p>
                             </div>
                             <div className="text-left">
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Data:</span>
@@ -750,7 +748,7 @@ const ReportTMB = () => {
                             </div>
                           </div>
 
-                          <div className="flex gap-2 mt-4 justify-end">
+                          <div className="flex gap-2 mt-4 justify-end border-t border-emerald-200 dark:border-emerald-800/30 pt-4">
                             <button
                               onClick={() => handleEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"

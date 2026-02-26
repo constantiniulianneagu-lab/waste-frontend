@@ -290,6 +290,7 @@ const RecyclingReportView = ({
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
                 <th className="px-4 py-3 text-left">Nr. Auto</th>
                 <th className="px-4 py-3 text-center">Cant. Livrată</th>
+                <th className="px-4 py-3 text-center">Cant. Acceptată</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
@@ -305,7 +306,7 @@ const RecyclingReportView = ({
                 tickets.map((ticket) => (
                   <React.Fragment key={ticket.id}>
                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.ticket_number || 'N/A'}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{ticket.ticket_number || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(ticket.ticket_date).toLocaleDateString('ro-RO')}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{ticket.supplier_name}</td>
                       <td className="px-4 py-3">
@@ -315,6 +316,7 @@ const RecyclingReportView = ({
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.vehicle_number || 'N/A'}</td>
                       <td className="px-4 py-3 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</td>
+                      <td className="px-4 py-3 text-center text-sm font-semibold text-emerald-800 dark:text-emerald-300">{formatNumberRO(ticket.accepted_quantity_tons)} t</td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{ticket.sector_name}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => onToggleExpand(ticket.id)} className="p-2 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors">
@@ -326,7 +328,7 @@ const RecyclingReportView = ({
                     </tr>
                     {expandedRows.has(ticket.id) && (
                       <tr className="bg-gray-50 dark:bg-gray-800/30">
-                        <td colSpan="8" className="px-4 py-4">
+                        <td colSpan="9" className="px-4 py-4">
                           <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Tichet:</span>
@@ -361,8 +363,12 @@ const RecyclingReportView = ({
                               <p className="font-medium text-gray-900 dark:text-white">{ticket.vehicle_number || 'N/A'}</p>
                             </div>
                             <div>
-                              <span className="text-emerald-600 dark:text-emerald-400 block mb-1 font-medium">Cantitate Livrată:</span>
-                              <p className="font-bold text-emerald-600 dark:text-emerald-400 text-lg">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cantitate Livrată:</span>
+                              <p className="font-semibold text-emerald-600 dark:text-emerald-400">{formatNumberRO(ticket.delivered_quantity_tons)} t</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Cantitate Acceptată:</span>
+                              <p className="font-semibold text-emerald-800 dark:text-emerald-300">{formatNumberRO(ticket.accepted_quantity_tons)} t</p>
                             </div>
                             <div>
                               <span className="text-gray-500 dark:text-gray-400 block mb-1">Creat la:</span>
@@ -378,7 +384,7 @@ const RecyclingReportView = ({
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-2 mt-4 justify-end">
+                          <div className="flex gap-2 mt-4 justify-end border-t border-emerald-200 dark:border-emerald-800/30 pt-4">
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
