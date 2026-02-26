@@ -683,8 +683,8 @@ const ReportsLandfill = () => {
                               </p>
                             </div>
                             <div className="text-left">
-                              <span className="text-amber-700 dark:text-amber-400 block mb-1 font-medium">Greutate Net:</span>
-                              <p className="font-bold text-amber-700 dark:text-amber-400 text-lg">
+                              <span className="text-gray-500 dark:text-gray-400 block mb-1">Greutate Net:</span>
+                              <p className="font-semibold text-amber-700 dark:text-amber-400">
                                 {formatNumberRO(ticket.net_weight_tons)} t
                               </p>
                             </div>
