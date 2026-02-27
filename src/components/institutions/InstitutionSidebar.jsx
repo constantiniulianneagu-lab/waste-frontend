@@ -181,14 +181,14 @@ const InstitutionSidebar = ({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
         onClick={onClose}
       />
       
       {/* Sidebar */}
       <div className={`
         fixed right-0 top-0 h-full w-full max-w-lg
-        bg-white dark:bg-gray-900 shadow-2xl z-50
+        bg-white dark:bg-gray-900 shadow-2xl z-[110]
         transform transition-transform duration-300
         ${isOpen ? 'translate-x-0' : 'translate-x-full'}
         flex flex-col

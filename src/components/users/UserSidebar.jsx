@@ -8,7 +8,6 @@
 import { X, Eye, EyeOff, Save, User } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { INSTITUTION_TYPES } from '../../constants/institutionTypes';
-import { useToast } from '../../contexts/ToastContext';
 
 const UserSidebar = ({
   mode = 'create',
@@ -24,7 +23,6 @@ const UserSidebar = ({
   roleTypes = {},
   roleOrder = [],
 }) => {
-  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   const isEditMode = mode === 'edit';
@@ -108,7 +106,7 @@ const UserSidebar = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.institutionId) {
-      toast.warning('Câmp obligatoriu', 'Vă rugăm să selectați o instituție.');
+      alert('Vă rugăm să selectați o instituție!');
       return;
     }
     onSubmit(formData);
@@ -122,8 +120,8 @@ const UserSidebar = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" onClick={onClose} />
+      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-gray-900 shadow-2xl z-[110] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
