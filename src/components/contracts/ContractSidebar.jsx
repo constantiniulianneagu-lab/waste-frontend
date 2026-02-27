@@ -15,11 +15,9 @@ import {
 import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
-import { useToast } from '../../contexts/ToastContext';
 
 const AMENDMENT_TYPES = [
-  { value: 'EXTENSION', label: 'Modificare perioadă (Prelungire)' },
-  { value: 'TERMINATION', label: 'Încetare contract' },
+  { value: 'EXTENSION', label: 'Modificare perioadă' },
   { value: 'TARIFF_CHANGE', label: 'Modificare tarif' },
   { value: 'QUANTITY_CHANGE', label: 'Modificare cantitate' },
   { value: 'MULTIPLE', label: 'Modificări multiple' },
@@ -43,8 +41,8 @@ const ValidationModal = ({ isOpen, onClose, onConfirm, errors, warnings, loading
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]" onClick={onClose} />
-      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120]" onClick={onClose} />
+      <div className="fixed inset-0 flex items-center justify-center z-[130] p-4">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
           {/* Header */}
           <div className={`px-6 py-4 ${hasErrors ? 'bg-red-50 dark:bg-red-500/10' : 'bg-amber-50 dark:bg-amber-500/10'}`}>
@@ -155,7 +153,6 @@ const ContractSidebar = ({
   sectors = [],
 }) => {
   // Form state
-  const toast = useToast();
   const [formData, setFormData] = useState({
     attribution_type: '', // NEW: first field
     institution_id: '',
@@ -241,7 +238,6 @@ const ContractSidebar = ({
         contract_number: contract.contract_number || '',
         contract_date_start: contract.contract_date_start?.split('T')[0] || '',
         contract_date_end: contract.contract_date_end?.split('T')[0] || '',
-        service_start_date: contract.service_start_date?.split('T')[0] || '',
         notes: contract.notes || '',
         is_active: contract.is_active ?? true,
         sector_id: contract.sector_id || '',
@@ -570,9 +566,9 @@ const ContractSidebar = ({
     setAmendmentForm(prev => ({ ...prev, [name]: value }));
     
     // CALCUL PROPORȚIONAL ÎN TIMP REAL
-    // Când user schimbă new_contract_date_end pentru EXTENSION sau TERMINATION
+    // Când user schimbă new_contract_date_end pentru EXTENSION
     if (name === 'new_contract_date_end' && 
-        (amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION') && 
+        amendmentForm.amendment_type === 'EXTENSION' && 
         value && 
         contract.contract_date_start && 
         contract.contract_date_end) {
@@ -589,45 +585,52 @@ const ContractSidebar = ({
             return null;
           }
           
+          // Găsește ultima dată de prelungire din amendments existente
+          const lastExtensionEnd = amendments
+            .filter(a => a.amendment_type === 'EXTENSION' || a.amendment_type === 'PRELUNGIRE')
+            .filter(a => a.new_contract_date_end)
+            .map(a => new Date(a.new_contract_date_end))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => b - a)[0]; // Ultima dată (cea mai recentă)
+          
+          // Începutul prelungirii = ultima prelungire SAU data originală
+          const extensionStartDate = lastExtensionEnd || originalEnd;
+          
+          if (newEnd <= extensionStartDate) {
+            return null; // Data nouă trebuie să fie după ultima prelungire
+          }
+          
+          // Calcul zile
           const MS_PER_DAY = 1000 * 60 * 60 * 24;
-          // IMPORTANT: totalDays = perioada ORIGINALĂ (pentru rata zilnică)
+          
+          // IMPORTANT: totalDays = perioada ORIGINALĂ (pentru rate zilnic)
           const totalDays = Math.round((originalEnd - originalStart) / MS_PER_DAY);
-          if (totalDays <= 0) return null;
+          
+          // extensionDays = zile de la ultima prelungire până la noua dată
+          const extensionDays = Math.round((newEnd - extensionStartDate) / MS_PER_DAY);
+          
+          if (totalDays <= 0 || extensionDays <= 0) return null;
           
           // Cantitate originală (ÎNTOTDEAUNA din contract inițial)
           const originalQty = contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC'
             ? parseFloat(contract.estimated_quantity_tons || 0)
             : parseFloat(contract.contracted_quantity_tons || 0);
+          
           if (originalQty <= 0) return null;
           
+          // Formula: (cantitate_originală / zile_originale) × zile_noi_prelungire
           const dailyRate = originalQty / totalDays;
+          const proportionalQty = dailyRate * extensionDays;
           
-          if (amendmentForm.amendment_type === 'TERMINATION') {
-            // INCETARE: zile de la start până la data încetării
-            if (newEnd >= originalEnd) return null; // trebuie să fie înainte de end
-            const effectiveDays = Math.round((newEnd - originalStart) / MS_PER_DAY);
-            if (effectiveDays <= 0) return null;
-            const proportionalQty = dailyRate * effectiveDays;
-            console.log(`📊 Calcul INCETARE: ${effectiveDays} zile × ${dailyRate.toFixed(4)} t/zi = ${proportionalQty.toFixed(3)}t`);
-            return Math.round(proportionalQty * 1000) / 1000;
-          } else {
-            // EXTENSION: zile adăugate după ultima prelungire sau după end original
-            const lastExtensionEnd = amendments
-              .filter(a => a.amendment_type === 'EXTENSION' || a.amendment_type === 'PRELUNGIRE')
-              .filter(a => a.new_contract_date_end)
-              .map(a => new Date(a.new_contract_date_end))
-              .filter(d => !isNaN(d.getTime()))
-              .sort((a, b) => b - a)[0];
-            
-            const extensionStartDate = lastExtensionEnd || originalEnd;
-            if (newEnd <= extensionStartDate) return null;
-            
-            const extensionDays = Math.round((newEnd - extensionStartDate) / MS_PER_DAY);
-            if (extensionDays <= 0) return null;
-            const proportionalQty = dailyRate * extensionDays;
-            console.log(`📊 Calcul PRELUNGIRE: ${extensionDays} zile × ${dailyRate.toFixed(4)} t/zi = ${proportionalQty.toFixed(3)}t`);
-            return Math.round(proportionalQty * 1000) / 1000;
-          }
+          console.log('📊 Calcul Proporțional:');
+          console.log(`  - Perioadă originală: ${totalDays} zile (${originalQty}t)`);
+          console.log(`  - Rate zilnic: ${dailyRate.toFixed(4)} t/zi`);
+          console.log(`  - Prelungire de la: ${extensionStartDate.toISOString().split('T')[0]}`);
+          console.log(`  - Prelungire până la: ${newEnd.toISOString().split('T')[0]}`);
+          console.log(`  - Zile adăugate: ${extensionDays} zile`);
+          console.log(`  - Cantitate calculată: ${proportionalQty.toFixed(3)}t`);
+          
+          return Math.round(proportionalQty * 1000) / 1000; // 3 decimale
         } catch (err) {
           console.error('Proportional calculation error:', err);
           return null;
@@ -714,7 +717,7 @@ const ContractSidebar = ({
 
   const handleSaveAmendment = async () => {
     if (!amendmentForm.amendment_number || !amendmentForm.amendment_date) {
-      toast.warning('Câmpuri obligatorii', 'Numărul și data actului adițional sunt obligatorii.');
+      alert('Numărul și data sunt obligatorii');
       return;
     }
     
@@ -766,17 +769,17 @@ const ContractSidebar = ({
             ? 'new_estimated_quantity_tons' 
             : 'new_contracted_quantity_tons';
           const calculatedQty = response.data[qtyField];
-          toast.success('Act adițional salvat', `Cantitate calculată automat: ${calculatedQty} tone (proporțional cu perioada de prelungire).`);
+          alert(`✅ Act adițional salvat cu succes!\n\n💡 Cantitate calculată automat: ${calculatedQty} tone\n(proporțional cu perioada de prelungire)`);
         }
         
         setAmendmentForm(null);
         loadAmendments();
       } else {
-        toast.error('Eroare la salvare', response.message || 'A apărut o eroare.');
+        alert(response.message || 'Eroare la salvare');
       }
     } catch (err) {
       console.error('Save amendment error:', err);
-      toast.error('Eroare la salvare', 'A apărut o eroare neașteptată.');
+      alert('Eroare la salvare');
     } finally {
       setSavingAmendment(false);
     }
@@ -808,7 +811,7 @@ const ContractSidebar = ({
       if (response.success) {
         loadAmendments();
       } else {
-        toast.error('Eroare la ștergere', response.message || 'A apărut o eroare.');
+        alert(response.message || 'Eroare la ștergere');
       }
     } catch (err) {
       console.error('Delete amendment error:', err);
@@ -862,10 +865,10 @@ const ContractSidebar = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" onClick={onClose} />
       
       {/* Sidebar */}
-      <div className={`fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+      <div className={`fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[110] transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
@@ -1527,10 +1530,10 @@ const ContractSidebar = ({
                                 </select>
                               </div>
 
-                              {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION' || amendmentForm.amendment_type === 'MULTIPLE') && (
+                              {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'MULTIPLE') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    {amendmentForm.amendment_type === 'TERMINATION' ? 'Data Încetare Contract' : 'Nouă Dată Sfârșit'}
+                                    Nouă Dată Sfârșit
                                   </label>
                                   <input
                                     type="date"
@@ -1543,12 +1546,6 @@ const ContractSidebar = ({
                                     <p className="mt-1.5 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-1">
                                       <span className="mt-0.5">💡</span>
                                       <span>Pentru prelungiri, cantitatea se calculează automat proporțional cu perioada dacă nu este specificată manual.</span>
-                                    </p>
-                                  )}
-                                  {amendmentForm.amendment_type === 'TERMINATION' && (
-                                    <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-start gap-1">
-                                      <span className="mt-0.5">💡</span>
-                                      <span>Cantitatea efectivă se calculează automat proporțional cu perioada de la start până la data încetării.</span>
                                     </p>
                                   )}
                                 </div>
@@ -1587,12 +1584,12 @@ const ContractSidebar = ({
                                 </div>
                               )}
 
-                              {(amendmentForm.amendment_type === 'QUANTITY_CHANGE' || amendmentForm.amendment_type === 'MULTIPLE' || amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION') && (
+                              {(amendmentForm.amendment_type === 'QUANTITY_CHANGE' || amendmentForm.amendment_type === 'MULTIPLE' || amendmentForm.amendment_type === 'EXTENSION') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    {amendmentForm.amendment_type === 'TERMINATION' ? 'Cantitate Efectivă (tone)' : 'Nouă Cantitate (tone)'}
-                                    {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION') && (
-                                      <span className="text-gray-500 ml-1.5">(opțional - se calculează automat)</span>
+                                    Nouă Cantitate (tone)
+                                    {amendmentForm.amendment_type === 'EXTENSION' && (
+                                      <span className="text-gray-500 ml-1.5">(opțional)</span>
                                     )}
                                   </label>
                                   <input
