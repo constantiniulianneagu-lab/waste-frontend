@@ -370,9 +370,12 @@ export const exportToPDF = (tickets, summaryData, filters, reportType = 'landfil
 
     doc.setFontSize(10);
     meta.forEach(([label, val]) => {
+      // Label — bold (helvetica, fara diacritice, OK)
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(50, 50, 50);
       doc.text(label, LINE_START, y);
+      // Valoare — DejaVuSans normal (suporta diacritice: București, etc.)
+      doc.setFont('DejaVuSans', 'normal');
       doc.setTextColor(20, 20, 20);
       doc.text(val, LINE_START + 38, y);
       y += 6;
