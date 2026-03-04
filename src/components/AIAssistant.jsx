@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Bot, Minimize2, Maximize2, Trash2, Sparkles } from 'lucide-react';
-import apiClient from '../api/apiClient';
+import { apiClient } from '../api/apiClient';
 
 // ── Sugestii rapide ──────────────────────────────────────────────────────────
 const SUGGESTIONS = [
