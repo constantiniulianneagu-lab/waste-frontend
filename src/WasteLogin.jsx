@@ -70,7 +70,11 @@ const WasteLogin = () => {
         }
         
         login(data.data.user, accessToken, refreshToken);
-        navigate('/', { replace: true });
+        if (data.data.user?.mustChangePassword) {
+          navigate('/change-password', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } else {
         setError(data.message || 'Login failed');
       }
@@ -357,8 +361,19 @@ const WasteLogin = () => {
               </button>
             </form>
 
+            {/* Am uitat parola */}
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors hover:underline"
+              >
+                Am uitat parola
+              </button>
+            </div>
+
             {/* Footer text */}
-            <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">
+            <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">
               SAMD © 2026 - Sistem Avansat de Monitorizare Deșeuri
             </p>
           </div>
