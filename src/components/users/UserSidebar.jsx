@@ -54,17 +54,18 @@ const UserSidebar = ({
   }, [isInstitutionAdmin, myInstitutionId]);
 
   const filteredInstitutions = useMemo(() => {
-    const role = formData?.role;
+    const role = formData?.role || '';
     if (role === 'PLATFORM_ADMIN') {
       return institutions.filter((i) => Number(i.id) === 100 || i.type === INSTITUTION_TYPES.ASSOCIATION);
     }
-    if (role === 'ADMIN_INSTITUTION') {
+    if (role === 'ADMIN_INSTITUTION' || role === 'EDITOR_INSTITUTION') {
       return institutions.filter((i) => i.type === INSTITUTION_TYPES.MUNICIPALITY);
     }
     if (role === 'REGULATOR_VIEWER') {
       return institutions.filter((i) => i.type === INSTITUTION_TYPES.REGULATOR);
     }
-    return institutions;
+    // Fallback: dacă rolul nu e recunoscut, arată doar MUNICIPALITY
+    return institutions.filter((i) => i.type === INSTITUTION_TYPES.MUNICIPALITY);
   }, [institutions, formData?.role]);
 
   useEffect(() => {
