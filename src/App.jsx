@@ -74,8 +74,8 @@ function App() {
       reports: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
       users: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
       institutions: ["PLATFORM_ADMIN"],
-      contracts: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION"],
-      sectorStats: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION"],
+      contracts: ["PLATFORM_ADMIN", "ADMIN_INSTITUTION", "EDITOR_INSTITUTION", "REGULATOR_VIEWER"],
+      sectorStats: ["PLATFORM_ADMIN"],
     }),
     []
   );
