@@ -27,6 +27,7 @@ import ContractsPage from "./pages/ContractsPage";
 import InstitutionsPage from "./pages/InstitutionsPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
@@ -200,9 +201,10 @@ function App() {
             }
           />
 
-          {/* FORGOT / RESET PASSWORD */}
+          {/* FORGOT / RESET / CHANGE PASSWORD */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/change-password" element={<ChangePassword />} />
 
           <Route
             path="*"
