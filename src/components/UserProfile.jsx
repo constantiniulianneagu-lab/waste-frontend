@@ -527,10 +527,12 @@ const UserProfile = () => {
         </div>
 
 
-        {/* ✅ CONTRACTE ACTIVE - vizibil pentru toți utilizatorii */}
+        {/* ✅ CONTRACTE ACTIVE - ascuns pentru REGULATOR_VIEWER */}
+        {currentUser?.role !== 'REGULATOR_VIEWER' && (
         <ProfileContracts
           userRole={currentUser?.role}
         />
+        )}
       </div>
 
       {/* SIDEBAR EDITARE - Modern glassmorphism */}

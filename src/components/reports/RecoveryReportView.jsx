@@ -13,6 +13,9 @@ const RecoveryReportView = ({
   onToggleExpand,
   onEdit,
   onDelete,
+  canCreate = false,
+  canEdit = false,
+  canDelete = false,
   onPageChange,
   onPerPageChange,
   onExport,
@@ -261,6 +264,7 @@ const RecoveryReportView = ({
               Tichete Valorificare ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
+              {canCreate && (
               <button
                 onClick={onCreate}
                 className="px-4 py-2 text-sm font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
@@ -268,6 +272,7 @@ const RecoveryReportView = ({
                 <Plus className="w-4 h-4" />
                 Adaugă tichet
               </button>
+              )}
               <ExportDropdown
                 onExport={onExport}
                 disabled={exporting || !tickets || tickets.length === 0}
@@ -388,6 +393,7 @@ const RecoveryReportView = ({
                             </div>
                           </div>
                           <div className="flex gap-2 mt-4 justify-end border-t border-rose-200 dark:border-rose-800/30 pt-4">
+                            {canEdit && (
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -397,6 +403,8 @@ const RecoveryReportView = ({
                               </svg>
                               Editează
                             </button>
+                            )}
+                            {canDelete && (
                             <button
                               onClick={() => onDelete(ticket.id)}
                               className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -406,6 +414,7 @@ const RecoveryReportView = ({
                               </svg>
                               Șterge
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>

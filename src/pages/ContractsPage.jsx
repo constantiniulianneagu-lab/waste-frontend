@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { useSearchParams } from 'react-router-dom';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api/apiClient';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -97,10 +98,7 @@ const ContractsPage = () => {
   const [exporting, setExporting] = useState(false);
 
   const { user } = useAuth();
-  const isPlatformAdmin = user?.role === 'PLATFORM_ADMIN';
-  const canCreateData = isPlatformAdmin;
-  const canEditData   = isPlatformAdmin;
-  const canDeleteData = isPlatformAdmin;
+  const { canCreateData, canEditData, canDeleteData, isPlatformAdmin } = usePermissions();
 
   useEffect(() => {
     loadReferenceData();

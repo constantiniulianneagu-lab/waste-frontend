@@ -13,6 +13,9 @@ const RejectedReportView = ({
   onToggleExpand,
   onEdit,
   onDelete,
+  canCreate = false,
+  canEdit = false,
+  canDelete = false,
   onPageChange,
   onPerPageChange,
   onCreate,
@@ -229,6 +232,7 @@ const RejectedReportView = ({
               Tichete Refuzate/Neacceptate ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
+              {canCreate && (
               <button
                 onClick={onCreate}
                 className="px-4 py-2 text-sm font-medium bg-zinc-700 hover:bg-zinc-800 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
@@ -236,6 +240,7 @@ const RejectedReportView = ({
                 <Plus className="w-4 h-4" />
                 Adaugă tichet
               </button>
+              )}
               <ExportDropdown
                 onExport={onExport}
                 disabled={exporting || !tickets || tickets.length === 0}
@@ -350,6 +355,7 @@ const RejectedReportView = ({
                             </div>
                           </div>
                           <div className="flex gap-2 mt-4 justify-end">
+                            {canEdit && (
                             <button
                               onClick={() => onEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -359,6 +365,8 @@ const RejectedReportView = ({
                               </svg>
                               Editează
                             </button>
+                            )}
+                            {canDelete && (
                             <button
                               onClick={() => onDelete(ticket.id)}
                               className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -368,6 +376,7 @@ const RejectedReportView = ({
                               </svg>
                               Șterge
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { usePermissions } from '../../hooks/usePermissions';
 import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, Plus } from 'lucide-react';
 import ReportsFilters from './ReportsFilters';
@@ -28,6 +29,7 @@ import {
 import { handleExport } from '../../services/exportService';
 
 const ReportTMB = () => {
+  const { canCreateData, canEditData, canDeleteData } = usePermissions();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -626,6 +628,7 @@ const ReportTMB = () => {
               Tichete TMB ({pagination?.total_count || 0})
             </h3>
             <div className="flex gap-3">
+              {canCreateData && (
               <button
                 onClick={handleCreate}
                 className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
@@ -633,6 +636,7 @@ const ReportTMB = () => {
                 <Plus className="w-4 h-4" />
                 Adaugă tichet
               </button>
+              )}
               <ExportDropdown
                 onExport={handleExportClick}
                 disabled={exporting || !tickets || tickets.length === 0}
@@ -749,6 +753,7 @@ const ReportTMB = () => {
                           </div>
 
                           <div className="flex gap-2 mt-4 justify-end border-t border-emerald-200 dark:border-emerald-800/30 pt-4">
+                            {canEditData && (
                             <button
                               onClick={() => handleEdit(ticket)}
                               className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -758,7 +763,8 @@ const ReportTMB = () => {
                               </svg>
                               Editează
                             </button>
-
+                            )}
+                            {canDeleteData && (
                             <button
                               onClick={() => handleDelete(ticket.id)}
                               className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors shadow-sm flex items-center gap-1"
@@ -768,6 +774,7 @@ const ReportTMB = () => {
                               </svg>
                               Șterge
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -839,6 +846,9 @@ const ReportTMB = () => {
           onDelete={handleDelete}
           onCreate={handleCreate}
           onExport={handleExportClick}
+          canCreate={canCreateData}
+          canEdit={canEditData}
+          canDelete={canDeleteData}
           exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
@@ -870,6 +880,9 @@ const ReportTMB = () => {
           onDelete={handleDelete}
           onCreate={handleCreate}
           onExport={handleExportClick}
+          canCreate={canCreateData}
+          canEdit={canEditData}
+          canDelete={canDeleteData}
           exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
@@ -901,6 +914,9 @@ const ReportTMB = () => {
           onDelete={handleDelete}
           onCreate={handleCreate}
           onExport={handleExportClick}
+          canCreate={canCreateData}
+          canEdit={canEditData}
+          canDelete={canDeleteData}
           exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
@@ -932,6 +948,9 @@ const ReportTMB = () => {
           onDelete={handleDelete}
           onCreate={handleCreate}
           onExport={handleExportClick}
+          canCreate={canCreateData}
+          canEdit={canEditData}
+          canDelete={canDeleteData}
           exporting={exporting}
           onPageChange={handlePageChange}
           onPerPageChange={handlePerPageChange}
