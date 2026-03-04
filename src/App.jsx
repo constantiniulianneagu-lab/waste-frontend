@@ -28,6 +28,7 @@ import InstitutionsPage from "./pages/InstitutionsPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
+import AIAssistant from "./components/AIAssistant";
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, loading } = useAuth();
@@ -212,6 +213,7 @@ function App() {
           />
         </Routes>
       </div>
+      {user && <AIAssistant />}
     </div>
   );
 }
