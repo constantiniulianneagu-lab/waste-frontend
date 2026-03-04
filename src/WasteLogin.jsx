@@ -15,7 +15,7 @@
  * ============================================================================
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, Mail, Lock, Eye, EyeOff, AlertCircle, Sparkles, Recycle, TreePine, Leaf } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import ThemeToggle from './components/dashboard/ThemeToggle';
@@ -35,6 +35,15 @@ const WasteLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [inactivityMessage, setInactivityMessage] = useState('');
+
+  useEffect(() => {
+    const reason = sessionStorage.getItem('logoutReason');
+    if (reason === 'inactivity') {
+      setInactivityMessage('Ai fost deconectat automat din cauza inactivității.');
+      sessionStorage.removeItem('logoutReason');
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -199,6 +208,22 @@ const WasteLogin = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Bine ai venit! 👋
             </h2>
+
+            {/* Inactivity message */}
+            {inactivityMessage && (
+              <div className="mb-5 p-4 bg-amber-50 dark:bg-amber-900/30
+                            border border-amber-200 dark:border-amber-800/50
+                            rounded-[16px]
+                            flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[12px] bg-amber-500/10 dark:bg-amber-500/20
+                              flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                  {inactivityMessage}
+                </span>
+              </div>
+            )}
 
             {/* Error message */}
             {error && (
