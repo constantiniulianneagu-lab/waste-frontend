@@ -58,8 +58,12 @@ const UserSidebar = ({
     if (role === 'PLATFORM_ADMIN') {
       return institutions.filter((i) => Number(i.id) === 100 || i.type === INSTITUTION_TYPES.ASSOCIATION);
     }
-    if (role === 'ADMIN_INSTITUTION' || role === 'EDITOR_INSTITUTION') {
+    if (role === 'ADMIN_INSTITUTION') {
       return institutions.filter((i) => i.type === INSTITUTION_TYPES.MUNICIPALITY);
+    }
+    if (role === 'EDITOR_INSTITUTION') {
+      // Editorii sunt doar la nivel de sector (1-6), nu la PMB (id=7)
+      return institutions.filter((i) => i.type === INSTITUTION_TYPES.MUNICIPALITY && Number(i.id) !== 7);
     }
     if (role === 'REGULATOR_VIEWER') {
       return institutions.filter((i) => i.type === INSTITUTION_TYPES.REGULATOR);
