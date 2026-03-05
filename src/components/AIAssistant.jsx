@@ -100,7 +100,7 @@ const AIAssistant = () => {
       setLoading(true);
 
       try {
-        const response = await apiClient('/ai/chat', {
+        const response = await apiClient('/api/ai/chat', {
           method: 'POST',
           body: JSON.stringify({ messages: newMessages }),
         });
