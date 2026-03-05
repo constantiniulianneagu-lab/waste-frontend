@@ -360,6 +360,23 @@ const ContractSidebar = ({
     }
   };
 
+  // Handle service order PDF upload (TMB)
+  const handleServiceOrderPDFChange = (fileData) => {
+    if (fileData) {
+      setFormData(prev => ({
+        ...prev,
+        service_order_file_url: fileData.url,
+        service_order_file_name: fileData.fileName,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        service_order_file_url: '',
+        service_order_file_name: '',
+      }));
+    }
+  };
+
   // Handle view PDF
   const handleViewPDF = (url, fileName) => {
     setPdfViewerUrl(url);
