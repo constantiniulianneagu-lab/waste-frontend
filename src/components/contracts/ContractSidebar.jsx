@@ -464,16 +464,6 @@ const ContractSidebar = ({
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // For TMB: calculate estimated_quantity_tons from annual + contract period
-    let finalFormData = { ...formData };
-    if (contractType === 'TMB' && formData.estimated_quantity_annual && formData.contract_date_start && formData.contract_date_end) {
-      const annual = parseFloat(formData.estimated_quantity_annual) || 0;
-      const start = new Date(formData.contract_date_start);
-      const end = new Date(formData.contract_date_end);
-      const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      finalFormData.estimated_quantity_tons = (annual * days / 365).toFixed(2);
-    }
-
     // Ensure contract_number keeps the required prefix (D- / TMB-)
     const normalizeContractNumber = (type, num) => {
       const raw = (num || '').trim();
@@ -862,12 +852,8 @@ const ContractSidebar = ({
   const calculateTotalValue = () => {
     if (contractType === 'TMB') {
       const t = parseFloat(formData.tariff_per_ton) || 0;
-      const annual = parseFloat(formData.estimated_quantity_annual) || 0;
-      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-      if (!start || !end || end <= start) return t * annual;
-      const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      return t * (annual * days / 365);
+      const q = parseFloat(formData.estimated_quantity_tons) || 0;
+      return t * q;
     } else if (contractType === 'AEROBIC' || contractType === 'ANAEROBIC') {
       const t = parseFloat(formData.tariff_per_ton) || 0;
       const q = parseFloat(formData.estimated_quantity_tons) || 0;
@@ -1131,17 +1117,17 @@ const ContractSidebar = ({
                     </div>
                   </div>
 
-                  {/* ROW 6: Cantitate estimată anual | Cantitate estimată contract (calculată) */}
+                  {/* ROW 6: Cant. estimată contract (manual) | Cant. estimată anual (calculată) */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Cant. estimată anual (tone)
+                        Cant. estimată contract (tone)
                       </label>
                       <input
                         type="number"
                         step="0.01"
-                        name="estimated_quantity_annual"
-                        value={formData.estimated_quantity_annual}
+                        name="estimated_quantity_tons"
+                        value={formData.estimated_quantity_tons}
                         onChange={handleInputChange}
                         disabled={isReadOnly}
                         placeholder="0.00"
@@ -1151,33 +1137,29 @@ const ContractSidebar = ({
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Cant. estimată contract (tone)
+                        Cant. estimată anual (tone)
                       </label>
                       <input
                         type="text"
                         readOnly
                         value={(() => {
-                          const annual = parseFloat(formData.estimated_quantity_annual) || 0;
+                          const qty = parseFloat(formData.estimated_quantity_tons) || 0;
                           const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
                           const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                          if (!annual || !start || !end || end <= start) return '';
+                          if (!qty || !start || !end || end <= start) return '';
                           const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                          return (annual * days / 365).toFixed(2);
+                          return (qty * 365 / days).toFixed(2);
                         })()}
                         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                         placeholder="Calculat automat"
                       />
-                      <p className="mt-1 text-xs text-gray-400">= cant. anual × zile contract / 365</p>
+                      <p className="mt-1 text-xs text-gray-400">= cant. contract × 365 / zile contract</p>
                     </div>
                   </div>
 
                   {/* Valoare Totală */}
-                  {(formData.tariff_per_ton && formData.estimated_quantity_annual && formData.contract_date_start && formData.contract_date_end) && (() => {
-                    const annual = parseFloat(formData.estimated_quantity_annual) || 0;
-                    const start = new Date(formData.contract_date_start);
-                    const end = new Date(formData.contract_date_end);
-                    const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    const qty = annual * days / 365;
+                  {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (() => {
+                    const qty = parseFloat(formData.estimated_quantity_tons) || 0;
                     const val = (parseFloat(formData.tariff_per_ton) || 0) * qty;
                     if (val <= 0) return null;
                     return (

@@ -459,6 +459,32 @@ const ContractViewModal = ({
                 </div>
               )}
 
+              {/* Section: Service Order Document (TMB) */}
+              {contract.service_order_file_url && (
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                    Ordin de Începere
+                  </h3>
+                  <button
+                    onClick={() => handleViewPDF(contract.service_order_file_url, contract.service_order_file_name || 'Ordin_Incepere.pdf')}
+                    className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 rounded-xl border border-blue-100 dark:border-blue-500/20 hover:shadow-md transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {contract.service_order_file_name || 'Ordin_Incepere.pdf'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Click pentru vizualizare
+                      </p>
+                    </div>
+                    <Eye className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                  </button>
+                </div>
+              )}
+
               {/* Section: Notes */}
               {contract.notes && (
                 <div>
