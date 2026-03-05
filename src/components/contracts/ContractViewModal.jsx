@@ -441,20 +441,20 @@ const ContractViewModal = ({
                   </h3>
                   <button
                     onClick={() => handleViewPDF(contract.contract_file_url, contract.contract_file_name || 'Contract.pdf')}
-                    className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-500/10 dark:to-orange-500/10 rounded-xl border border-red-100 dark:border-red-500/20 hover:shadow-md transition-all group"
+                    className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-500/10 dark:to-orange-500/10 rounded-xl border border-red-100 dark:border-red-500/20 hover:shadow-md transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/30">
-                      <FileText className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 shadow shadow-red-500/30">
+                      <FileText className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors truncate">
                         {contract.contract_file_name || 'Contract.pdf'}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         Click pentru vizualizare
                       </p>
                     </div>
-                    <Eye className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                    <Eye className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors flex-shrink-0" />
                   </button>
                 </div>
               )}
@@ -467,20 +467,20 @@ const ContractViewModal = ({
                   </h3>
                   <button
                     onClick={() => handleViewPDF(contract.service_order_file_url, contract.service_order_file_name || 'Ordin_Incepere.pdf')}
-                    className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 rounded-xl border border-blue-100 dark:border-blue-500/20 hover:shadow-md transition-all group"
+                    className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 rounded-xl border border-blue-100 dark:border-blue-500/20 hover:shadow-md transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
-                      <FileText className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow shadow-blue-500/30">
+                      <FileText className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                         {contract.service_order_file_name || 'Ordin_Incepere.pdf'}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         Click pentru vizualizare
                       </p>
                     </div>
-                    <Eye className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                    <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                   </button>
                 </div>
               )}
