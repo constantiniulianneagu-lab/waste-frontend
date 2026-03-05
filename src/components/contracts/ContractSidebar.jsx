@@ -1290,8 +1290,301 @@ const ContractSidebar = ({
               ) : (
                 <div className="space-y-5">
 
+                {/* ================================================================
+                    DISPOSAL FORM - 2 COLUMN COMPACT LAYOUT
+                    ================================================================ */}
+                {contractType === 'DISPOSAL' ? (
+                  <div className="space-y-3">
+
+                    {/* ROW 1: Tip Atribuire - full width */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                        <Gavel className="w-3 h-3 inline mr-1" />
+                        Tip Atribuire <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="attribution_type"
+                        value={formData.attribution_type}
+                        onChange={handleInputChange}
+                        disabled={isReadOnly}
+                        className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.attribution_type ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                      >
+                        <option value="">Selectează tipul de atribuire...</option>
+                        {ATTRIBUTION_TYPES.map(type => (
+                          <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
+                      </select>
+                      {errors.attribution_type && <p className="mt-1 text-xs text-red-600">{errors.attribution_type}</p>}
+                    </div>
+
+                    {/* ROW 2: Operator Depozitare - full width */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                        Operator Depozitare <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="institution_id"
+                        value={formData.institution_id}
+                        onChange={handleInputChange}
+                        disabled={isReadOnly || mode === 'edit'}
+                        className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.institution_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                      >
+                        <option value="">Selectează...</option>
+                        {filteredInstitutions.map(i => (
+                          <option key={i.id} value={i.id}>{i.name}</option>
+                        ))}
+                      </select>
+                      {errors.institution_id && <p className="mt-1 text-xs text-red-600">{errors.institution_id}</p>}
+                    </div>
+
+                    {/* ROW 3: Număr Contract | Data Contract */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Număr Contract <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="contract_number"
+                          value={formData.contract_number}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          placeholder="D-123"
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.contract_number && <p className="mt-1 text-xs text-red-600">{errors.contract_number}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Data Contract <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          name="contract_date_start"
+                          value={formData.contract_date_start}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.contract_date_start ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.contract_date_start && <p className="mt-1 text-xs text-red-600">{errors.contract_date_start}</p>}
+                      </div>
+                    </div>
+
+                    {/* ROW 4: Durată (Data Sfârșit) | Data Începere Serviciu */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Durată (Data Sfârșit)
+                        </label>
+                        <input
+                          type="date"
+                          name="contract_date_end"
+                          value={formData.contract_date_end}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Data Începere Serviciu <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          name="service_start_date"
+                          value={formData.service_start_date}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.service_start_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.service_start_date && <p className="mt-1 text-xs text-red-600">{errors.service_start_date}</p>}
+                      </div>
+                    </div>
+
+                    {/* ROW 5: U.A.T. (Sector) - full width */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                        U.A.T. (Sector) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="sector_id"
+                        value={formData.sector_id}
+                        onChange={handleInputChange}
+                        disabled={isReadOnly}
+                        className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.sector_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                      >
+                        <option value="">Selectează...</option>
+                        {sectors.map(s => (
+                          <option key={s.id} value={s.id}>{s.sector_name}</option>
+                        ))}
+                      </select>
+                      {errors.sector_id && <p className="mt-1 text-xs text-red-600">{errors.sector_id}</p>}
+                    </div>
+
+                    {/* ROW 6: Tarif | Taxa CEC */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Tarif (LEI/t) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number" step="0.01"
+                          name="tariff_per_ton"
+                          value={formData.tariff_per_ton}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          placeholder="0.00"
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.tariff_per_ton ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.tariff_per_ton && <p className="mt-1 text-xs text-red-600">{errors.tariff_per_ton}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Taxa CEC (LEI/t)
+                        </label>
+                        <input
+                          type="number" step="0.01"
+                          name="cec_tax_per_ton"
+                          value={formData.cec_tax_per_ton}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ROW 7: Cant. estimată contract (manual) | Cant. estimată anual (calculată) */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Cant. estimată contract (tone)
+                        </label>
+                        <input
+                          type="number" step="0.01"
+                          name="contracted_quantity_tons"
+                          value={formData.contracted_quantity_tons}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">Introdus manual</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Cant. estimată anual (tone)
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={(() => {
+                            const qty = parseFloat(formData.contracted_quantity_tons) || 0;
+                            const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
+                            const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
+                            if (!qty || !start || !end || end <= start) return '';
+                            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                            return (qty * 365 / days).toFixed(2);
+                          })()}
+                          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                          placeholder="Calculat automat"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">= cant. contract × 365 / zile contract</p>
+                      </div>
+                    </div>
+
+                    {/* Valori estimate */}
+                    {(formData.contracted_quantity_tons && formData.tariff_per_ton) && (() => {
+                      const qty = parseFloat(formData.contracted_quantity_tons) || 0;
+                      const tarif = parseFloat(formData.tariff_per_ton) || 0;
+                      const cec = parseFloat(formData.cec_tax_per_ton) || 0;
+                      const valTarif = tarif * qty;
+                      const valCec = cec * qty;
+                      const valTotal = valTarif + valCec;
+                      if (valTotal <= 0) return null;
+                      const fmt = (v) => new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(v);
+                      return (
+                        <div className="p-3 bg-teal-50 dark:bg-teal-500/10 rounded-lg border border-teal-200 dark:border-teal-500/20 space-y-1.5">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500 dark:text-gray-400">Val. estimată contract:</span>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{fmt(valTarif)}</span>
+                          </div>
+                          {cec > 0 && (
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500 dark:text-gray-400">Val. estimată C.E.C.:</span>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">{fmt(valCec)}</span>
+                            </div>
+                          )}
+                          <div className="pt-1.5 border-t border-teal-200 dark:border-teal-500/30 flex justify-between items-center">
+                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Valoare Totală:</span>
+                            <span className="text-base font-bold text-teal-700 dark:text-teal-400">{fmt(valTotal)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* ROW: Document Contract | Ordin de Începere */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <PDFUpload
+                        label="Document Contract"
+                        value={formData.contract_file_url ? { url: formData.contract_file_url, fileName: formData.contract_file_name } : null}
+                        onChange={handlePDFChange}
+                        onView={handleViewPDF}
+                        disabled={isReadOnly}
+                        contractType={contractType}
+                        contractNumber={formData.contract_number}
+                        compact={true}
+                      />
+                      <PDFUpload
+                        label="Ordin de Începere"
+                        value={formData.service_order_file_url ? { url: formData.service_order_file_url, fileName: formData.service_order_file_name } : null}
+                        onChange={handleServiceOrderPDFChange}
+                        onView={(url, name) => { setPdfViewerUrl(url); setPdfViewerFileName(name); setPdfViewerOpen(true); }}
+                        disabled={isReadOnly}
+                        contractType={contractType}
+                        contractNumber={formData.contract_number ? formData.contract_number + '_ordin' : ''}
+                        compact={true}
+                      />
+                    </div>
+
+                    {/* Observații */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                        Observații
+                      </label>
+                      <textarea
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        disabled={isReadOnly}
+                        rows={3}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 resize-none"
+                        placeholder="Observații adiționale..."
+                      />
+                    </div>
+
+                    {/* Contract activ */}
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        checked={formData.is_active}
+                        onChange={handleInputChange}
+                        disabled={isReadOnly}
+                        className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                      />
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Contract activ</label>
+                    </div>
+
+                  </div>
+                ) : (
+                  /* ================================================================
+                     OTHER CONTRACTS (AEROBIC, ANAEROBIC, SORTING, WASTE_COLLECTOR)
+                     ================================================================ */
+                  <div className="space-y-5">
+
                   {/* ATTRIBUTION TYPE */}
-                  {(contractType === 'DISPOSAL' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
+                  {(contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         <Gavel className="w-4 h-4 inline mr-1" />
@@ -1313,11 +1606,10 @@ const ContractSidebar = ({
                     </div>
                   )}
 
-                  {/* OPERATOR / INSTITUTION */}
+                  {/* OPERATOR */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      {contractType === 'DISPOSAL' ? 'Operator Depozitare' :
-                       contractType === 'AEROBIC' ? 'Operator Aerob' :
+                      {contractType === 'AEROBIC' ? 'Operator Aerob' :
                        contractType === 'ANAEROBIC' ? 'Operator Anaerob' :
                        'Instituție'} <span className="text-red-500">*</span>
                     </label>
@@ -1347,7 +1639,7 @@ const ContractSidebar = ({
                       value={formData.contract_number}
                       onChange={handleInputChange}
                       disabled={isReadOnly}
-                      placeholder={contractType === 'DISPOSAL' ? 'D-123' : contractType === 'AEROBIC' ? 'TA-123' : contractType === 'ANAEROBIC' ? 'TAN-123' : 'C-123'}
+                      placeholder={contractType === 'AEROBIC' ? 'TA-123' : contractType === 'ANAEROBIC' ? 'TAN-123' : 'C-123'}
                       className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
                     />
                     {errors.contract_number && <p className="mt-1 text-xs text-red-600">{errors.contract_number}</p>}
@@ -1421,39 +1713,20 @@ const ContractSidebar = ({
                     {errors.sector_id && <p className="mt-1 text-xs text-red-600">{errors.sector_id}</p>}
                   </div>
 
-                  {/* TARIFF + CEC */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Tarif (LEI/t) {contractType === 'DISPOSAL' && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        type="number" step="0.01"
-                        name="tariff_per_ton"
-                        value={formData.tariff_per_ton}
-                        onChange={handleInputChange}
-                        disabled={isReadOnly}
-                        placeholder="0.00"
-                        className={`w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.tariff_per_ton ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
-                      />
-                      {errors.tariff_per_ton && <p className="mt-1 text-xs text-red-600">{errors.tariff_per_ton}</p>}
-                    </div>
-                    {contractType === 'DISPOSAL' && (
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                          Taxa CEC (LEI/t)
-                        </label>
-                        <input
-                          type="number" step="0.01"
-                          name="cec_tax_per_ton"
-                          value={formData.cec_tax_per_ton}
-                          onChange={handleInputChange}
-                          disabled={isReadOnly}
-                          placeholder="0.00"
-                          className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                        />
-                      </div>
-                    )}
+                  {/* TARIFF */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Tarif (LEI/t)
+                    </label>
+                    <input
+                      type="number" step="0.01"
+                      name="tariff_per_ton"
+                      value={formData.tariff_per_ton}
+                      onChange={handleInputChange}
+                      disabled={isReadOnly}
+                      placeholder="0.00"
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    />
                   </div>
 
                   {/* QUANTITY */}
@@ -1463,8 +1736,8 @@ const ContractSidebar = ({
                     </label>
                     <input
                       type="number" step="0.01"
-                      name={contractType === 'AEROBIC' || contractType === 'ANAEROBIC' ? 'estimated_quantity_tons' : 'contracted_quantity_tons'}
-                      value={contractType === 'AEROBIC' || contractType === 'ANAEROBIC' ? formData.estimated_quantity_tons : formData.contracted_quantity_tons}
+                      name="estimated_quantity_tons"
+                      value={formData.estimated_quantity_tons}
                       onChange={handleInputChange}
                       disabled={isReadOnly}
                       placeholder="0"
@@ -1473,41 +1746,12 @@ const ContractSidebar = ({
                   </div>
 
                   {/* TOTAL VALUE */}
-                  {(formData.tariff_per_ton && (formData.estimated_quantity_tons || formData.contracted_quantity_tons)) && (
-                    <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-xl border border-teal-200 dark:border-teal-500/20">
-                      {contractType === 'DISPOSAL' ? (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Valoare Tarif:</span>
-                            <span className="font-semibold text-gray-900 dark:text-white">
-                              {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(
-                                (parseFloat(formData.tariff_per_ton) || 0) * (parseFloat(formData.contracted_quantity_tons) || 0)
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Valoare CEC:</span>
-                            <span className="font-semibold text-gray-900 dark:text-white">
-                              {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(
-                                (parseFloat(formData.cec_tax_per_ton) || 0) * (parseFloat(formData.contracted_quantity_tons) || 0)
-                              )}
-                            </span>
-                          </div>
-                          <div className="pt-2 border-t border-teal-300 dark:border-teal-600 flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Valoare Totală:</span>
-                            <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
-                              {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Valoare Totală:</span>
-                          <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
-                            {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
-                          </span>
-                        </div>
-                      )}
+                  {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (
+                    <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-xl border border-teal-200 dark:border-teal-500/20 flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Valoare Totală:</span>
+                      <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
+                        {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(calculateTotalValue())}
+                      </span>
                     </div>
                   )}
 
@@ -1602,6 +1846,9 @@ const ContractSidebar = ({
                       Contract activ
                     </label>
                   </div>
+
+                  </div>
+                )} {/* end DISPOSAL ternary */}
 
                 </div>
               )} {/* end non-TMB form */}
