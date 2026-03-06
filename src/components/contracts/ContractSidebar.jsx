@@ -507,6 +507,17 @@ const ContractSidebar = ({
         : 365;
       normalizedFormData.contracted_quantity_tons = annualQty > 0 ? (annualQty * days / 365) : null;
     }
+
+    // AEROBIC / ANAEROBIC: același calcul - annual manual, contract calculat
+    if (contractType === 'AEROBIC' || contractType === 'ANAEROBIC') {
+      const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
+      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
+      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
+      const days = (start && end && end > start)
+        ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
+        : 365;
+      normalizedFormData.contracted_quantity_tons = annualQty > 0 ? (annualQty * days / 365) : null;
+    }
     
     const canProceed = await validateServer();
     if (canProceed) {
@@ -532,8 +543,8 @@ const ContractSidebar = ({
     onSave({
       ...formData,
       contract_number,
-      // DISPOSAL: calculează contracted_quantity_tons din annual × zile / 365
-      ...(contractType === 'DISPOSAL' && (() => {
+      // DISPOSAL / AEROBIC / ANAEROBIC: calculează contracted_quantity_tons din annual × zile / 365
+      ...(['DISPOSAL', 'AEROBIC', 'ANAEROBIC'].includes(contractType) && (() => {
         const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
         const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
         const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
