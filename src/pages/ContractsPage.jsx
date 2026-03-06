@@ -363,9 +363,21 @@ const ContractsPage = () => {
   const handleSave = async (formData) => {
     setSaving(true);
     try {
-      const endpoint = ENDPOINT_MAP[selectedContractType];
+      const baseEndpoint = ENDPOINT_MAP[selectedContractType];
+      
+      // For POST (create), use institution_id from formData to build correct endpoint
+      // For GET, institutionId=0 means "all", but for INSERT backend needs real institution_id
+      let endpoint;
+      if (sidebarMode === 'edit') {
+        endpoint = `${baseEndpoint}/${editContract.id}`;
+      } else {
+        // Replace /0/ with actual institution_id from form
+        const institutionId = formData.institution_id || '0';
+        endpoint = baseEndpoint.replace('/institutions/0/', `/institutions/${institutionId}/`);
+      }
+
       const response = sidebarMode === 'edit'
-        ? await apiPut(`${endpoint}/${editContract.id}`, formData)
+        ? await apiPut(endpoint, formData)
         : await apiPost(endpoint, formData);
       
       if (response.success) {
