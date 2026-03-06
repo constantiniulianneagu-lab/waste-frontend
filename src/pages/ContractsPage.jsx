@@ -363,15 +363,30 @@ const ContractsPage = () => {
   const handleSave = async (formData) => {
     setSaving(true);
     try {
-      const baseEndpoint = ENDPOINT_MAP[selectedContractType];
-      
-      // For POST (create), use institution_id from formData to build correct endpoint
-      // For GET, institutionId=0 means "all", but for INSERT backend needs real institution_id
+      // Determină tipul corect de contract:
+      // - la edit: folosește contract_type din obiectul contractului (important când selectedContractType='ALL')
+      // - la create: folosește selectedContractType curent
+      const effectiveContractType = sidebarMode === 'edit'
+        ? (editContract?.contract_type || selectedContractType)
+        : selectedContractType;
+
+      const baseEndpoint = ENDPOINT_MAP[effectiveContractType];
+
+      if (!baseEndpoint) {
+        toast.error('Eroare configurare', `Tip contract necunoscut: ${effectiveContractType}`);
+        return;
+      }
+
       let endpoint;
       if (sidebarMode === 'edit') {
-        endpoint = `${baseEndpoint}/${editContract.id}`;
+        // La edit, institutionId din URL nu contează pentru UPDATE (backend folosește contractId)
+        // Înlocuim /0/ cu institution_id real pentru corectitudine
+        const institutionId = editContract?.institution_id || formData.institution_id || '0';
+        endpoint = baseEndpoint
+          .replace('/institutions/0/', `/institutions/${institutionId}/`)
+          + `/${editContract.id}`;
       } else {
-        // Replace /0/ with actual institution_id from form
+        // La create, folosim institution_id din formData
         const institutionId = formData.institution_id || '0';
         endpoint = baseEndpoint.replace('/institutions/0/', `/institutions/${institutionId}/`);
       }
@@ -407,7 +422,11 @@ const ContractsPage = () => {
     if (!contractToDelete) return;
 
     try {
-      const endpoint = ENDPOINT_MAP[selectedContractType];
+      // Folosește contract_type din obiect (important când selectedContractType='ALL')
+      const effectiveContractType = contractToDelete.contract_type || selectedContractType;
+      const baseEndpoint = ENDPOINT_MAP[effectiveContractType];
+      const institutionId = contractToDelete.institution_id || '0';
+      const endpoint = baseEndpoint.replace('/institutions/0/', `/institutions/${institutionId}/`);
       const response = await apiDelete(`${endpoint}/${contractToDelete.id}`);
 
       if (response.success) {
