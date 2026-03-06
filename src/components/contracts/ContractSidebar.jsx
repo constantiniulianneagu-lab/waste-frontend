@@ -576,6 +576,7 @@ const ContractSidebar = ({
     setAmendmentForm({
       amendment_number: `${prefix}-${baseNumber}-${lastNum + 1}`,
       amendment_date: new Date().toISOString().split('T')[0],
+      effective_date: new Date().toISOString().split('T')[0],
       amendment_type: 'EXTENSION',
       new_contract_date_end: '',
       new_tariff_per_ton: '',
@@ -600,6 +601,7 @@ const ContractSidebar = ({
       id: a.id,
       amendment_number: a.amendment_number || '',
       amendment_date: formatDateForInput(a.amendment_date),
+      effective_date: formatDateForInput(a.effective_date || a.amendment_date),
       amendment_type: a.amendment_type || 'EXTENSION',
       new_contract_date_start: formatDateForInput(a.new_contract_date_start),
       new_contract_date_end: formatDateForInput(a.new_contract_date_end),
@@ -627,7 +629,14 @@ const ContractSidebar = ({
     const { name, value } = e.target;
     
     // Update field
-    setAmendmentForm(prev => ({ ...prev, [name]: value }));
+    setAmendmentForm(prev => {
+      const updated = { ...prev, [name]: value };
+      // Dacă se schimbă amendment_date și effective_date era identică, sincronizează automat
+      if (name === 'amendment_date' && prev.effective_date === prev.amendment_date) {
+        updated.effective_date = value;
+      }
+      return updated;
+    });
     
     // CALCUL PROPORȚIONAL ÎN TIMP REAL
     // Când user schimbă new_contract_date_end pentru EXTENSION
@@ -2514,6 +2523,11 @@ const ContractSidebar = ({
                                       <Calendar className="w-3 h-3 inline mr-1" />
                                       {formatDate(a.amendment_date)}
                                     </div>
+                                    {a.effective_date && a.effective_date.split('T')[0] !== a.amendment_date?.split('T')[0] && (
+                                      <div className="text-xs text-amber-600 dark:text-amber-400">
+                                        <span className="font-medium">Intră în vigoare:</span> {formatDate(a.effective_date)}
+                                      </div>
+                                    )}
                                     {getAmendmentDetails(a) && (
                                       <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                                         {getAmendmentDetails(a)}
@@ -2576,7 +2590,7 @@ const ContractSidebar = ({
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    Data <span className="text-red-500">*</span>
+                                    Data Semnării <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="date"
@@ -2586,6 +2600,21 @@ const ContractSidebar = ({
                                     className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
                                   />
                                 </div>
+                              </div>
+
+                              {/* Data intrării în vigoare - full width */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                  Data Intrării în Vigoare
+                                  <span className="ml-1 text-gray-400 dark:text-gray-500 font-normal">(implicit = data semnării)</span>
+                                </label>
+                                <input
+                                  type="date"
+                                  name="effective_date"
+                                  value={amendmentForm.effective_date || amendmentForm.amendment_date}
+                                  onChange={handleAmendmentInputChange}
+                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white"
+                                />
                               </div>
 
                               <div>
