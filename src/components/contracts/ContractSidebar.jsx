@@ -1126,8 +1126,8 @@ const ContractSidebar = ({
                       <input
                         type="number"
                         step="0.01"
-                        name="estimated_quantity_tons"
-                        value={formData.estimated_quantity_tons}
+                        name="contracted_quantity_tons"
+                        value={formData.contracted_quantity_tons}
                         onChange={handleInputChange}
                         disabled={isReadOnly}
                         placeholder="0.00"
@@ -1143,7 +1143,7 @@ const ContractSidebar = ({
                         type="text"
                         readOnly
                         value={(() => {
-                          const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                          const qty = parseFloat(formData.contracted_quantity_tons) || 0;
                           const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
                           const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
                           if (!qty || !start || !end || end <= start) return '';
@@ -1158,8 +1158,8 @@ const ContractSidebar = ({
                   </div>
 
                   {/* Valoare Totală */}
-                  {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (() => {
-                    const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                  {(formData.tariff_per_ton && formData.contracted_quantity_tons) && (() => {
+                    const qty = parseFloat(formData.contracted_quantity_tons) || 0;
                     const val = (parseFloat(formData.tariff_per_ton) || 0) * qty;
                     if (val <= 0) return null;
                     return (
