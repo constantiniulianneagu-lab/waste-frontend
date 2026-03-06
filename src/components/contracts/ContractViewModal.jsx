@@ -137,7 +137,10 @@ const ContractViewModal = ({
   const effectiveTariff = contract.effective_tariff || contract.tariff_per_ton;
   const effectiveQuantity = contract.effective_quantity || contract.estimated_quantity_tons || contract.contracted_quantity_tons;
   const effectiveTotalValue = contract.effective_total_value || contract.total_value;
-  const effectiveCecTax = contract.effective_cec || contract.cec_tax_per_ton; // Added for CEC tax
+  const effectiveCecTax = contract.effective_cec || contract.cec_tax_per_ton;
+  // Valorile pe componente - calculate corect pe perioade de backend
+  const effectiveTariffValue = contract.effective_tariff_value ?? (effectiveQuantity * effectiveTariff);
+  const effectiveCecValue = contract.effective_cec_value ?? (effectiveQuantity * effectiveCecTax);
   const expired = isExpired();
   const expiringSoon = isExpiringSoon();
 
@@ -276,7 +279,7 @@ const ContractViewModal = ({
                       Valoare Tarif Depozitare:
                     </span>
                     <span className="font-bold text-gray-900 dark:text-white">
-                      {formatCurrency((effectiveTariff || 0) * (contract.contracted_quantity_tons || 0))}
+                      {formatCurrency(effectiveTariffValue)}
                     </span>
                   </div>
                   
@@ -286,7 +289,7 @@ const ContractViewModal = ({
                       Valoare Taxa CEC:
                     </span>
                     <span className="font-bold text-gray-900 dark:text-white">
-                      {formatCurrency((effectiveCecTax || 0) * (contract.contracted_quantity_tons || 0))}
+                      {formatCurrency(effectiveCecValue)}
                     </span>
                   </div>
                   
