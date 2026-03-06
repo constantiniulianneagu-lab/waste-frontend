@@ -235,13 +235,17 @@ const ContractSidebar = ({
 
   // Load contract data when editing/viewing
   useEffect(() => {
+    if (!isOpen) return;
+
     if (contract && (mode === 'edit' || mode === 'view' || mode === 'delete')) {
+
       setFormData({
         attribution_type: contract.attribution_type || '',
         institution_id: contract.institution_id || '',
         contract_number: contract.contract_number || '',
         contract_date_start: contract.contract_date_start?.split('T')[0] || '',
         contract_date_end: contract.contract_date_end?.split('T')[0] || '',
+        service_start_date: contract.service_start_date?.split('T')[0] || '',
         notes: contract.notes || '',
         is_active: contract.is_active ?? true,
         sector_id: contract.sector_id || '',
@@ -287,12 +291,13 @@ const ContractSidebar = ({
         estimated_quantity_annual: '',
         service_order_file_url: '',
         service_order_file_name: '',
+        service_start_date: '',
       });
       setAmendments([]);
     }
     setErrors({});
     setAmendmentForm(null);
-  }, [contract, mode, isOpen]);
+  }, [contract?.id, contractType, mode, isOpen]);
 
   // Load amendments for existing contract
   const loadAmendments = async () => {
