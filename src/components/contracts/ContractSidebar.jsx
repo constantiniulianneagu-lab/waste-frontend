@@ -17,7 +17,8 @@ import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
 
 const AMENDMENT_TYPES = [
-  { value: 'EXTENSION', label: 'Modificare perioadă' },
+  { value: 'EXTENSION', label: 'Modificare perioadă / Prelungire' },
+  { value: 'TERMINATION', label: 'Încetare contract' },
   { value: 'TARIFF_CHANGE', label: 'Modificare tarif' },
   { value: 'QUANTITY_CHANGE', label: 'Modificare cantitate' },
   { value: 'MULTIPLE', label: 'Modificări multiple' },
@@ -640,13 +641,15 @@ const ContractSidebar = ({
     });
     
     // CALCUL PROPORȚIONAL ÎN TIMP REAL
-    // Când user schimbă new_contract_date_end pentru EXTENSION
+    // Când user schimbă new_contract_date_end pentru EXTENSION sau TERMINATION
     if (name === 'new_contract_date_end' && 
-        amendmentForm.amendment_type === 'EXTENSION' && 
+        (amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION') && 
         value && 
         contract.contract_date_start && 
         contract.contract_date_end) {
       
+      const isTermination = amendmentForm.amendment_type === 'TERMINATION';
+
       // Calculează cantitatea proporțional
       const calculateProportional = () => {
         try {
@@ -657,6 +660,37 @@ const ContractSidebar = ({
           // Validare
           if (isNaN(originalStart.getTime()) || isNaN(originalEnd.getTime()) || isNaN(newEnd.getTime())) {
             return null;
+          }
+
+          const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+          if (isTermination) {
+            // INCETARE: calculează cantitatea de la start până la noua dată de încetare
+            // Folosim effective_date_end dacă există (prelungiri anterioare)
+            const effectiveEnd = amendments
+              .filter(a => (a.amendment_type === 'EXTENSION' || a.amendment_type === 'PRELUNGIRE') && a.new_contract_date_end)
+              .map(a => new Date(a.new_contract_date_end))
+              .filter(d => !isNaN(d.getTime()))
+              .sort((a, b) => b - a)[0] || originalEnd;
+
+            // Rata zilnică din contractul original
+            const totalDays = Math.round((originalEnd - originalStart) / MS_PER_DAY);
+            const actualDays = Math.round((newEnd - originalStart) / MS_PER_DAY);
+
+            if (totalDays <= 0 || actualDays <= 0) return null;
+            if (newEnd >= effectiveEnd) return null; // nu are sens să încetem după data efectivă
+
+            const originalQty = contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC'
+              ? parseFloat(contract.estimated_quantity_tons || 0)
+              : parseFloat(contract.contracted_quantity_tons || 0);
+
+            if (originalQty <= 0) return null;
+
+            const dailyRate = originalQty / totalDays;
+            const newQty = dailyRate * actualDays;
+
+            console.log(`📊 Calcul INCETARE: ${actualDays} zile × ${dailyRate.toFixed(4)} t/zi = ${newQty.toFixed(3)}t`);
+            return Math.round(newQty * 1000) / 1000;
           }
           
           // Găsește ultima dată de prelungire din amendments existente
@@ -2634,10 +2668,10 @@ const ContractSidebar = ({
                                 </select>
                               </div>
 
-                              {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'MULTIPLE') && (
+                              {(amendmentForm.amendment_type === 'EXTENSION' || amendmentForm.amendment_type === 'TERMINATION' || amendmentForm.amendment_type === 'MULTIPLE') && (
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                    Nouă Dată Sfârșit
+                                    {amendmentForm.amendment_type === 'TERMINATION' ? 'Dată Încetare Contract' : 'Nouă Dată Sfârșit'}
                                   </label>
                                   <input
                                     type="date"
@@ -2650,6 +2684,12 @@ const ContractSidebar = ({
                                     <p className="mt-1.5 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-1">
                                       <span className="mt-0.5">💡</span>
                                       <span>Pentru prelungiri, cantitatea se calculează automat proporțional cu perioada dacă nu este specificată manual.</span>
+                                    </p>
+                                  )}
+                                  {amendmentForm.amendment_type === 'TERMINATION' && (
+                                    <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-1">
+                                      <span className="mt-0.5">⚠️</span>
+                                      <span>Cantitatea estimată se recalculează automat proporțional până la data încetării.</span>
                                     </p>
                                   )}
                                 </div>
