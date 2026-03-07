@@ -16,6 +16,32 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../api/apiClient';
 import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
 
+// ============================================================================
+// HELPER: Calculează zilele reale ale perioadei (ține cont de ani bisecți)
+// yearDays = zilele anului calendaristic al datei de start (365 sau 366)
+// ============================================================================
+const getContractDays = (startDate, endDate) => {
+  const start = startDate instanceof Date ? startDate : new Date(startDate);
+  const end = endDate instanceof Date ? endDate : new Date(endDate);
+  if (!start || !end || isNaN(start) || isNaN(end) || end <= start) return 365;
+  return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+};
+
+const getYearDays = (startDate) => {
+  const start = startDate instanceof Date ? startDate : new Date(startDate);
+  if (!start || isNaN(start)) return 365;
+  const year = start.getFullYear();
+  // An bisect: divizibil cu 4, exceptând sec. nedivizibile cu 400
+  return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365;
+};
+
+// Calculează cantitatea contractuală: cant_anuala × zile_reale / zile_an
+const calcContractQty = (annualQty, startDate, endDate) => {
+  const days = getContractDays(startDate, endDate);
+  const yearDays = getYearDays(startDate);
+  return annualQty * days / yearDays;
+};
+
 const AMENDMENT_TYPES = [
   { value: 'EXTENSION', label: 'Modificare perioadă / Prelungire' },
   { value: 'TERMINATION', label: 'Încetare contract' },
@@ -498,26 +524,20 @@ const ContractSidebar = ({
       contract_number: normalizeContractNumber(contractType, formData.contract_number),
     };
 
-    // DISPOSAL: calculează contracted_quantity_tons din estimated_quantity_tons (anual) × zile / 365
+    // DISPOSAL: calculează contracted_quantity_tons = cant_anuala × zile_reale / zile_an (365 sau 366)
     if (contractType === 'DISPOSAL') {
       const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-      const days = (start && end && end > start)
-        ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
-        : 365;
-      normalizedFormData.contracted_quantity_tons = annualQty > 0 ? (annualQty * days / 365) : null;
+      normalizedFormData.contracted_quantity_tons = annualQty > 0
+        ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
+        : null;
     }
 
-    // AEROBIC / ANAEROBIC: același calcul - annual manual, contract calculat
+    // AEROBIC / ANAEROBIC: același calcul
     if (contractType === 'AEROBIC' || contractType === 'ANAEROBIC') {
       const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-      const days = (start && end && end > start)
-        ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
-        : 365;
-      normalizedFormData.contracted_quantity_tons = annualQty > 0 ? (annualQty * days / 365) : null;
+      normalizedFormData.contracted_quantity_tons = annualQty > 0
+        ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
+        : null;
     }
     
     const canProceed = await validateServer();
@@ -544,15 +564,12 @@ const ContractSidebar = ({
     onSave({
       ...formData,
       contract_number,
-      // DISPOSAL / AEROBIC / ANAEROBIC: calculează contracted_quantity_tons din annual × zile / 365
+      // DISPOSAL / AEROBIC / ANAEROBIC: calculează contracted_quantity_tons = cant_anuala × zile / zile_an
       ...(['DISPOSAL', 'AEROBIC', 'ANAEROBIC'].includes(contractType) && (() => {
         const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-        const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-        const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-        const days = (start && end && end > start)
-          ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
-          : 365;
-        return { contracted_quantity_tons: annualQty > 0 ? (annualQty * days / 365) : null };
+        return { contracted_quantity_tons: annualQty > 0
+          ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
+          : null };
       })()),
     });
   };
@@ -1222,26 +1239,20 @@ const ContractSidebar = ({
                         readOnly
                         value={(() => {
                           const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                          const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                          const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                          if (!qty || !start || !end || end <= start) return '';
-                          const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                          return (qty * days / 365).toFixed(2);
+                          if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                          return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
                         })()}
                         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                         placeholder="Calculat automat"
                       />
-                      <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / 365</p>
+                      <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                     </div>
                   </div>
 
                   {/* Valoare Totală */}
                   {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (() => {
                     const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-                    const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                    const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                    const days = (start && end && end > start) ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1 : 365;
-                    const qty = annualQty * days / 365;
+                    const qty = calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end);
                     const val = (parseFloat(formData.tariff_per_ton) || 0) * qty;
                     if (val <= 0) return null;
                     return (
@@ -1562,26 +1573,20 @@ const ContractSidebar = ({
                           readOnly
                           value={(() => {
                             const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                            const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                            if (!qty || !start || !end || end <= start) return '';
-                            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                            return (qty * days / 365).toFixed(2);
+                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
                           })()}
                           className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                           placeholder="Calculat automat"
                         />
-                        <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / 365</p>
+                        <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
                     </div>
 
                     {/* Valoare Totală */}
                     {(formData.estimated_quantity_tons && formData.tariff_per_ton) && (() => {
                       const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-                      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                      const days = (start && end && end > start) ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1 : 365;
-                      const qty = annualQty * days / 365;
+                      const qty = calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end);
                       const tarif = parseFloat(formData.tariff_per_ton) || 0;
                       const cec = parseFloat(formData.cec_tax_per_ton) || 0;
                       const valTarif = tarif * qty;
@@ -1836,16 +1841,15 @@ const ContractSidebar = ({
                           readOnly
                           value={(() => {
                             const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                            const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                            if (!qty || !start || !end || end <= start) return '';
-                            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                            return (qty * 365 / days).toFixed(2);
+                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                            const days = getContractDays(formData.contract_date_start, formData.contract_date_end);
+                            const yearDays = getYearDays(formData.contract_date_start);
+                            return (qty * yearDays / days).toFixed(2);
                           })()}
                           className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                           placeholder="Calculat automat"
                         />
-                        <p className="mt-1 text-xs text-gray-400">= cant. contract × 365 / zile contract</p>
+                        <p className="mt-1 text-xs text-gray-400">= cant. contract × zile an / zile contract</p>
                       </div>
                     </div>
 
@@ -2117,26 +2121,20 @@ const ContractSidebar = ({
                           readOnly
                           value={(() => {
                             const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                            const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                            if (!qty || !start || !end || end <= start) return '';
-                            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                            return (qty * days / 365).toFixed(2);
+                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
                           })()}
                           className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                           placeholder="Calculat automat"
                         />
-                        <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / 365</p>
+                        <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
                     </div>
 
                     {/* Valoare Totală */}
                     {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (() => {
                       const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-                      const start = formData.contract_date_start ? new Date(formData.contract_date_start) : null;
-                      const end = formData.contract_date_end ? new Date(formData.contract_date_end) : null;
-                      const days = (start && end && end > start) ? Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1 : 365;
-                      const qty = annualQty * days / 365;
+                      const qty = calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end);
                       const val = (parseFloat(formData.tariff_per_ton) || 0) * qty;
                       if (val <= 0) return null;
                       return (
