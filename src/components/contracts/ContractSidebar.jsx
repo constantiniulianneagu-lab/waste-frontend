@@ -17,8 +17,9 @@ import PDFUpload from '../common/PDFUpload';
 import PDFViewerModal from '../common/PDFViewerModal';
 
 // ============================================================================
-// HELPER: Calculează zilele reale ale perioadei (ține cont de ani bisecți)
-// yearDays = zilele anului calendaristic al datei de start (365 sau 366)
+// HELPER: Calculează zilele reale ale perioadei și cantitatea contractuală
+// yearDays = 365 + numărul de 29 feb din intervalul [start, end]
+// Astfel: un contract care nu include 29 feb ÷ 365, chiar dacă anul e bisect
 // ============================================================================
 const getContractDays = (startDate, endDate) => {
   const start = startDate instanceof Date ? startDate : new Date(startDate);
@@ -27,20 +28,29 @@ const getContractDays = (startDate, endDate) => {
   return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
 };
 
-const getYearDays = (startDate) => {
+const countFeb29InRange = (startDate, endDate) => {
   const start = startDate instanceof Date ? startDate : new Date(startDate);
-  if (!start || isNaN(start)) return 365;
-  const year = start.getFullYear();
-  // An bisect: divizibil cu 4, exceptând sec. nedivizibile cu 400
-  return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365;
+  const end = endDate instanceof Date ? endDate : new Date(endDate);
+  if (!start || !end || isNaN(start) || isNaN(end)) return 0;
+  let count = 0;
+  for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    if (isLeap) {
+      const feb29 = new Date(year, 1, 29); // feb = luna 1 (0-indexed)
+      if (feb29 >= start && feb29 <= end) count++;
+    }
+  }
+  return count;
 };
 
-// Calculează cantitatea contractuală: cant_anuala × zile_reale / zile_an
+// Calculează cantitatea contractuală: cant_anuala × zile_reale / (365 + feb29_in_interval)
 const calcContractQty = (annualQty, startDate, endDate) => {
   const days = getContractDays(startDate, endDate);
-  const yearDays = getYearDays(startDate);
+  const feb29Count = countFeb29InRange(startDate, endDate);
+  const yearDays = 365 + feb29Count;
   return annualQty * days / yearDays;
 };
+
 
 const AMENDMENT_TYPES = [
   { value: 'EXTENSION', label: 'Modificare perioadă / Prelungire' },
@@ -208,6 +218,9 @@ const ContractSidebar = ({
   });
 
   const [errors, setErrors] = useState({});
+  // Când true, câmpul "Cant. estimată contract" a fost editat manual
+  // și nu se mai suprascrie automat până la schimbarea cant. anuale sau datelor
+  const [contractQtyOverride, setContractQtyOverride] = useState(false);
   const [amendments, setAmendments] = useState([]);
   const [amendmentsExpanded, setAmendmentsExpanded] = useState(false);
   const [loadingAmendments, setLoadingAmendments] = useState(false);
@@ -369,6 +382,17 @@ const ContractSidebar = ({
       [name]: type === 'checkbox' ? checked : value,
     }));
     
+    // Dacă utilizatorul schimbă cant. anuală sau datele → resetăm override-ul
+    // ca să se recalculeze automat cantitatea pe contract
+    if (['estimated_quantity_tons', 'contract_date_start', 'contract_date_end'].includes(name)) {
+      setContractQtyOverride(false);
+    }
+
+    // Dacă utilizatorul editează direct câmpul contract → activăm override
+    if (name === 'contracted_quantity_tons' || name === 'estimated_quantity_annual') {
+      setContractQtyOverride(true);
+    }
+
     // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
@@ -1265,15 +1289,21 @@ const ContractSidebar = ({
                         Cant. estimată contract (tone)
                       </label>
                       <input
-                        type="text"
-                        readOnly
-                        value={(() => {
-                          const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                          if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                          return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
-                        })()}
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                        type="number"
+                        step="0.01"
+                        name="contracted_quantity_tons"
+                        value={contractQtyOverride
+                          ? (formData.contracted_quantity_tons ?? '')
+                          : (() => {
+                              const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                              if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                              return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
+                            })()
+                        }
+                        onChange={handleInputChange}
+                        disabled={isReadOnly}
                         placeholder="Calculat automat"
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                       />
                       <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                     </div>
@@ -1599,15 +1629,21 @@ const ContractSidebar = ({
                           Cant. estimată contract (tone)
                         </label>
                         <input
-                          type="text"
-                          readOnly
-                          value={(() => {
-                            const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
-                          })()}
-                          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                          type="number"
+                          step="0.01"
+                          name="contracted_quantity_tons"
+                          value={contractQtyOverride
+                            ? (formData.contracted_quantity_tons ?? '')
+                            : (() => {
+                                const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                                if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                                return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
+                              })()
+                          }
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
                           placeholder="Calculat automat"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                         />
                         <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
@@ -1867,15 +1903,21 @@ const ContractSidebar = ({
                           Cant. estimată contract (tone)
                         </label>
                         <input
-                          type="text"
-                          readOnly
-                          value={(() => {
-                            const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
-                          })()}
-                          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                          type="number"
+                          step="0.01"
+                          name="estimated_quantity_annual"
+                          value={contractQtyOverride
+                            ? (formData.estimated_quantity_annual ?? '')
+                            : (() => {
+                                const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                                if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                                return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
+                              })()
+                          }
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
                           placeholder="Calculat automat"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                         />
                         <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
@@ -2145,15 +2187,21 @@ const ContractSidebar = ({
                           Cant. estimată contract (tone)
                         </label>
                         <input
-                          type="text"
-                          readOnly
-                          value={(() => {
-                            const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                            if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
-                          })()}
-                          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                          type="number"
+                          step="0.01"
+                          name="contracted_quantity_tons"
+                          value={contractQtyOverride
+                            ? (formData.contracted_quantity_tons ?? '')
+                            : (() => {
+                                const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                                if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                                return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
+                              })()
+                          }
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
                           placeholder="Calculat automat"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                         />
                         <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
