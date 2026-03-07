@@ -708,9 +708,6 @@ const ContractSidebar = ({
             return null; // Data nouă trebuie să fie după ultima prelungire
           }
           
-          // Calcul zile
-          const MS_PER_DAY = 1000 * 60 * 60 * 24;
-          
           // IMPORTANT: totalDays = perioada ORIGINALĂ (pentru rate zilnic)
           const totalDays = Math.round((originalEnd - originalStart) / MS_PER_DAY);
           
