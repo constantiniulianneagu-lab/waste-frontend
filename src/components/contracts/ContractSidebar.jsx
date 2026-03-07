@@ -539,6 +539,15 @@ const ContractSidebar = ({
         ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
         : null;
     }
+
+    // TMB: estimated_quantity_tons = cant. anuală (introdusă manual)
+    //      estimated_quantity_annual = cant. pe contract (calculată din zile reale)
+    if (contractType === 'TMB') {
+      const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
+      normalizedFormData.estimated_quantity_annual = annualQty > 0
+        ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
+        : null;
+    }
     
     const canProceed = await validateServer();
     if (canProceed) {
@@ -1836,11 +1845,11 @@ const ContractSidebar = ({
                       </div>
                     </div>
 
-                    {/* ROW 6: Cant. estimată contract (manual) | Cant. estimată anual (calculată) */}
+                    {/* ROW 6: Cant. estimată anual (manual) | Cant. estimată contract (calculată) */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                          Cant. estimată contract (tone)
+                          Cant. estimată anual (tone)
                         </label>
                         <input
                           type="number" step="0.01"
@@ -1855,7 +1864,7 @@ const ContractSidebar = ({
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                          Cant. estimată anual (tone)
+                          Cant. estimată contract (tone)
                         </label>
                         <input
                           type="text"
@@ -1863,25 +1872,23 @@ const ContractSidebar = ({
                           value={(() => {
                             const qty = parseFloat(formData.estimated_quantity_tons) || 0;
                             if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                            const days = getContractDays(formData.contract_date_start, formData.contract_date_end);
-                            const yearDays = getYearDays(formData.contract_date_start);
-                            return (qty * yearDays / days).toFixed(2);
+                            return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
                           })()}
                           className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 cursor-not-allowed"
                           placeholder="Calculat automat"
                         />
-                        <p className="mt-1 text-xs text-gray-400">= cant. contract × zile an / zile contract</p>
+                        <p className="mt-1 text-xs text-gray-400">= cant. anual × zile / zile an</p>
                       </div>
                     </div>
 
                     {/* Valoare Totală */}
-                    {(formData.tariff_per_ton && formData.estimated_quantity_tons) && (() => {
-                      const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                      const val = (parseFloat(formData.tariff_per_ton) || 0) * qty;
+                    {(formData.tariff_per_ton && formData.estimated_quantity_tons && formData.contract_date_start && formData.contract_date_end) && (() => {
+                      const contractQty = calcContractQty(parseFloat(formData.estimated_quantity_tons) || 0, formData.contract_date_start, formData.contract_date_end);
+                      const val = (parseFloat(formData.tariff_per_ton) || 0) * contractQty;
                       if (val <= 0) return null;
                       return (
                         <div className="p-3 bg-teal-50 dark:bg-teal-500/10 rounded-lg border border-teal-200 dark:border-teal-500/20 flex justify-between items-center">
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Valoare Totală:</span>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Valoare Totală Estimată:</span>
                           <span className="text-base font-bold text-teal-700 dark:text-teal-400">
                             {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(val)}
                           </span>
@@ -2524,7 +2531,7 @@ const ContractSidebar = ({
               )} {/* end non-TMB form */}
 
               {/* ================= AMENDMENTS SECTION ================= */}
-              {(mode === 'edit' || mode === 'view') && (contractType === 'DISPOSAL' || contractType === 'TMB') && (
+              {(mode === 'edit' || mode === 'view') && (contractType === 'DISPOSAL' || contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                   <button
                     type="button"
