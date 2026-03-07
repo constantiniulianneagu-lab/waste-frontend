@@ -426,8 +426,8 @@ const ContractSidebar = ({
           // Skip server validation for DISPOSAL (endpoint not implemented yet)
           return true;
         case 'TMB':
-          endpoint = `/api/institutions/${contract.institution_id}/tmb-contracts/validate`;
-          break;
+          // Skip server validation for TMB (endpoint not implemented)
+          return true;
         default:
           return true;
       }
