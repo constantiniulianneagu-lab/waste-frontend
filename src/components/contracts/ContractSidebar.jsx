@@ -654,6 +654,27 @@ const ContractSidebar = ({
       if (name === 'amendment_date' && prev.effective_date === prev.amendment_date) {
         updated.effective_date = value;
       }
+      // Când se schimbă tipul, golește câmpurile care nu aparțin noului tip
+      if (name === 'amendment_type') {
+        const isExtOrTerm = value === 'EXTENSION' || value === 'TERMINATION';
+        const isTariff = value === 'TARIFF_CHANGE';
+        const isQty = value === 'QUANTITY_CHANGE';
+        const isMultiple = value === 'MULTIPLE';
+        // Golește data dacă noul tip nu are câmp dată
+        if (!isExtOrTerm && !isMultiple) {
+          updated.new_contract_date_end = '';
+        }
+        // Golește tariful dacă noul tip nu modifică tariful
+        if (!isTariff && !isMultiple) {
+          updated.new_tariff_per_ton = '';
+          updated.new_cec_tax_per_ton = '';
+        }
+        // Golește cantitatea dacă noul tip nu modifică cantitatea
+        if (!isQty && !isExtOrTerm && !isMultiple) {
+          updated.new_estimated_quantity_tons = '';
+          updated.new_contracted_quantity_tons = '';
+        }
+      }
       return updated;
     });
     
