@@ -604,9 +604,10 @@ const ContractSidebar = ({
     // TMB: estimated_quantity_tons = cant. anuală (introdusă manual)
     //      estimated_quantity_annual = cant. pe contract (manuală dacă override, altfel calculată)
     if (contractType === 'TMB') {
-      if (contractQtyOverride && formData.contracted_quantity_tons) {
-        // Userul a introdus manual → folosim valoarea sa
-        normalizedFormData.estimated_quantity_annual = parseFloat(formData.contracted_quantity_tons) || null;
+      // În create mode câmpul e contracted_quantity_tons, în edit e estimated_quantity_annual
+      const manualContractQty = formData.estimated_quantity_annual || formData.contracted_quantity_tons;
+      if (contractQtyOverride && manualContractQty) {
+        normalizedFormData.estimated_quantity_annual = parseFloat(manualContractQty) || null;
       } else {
         const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
         normalizedFormData.estimated_quantity_annual = annualQty > 0
