@@ -92,16 +92,17 @@ export const AuthProvider = ({ children }) => {
     // Pornim timerul imediat după login
     resetInactivityTimer();
 
-    // Adăugăm listeneri pentru activitate
+    // Adăugăm listeneri pentru activitate în faza de CAPTURE
+    // (capture: true = evenimentele sunt interceptate înainte de stopPropagation din modals)
     ACTIVITY_EVENTS.forEach((event) =>
-      window.addEventListener(event, resetInactivityTimer, { passive: true })
+      window.addEventListener(event, resetInactivityTimer, { passive: true, capture: true })
     );
 
     return () => {
       clearTimeout(inactivityTimerRef.current);
       clearTimeout(warningTimerRef.current);
       ACTIVITY_EVENTS.forEach((event) =>
-        window.removeEventListener(event, resetInactivityTimer)
+        window.removeEventListener(event, resetInactivityTimer, { capture: true })
       );
     };
   }, [user, resetInactivityTimer]);
