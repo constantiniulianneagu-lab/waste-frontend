@@ -306,35 +306,7 @@ const ContractSidebar = ({
       
       if (mode === 'edit' || mode === 'view') {
         loadAmendments();
-
-        // Dacă valoarea salvată în DB diferă de cea calculată → userul o introdusese manual
-        if (contractType === 'TMB' && contract.estimated_quantity_annual && contract.estimated_quantity_tons
-            && contract.contract_date_start && contract.contract_date_end) {
-          const calculated = calcContractQty(
-            parseFloat(contract.estimated_quantity_tons) || 0,
-            contract.contract_date_start.split('T')[0],
-            contract.contract_date_end.split('T')[0]
-          );
-          if (Math.abs(calculated - parseFloat(contract.estimated_quantity_annual)) > 0.1) {
-            setContractQtyOverride(true);
-          } else {
-            setContractQtyOverride(false);
-          }
-        } else if (['AEROBIC', 'ANAEROBIC', 'DISPOSAL'].includes(contractType) && contract.contracted_quantity_tons && contract.estimated_quantity_tons
-            && contract.contract_date_start && contract.contract_date_end) {
-          const calculated = calcContractQty(
-            parseFloat(contract.estimated_quantity_tons) || 0,
-            contract.contract_date_start.split('T')[0],
-            contract.contract_date_end.split('T')[0]
-          );
-          if (Math.abs(calculated - parseFloat(contract.contracted_quantity_tons)) > 0.1) {
-            setContractQtyOverride(true);
-          } else {
-            setContractQtyOverride(false);
-          }
-        } else {
-          setContractQtyOverride(false);
-        }
+        setContractQtyOverride(false); // nu mai e nevoie de detecție complexă
       }
     } else {
       // Reset form for add mode
@@ -411,10 +383,18 @@ const ContractSidebar = ({
       [name]: type === 'checkbox' ? checked : value,
     }));
     
-    // Dacă utilizatorul schimbă cant. anuală sau datele → resetăm override-ul
+    // Dacă utilizatorul schimbă cant. anuală sau datele → golim estimated_quantity_annual
     // ca să se recalculeze automat cantitatea pe contract
     if (['estimated_quantity_tons', 'contract_date_start', 'contract_date_end'].includes(name)) {
       setContractQtyOverride(false);
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+        estimated_quantity_annual: '',
+        contracted_quantity_tons: '',
+      }));
+      if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+      return;
     }
 
     // Dacă utilizatorul editează direct câmpul contract → activăm override
@@ -602,12 +582,11 @@ const ContractSidebar = ({
     }
 
     // TMB: estimated_quantity_tons = cant. anuală (introdusă manual)
-    //      estimated_quantity_annual = cant. pe contract (manuală dacă override, altfel calculată)
+    //      estimated_quantity_annual = cant. pe contract — ce e în câmp, calculează doar dacă e gol
     if (contractType === 'TMB') {
-      // În create mode câmpul e contracted_quantity_tons, în edit e estimated_quantity_annual
       const manualContractQty = formData.estimated_quantity_annual || formData.contracted_quantity_tons;
-      if (contractQtyOverride && manualContractQty) {
-        normalizedFormData.estimated_quantity_annual = parseFloat(manualContractQty) || null;
+      if (manualContractQty && parseFloat(manualContractQty) > 0) {
+        normalizedFormData.estimated_quantity_annual = parseFloat(manualContractQty);
       } else {
         const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
         normalizedFormData.estimated_quantity_annual = annualQty > 0
@@ -650,10 +629,11 @@ const ContractSidebar = ({
           ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
           : null };
       })()),
-      // TMB: respectă override manual pentru estimated_quantity_annual
+      // TMB: trimite ce e în câmp, calculează doar dacă e gol
       ...(contractType === 'TMB' && (() => {
-        if (contractQtyOverride && formData.estimated_quantity_annual) {
-          return { estimated_quantity_annual: parseFloat(formData.estimated_quantity_annual) || null };
+        const manualQty = formData.estimated_quantity_annual || formData.contracted_quantity_tons;
+        if (manualQty && parseFloat(manualQty) > 0) {
+          return { estimated_quantity_annual: parseFloat(manualQty) };
         }
         const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
         return { estimated_quantity_annual: annualQty > 0
@@ -1969,13 +1949,14 @@ const ContractSidebar = ({
                           type="number"
                           step="0.01"
                           name="estimated_quantity_annual"
-                          value={contractQtyOverride
-                            ? (formData.estimated_quantity_annual ?? '')
-                            : (() => {
-                                const qty = parseFloat(formData.estimated_quantity_tons) || 0;
-                                if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
-                                return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
-                              })()
+                          value={
+                            formData.estimated_quantity_annual !== '' && formData.estimated_quantity_annual != null
+                              ? formData.estimated_quantity_annual
+                              : (() => {
+                                  const qty = parseFloat(formData.estimated_quantity_tons) || 0;
+                                  if (!qty || !formData.contract_date_start || !formData.contract_date_end) return '';
+                                  return calcContractQty(qty, formData.contract_date_start, formData.contract_date_end).toFixed(2);
+                                })()
                           }
                           onChange={handleInputChange}
                           disabled={isReadOnly}
@@ -1986,16 +1967,15 @@ const ContractSidebar = ({
                       </div>
                     </div>
 
-                    {/* Valoare Totală — bazată pe cantitatea contract (manuală sau calculată) */}
-                    {(formData.tariff_per_ton && formData.contract_date_start && formData.contract_date_end) && (() => {
-                      let contractQty;
-                      if (contractQtyOverride) {
-                        contractQty = parseFloat(formData.estimated_quantity_annual) || 0;
-                      } else {
-                        const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
-                        if (!annualQty) return null;
-                        contractQty = calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end);
-                      }
+                    {/* Valoare Totală — bazată pe cantitatea contract din formData */}
+                    {(formData.tariff_per_ton) && (() => {
+                      const contractQty = formData.estimated_quantity_annual !== '' && formData.estimated_quantity_annual != null
+                        ? parseFloat(formData.estimated_quantity_annual) || 0
+                        : (() => {
+                            const annualQty = parseFloat(formData.estimated_quantity_tons) || 0;
+                            if (!annualQty || !formData.contract_date_start || !formData.contract_date_end) return 0;
+                            return calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end);
+                          })();
                       const val = (parseFloat(formData.tariff_per_ton) || 0) * contractQty;
                       if (val <= 0) return null;
                       return (
