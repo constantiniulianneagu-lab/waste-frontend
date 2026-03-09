@@ -75,8 +75,11 @@ export const apiClient = async (endpoint, options = {}) => {
           const refreshData = await refreshResponse.json();
           
           if (refreshData.success && refreshData.data.accessToken) {
-            // Save new access token
+            // Save new tokens — AMBELE, access și refresh (rotation!)
             localStorage.setItem('wasteAccessToken', refreshData.data.accessToken);
+            if (refreshData.data.refreshToken) {
+              localStorage.setItem('wasteRefreshToken', refreshData.data.refreshToken);
+            }
             
             // Process queued requests
             processQueue(null, refreshData.data.accessToken);
