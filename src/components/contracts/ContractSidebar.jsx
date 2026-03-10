@@ -248,6 +248,9 @@ const ContractSidebar = ({
   const [pdfViewerUrl, setPdfViewerUrl] = useState('');
   const [pdfViewerFileName, setPdfViewerFileName] = useState('');
 
+  // Delete amendment confirm modal
+  const [deleteAmendConfirm, setDeleteAmendConfirm] = useState(null); // { id, number }
+
   // Filter institutions by type
   const filteredInstitutions = institutions.filter(i => {
     if (contractType === 'DISPOSAL') {
@@ -1005,9 +1008,13 @@ const ContractSidebar = ({
     }
   };
 
-  const handleDeleteAmendment = async (id) => {
-    if (!confirm('Ștergeți actul adițional?')) return;
-    
+  const handleDeleteAmendment = (id, number) => {
+    setDeleteAmendConfirm({ id, number });
+  };
+
+  const handleConfirmDeleteAmendment = async () => {
+    const { id } = deleteAmendConfirm;
+    setDeleteAmendConfirm(null);
     try {
       let endpoint = '';
       switch (contractType) {
@@ -2687,7 +2694,7 @@ const ContractSidebar = ({
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleDeleteAmendment(a.id)}
+                                      onClick={() => handleDeleteAmendment(a.id, a.amendment_number)}
                                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -2972,6 +2979,51 @@ const ContractSidebar = ({
         warnings={validationWarnings}
         loading={saving}
       />
+
+      {/* Delete Amendment Confirm Modal */}
+      {deleteAmendConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteAmendConfirm(null)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-7 h-7 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+            {/* Title */}
+            <h3 className="text-center text-lg font-bold text-gray-900 dark:text-white mb-2">
+              Confirmare ștergere
+            </h3>
+            {/* Message */}
+            <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-1">
+              Ștergeți actul adițional
+            </p>
+            <p className="text-center font-semibold text-gray-900 dark:text-white mb-2">
+              {deleteAmendConfirm.number}
+            </p>
+            <p className="text-center text-xs text-amber-600 dark:text-amber-400 mb-6">
+              Această acțiune nu poate fi anulată. Fișierul PDF atașat va fi șters.
+            </p>
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteAmendConfirm(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors text-sm"
+              >
+                Anulează
+              </button>
+              <button
+                onClick={handleConfirmDeleteAmendment}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Șterge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PDF Viewer Modal */}
       <PDFViewerModal
