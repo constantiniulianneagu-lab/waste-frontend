@@ -347,7 +347,7 @@ const ContractViewModal = ({
                       iconColor="text-teal-500"
                     />
                   )}
-                  {contractType === 'TMB' && contract.associate_name && (
+                  {(contractType === 'TMB' || contractType === 'AEROBIC' || contractType === 'ANAEROBIC') && contract.associate_name && (
                     <InfoItem 
                       icon={Users} 
                       label="Operator Asociat" 

@@ -2082,7 +2082,7 @@ const ContractSidebar = ({
                       {errors.attribution_type && <p className="mt-1 text-xs text-red-600">{errors.attribution_type}</p>}
                     </div>
 
-                    {/* ROW 2: Operator Aerob | Data Contract */}
+                    {/* ROW 2: Operator Aerob | Asociat */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
@@ -2104,6 +2104,42 @@ const ContractSidebar = ({
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Asociat (opțional)
+                        </label>
+                        <select
+                          name="associate_institution_id"
+                          value={formData.associate_institution_id}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                        >
+                          <option value="">Fără asociat</option>
+                          {aerobicOperatorsForAssociate.map(i => (
+                            <option key={i.id} value={i.id}>{i.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* ROW 3: Număr Contract | Data Contract */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Număr Contract <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="contract_number"
+                          value={formData.contract_number}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          placeholder="TA-123"
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.contract_number && <p className="mt-1 text-xs text-red-600">{errors.contract_number}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
                           Data Contract <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -2118,23 +2154,8 @@ const ContractSidebar = ({
                       </div>
                     </div>
 
-                    {/* ROW 3: Număr Contract | Durată */}
+                    {/* ROW 4: Durată (Data Sfârșit) | Data Începere Serviciu */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                          Număr Contract <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          name="contract_number"
-                          value={formData.contract_number}
-                          onChange={handleInputChange}
-                          disabled={isReadOnly}
-                          placeholder="AN-123"
-                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.contract_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
-                        />
-                        {errors.contract_number && <p className="mt-1 text-xs text-red-600">{errors.contract_number}</p>}
-                      </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
                           Durată (Data Sfârșit)
@@ -2148,22 +2169,20 @@ const ContractSidebar = ({
                           className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                         />
                       </div>
-                    </div>
-
-                    {/* ROW 4: Data Începere Serviciu */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Data Începere Serviciu <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        name="service_start_date"
-                        value={formData.service_start_date}
-                        onChange={handleInputChange}
-                        disabled={isReadOnly}
-                        className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.service_start_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
-                      />
-                      {errors.service_start_date && <p className="mt-1 text-xs text-red-600">{errors.service_start_date}</p>}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Data Începere Serviciu <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          name="service_start_date"
+                          value={formData.service_start_date}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.service_start_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        />
+                        {errors.service_start_date && <p className="mt-1 text-xs text-red-600">{errors.service_start_date}</p>}
+                      </div>
                     </div>
 
                     {/* ROW 5: U.A.T. (Sector) | Tarif */}
@@ -2517,27 +2536,9 @@ const ContractSidebar = ({
                     </div>
                   )}
 
-                  {/* AEROBIC: Associate + Indicator */}
+                  {/* AEROBIC: Indicator de Performanță */}
                   {contractType === 'AEROBIC' && (
                     <>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                          <Users className="w-4 h-4 inline mr-1" />
-                          Asociat (opțional)
-                        </label>
-                        <select
-                          name="associate_institution_id"
-                          value={formData.associate_institution_id}
-                          onChange={handleInputChange}
-                          disabled={isReadOnly}
-                          className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                        >
-                          <option value="">Fără asociat</option>
-                          {aerobicOperatorsForAssociate.map(i => (
-                            <option key={i.id} value={i.id}>{i.name}</option>
-                          ))}
-                        </select>
-                      </div>
                       <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
                         <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                           <Percent className="w-4 h-4 text-teal-500" />
