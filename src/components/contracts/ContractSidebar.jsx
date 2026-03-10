@@ -631,8 +631,8 @@ const ContractSidebar = ({
     onSave({
       ...formData,
       contract_number,
-      // DISPOSAL / AEROBIC / ANAEROBIC: respectă override manual, altfel calculează
-      ...(['DISPOSAL', 'AEROBIC', 'ANAEROBIC'].includes(contractType) && (() => {
+      // DISPOSAL: contracted_quantity_tons se calculează din anuală × zile
+      ...('DISPOSAL' === contractType && (() => {
         if (contractQtyOverride && formData.contracted_quantity_tons) {
           return { contracted_quantity_tons: parseFloat(formData.contracted_quantity_tons) || null };
         }
@@ -640,6 +640,12 @@ const ContractSidebar = ({
         return { contracted_quantity_tons: annualQty > 0
           ? calcContractQty(annualQty, formData.contract_date_start, formData.contract_date_end)
           : null };
+      })()),
+      // AEROBIC / ANAEROBIC: estimated_quantity_tons este deja cantitatea pe contract (introdusă direct)
+      // contracted_quantity_tons = același valor, fără recalcul
+      ...(['AEROBIC', 'ANAEROBIC'].includes(contractType) && (() => {
+        const contractQty = parseFloat(formData.estimated_quantity_tons) || null;
+        return { contracted_quantity_tons: contractQty };
       })()),
       // TMB: estimated_quantity_annual = cant. anuală derivată; trimite manual dacă override, altfel calculează
       ...(contractType === 'TMB' && (() => {
@@ -1797,24 +1803,43 @@ const ContractSidebar = ({
                       {errors.attribution_type && <p className="mt-1 text-xs text-red-600">{errors.attribution_type}</p>}
                     </div>
 
-                    {/* ROW 2: Operator Anaerob - full width */}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-                        Operator Anaerob <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="institution_id"
-                        value={formData.institution_id}
-                        onChange={handleInputChange}
-                        disabled={isReadOnly || mode === 'edit'}
-                        className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.institution_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
-                      >
-                        <option value="">Selectează...</option>
-                        {filteredInstitutions.map(i => (
-                          <option key={i.id} value={i.id}>{i.name}</option>
-                        ))}
-                      </select>
-                      {errors.institution_id && <p className="mt-1 text-xs text-red-600">{errors.institution_id}</p>}
+                    {/* ROW 2: Operator Anaerob | Asociat */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Operator Anaerob <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          name="institution_id"
+                          value={formData.institution_id}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly || mode === 'edit'}
+                          className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 ${errors.institution_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}
+                        >
+                          <option value="">Selectează...</option>
+                          {filteredInstitutions.map(i => (
+                            <option key={i.id} value={i.id}>{i.name}</option>
+                          ))}
+                        </select>
+                        {errors.institution_id && <p className="mt-1 text-xs text-red-600">{errors.institution_id}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                          Asociat (opțional)
+                        </label>
+                        <select
+                          name="associate_institution_id"
+                          value={formData.associate_institution_id}
+                          onChange={handleInputChange}
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                        >
+                          <option value="">Fără asociat</option>
+                          {anaerobicOperatorsForAssociate.map(i => (
+                            <option key={i.id} value={i.id}>{i.name}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     {/* ROW 3: Număr Contract | Data Contract */}
