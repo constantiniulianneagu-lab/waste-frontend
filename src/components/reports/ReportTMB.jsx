@@ -257,12 +257,11 @@ const ReportTMB = () => {
           total_count: Number(paginationData.total || paginationData.total_records || 0),
         });
         
-        // ✅ FIX: Pentru recycling, mapăm clients -> operators
-        const operatorsData = activeTab === 'recycling' 
+        // recycling + recovery + disposal -> returnează 'clients'; tmb -> 'operators'
+        const operatorsData = ['recycling', 'recovery', 'disposal'].includes(activeTab)
           ? (response.data.clients || [])
           : (response.data.operators || []);
         
-        // ✅ FIX: Pentru recovery, adăugăm și clients
         const clientsData = (response.data.clients || []);
         
         // ✅ FIX: Găsim sectorul selectat din all_sectors după UUID
@@ -302,25 +301,32 @@ const ReportTMB = () => {
           .sort((a, b) => a.name.localeCompare(b.name));
         setSupplierOptions(uniqueSuppliers);
 
-        // Operatori/recipienți per tab
+        // Populate dropdown operatori/recipienți per tab
         if (activeTab === 'tmb') {
+          // TMB: operator TMB (operators)
           const opsRaw = response.data.operators || [];
           const uniqueOps = [...new Map(opsRaw.map(o => [o.operator_id || o.name, o])).values()]
             .sort((a, b) => a.name.localeCompare(b.name));
           setOperatorOptions(uniqueOps);
-          // Generator types din tichete
+          // Generator types din tichete curente
           const gtypes = [...new Set((response.data.items || []).map(t => t.generator_type).filter(Boolean))].sort();
           if (gtypes.length) setGeneratorTypeOptions(gtypes);
         } else {
-          const recipRaw = response.data.clients || response.data.operators || [];
-          const uniqueRecip = [...new Map(recipRaw.map(r => [r.recipient_id || r.operator_id || r.name, r])).values()]
-            .sort((a, b) => a.name.localeCompare(b.name));
+          // Recycling / Recovery / Disposal: recipient (clients)
+          const recipRaw = response.data.clients || [];
+          const uniqueRecip = [...new Map(recipRaw.map(r => [
+            r.recipient_id || r.operator_id || r.name, r
+          ])).values()].sort((a, b) => a.name.localeCompare(b.name));
           setOperatorOptions(uniqueRecip);
         }
 
-        // Coduri deșeuri
+        // Coduri deșeuri — id = UUID (folosit ca waste_code_id în query)
         const codesRaw = response.data.waste_codes || [];
-        setWasteCodeOptions(codesRaw.map(wc => ({ id: wc.id || wc.code, label: wc.code || wc.waste_code })));
+        setWasteCodeOptions(codesRaw.map(wc => ({
+          id: wc.id || wc.waste_code_id || wc.code,
+          label: wc.code,
+          description: wc.description || '',
+        })));
       } else {
         throw new Error(response.message || 'Failed to fetch reports');
       }

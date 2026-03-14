@@ -408,10 +408,7 @@ const DisposalReportView = ({
               <option value="">Toți furnizorii</option>
               {(_supplierOpts||[]).map((s,i) => <option key={i} value={isControlled ? s.supplier_id : s[0]}>{isControlled ? s.name : s[1]}</option>)}
             </select>
-            <select value={isControlled ? '' : filterContractType} onChange={e => { if(!isControlled) setFilterContractType(e.target.value); }} className={selectClass} disabled={isControlled}>
-              <option value="">Toate tipurile</option>
-              {contractTypeOptions.map(ct => <option key={ct} value={ct}>{ct}</option>)}
-            </select>
+
             <select value={_wasteCodeId} onChange={e => _setWasteCodeId(e.target.value)} className={selectClass}>
               <option value="">Toate codurile</option>
               {(_wasteCodeOpts||[]).map((wc,i) => <option key={i} value={isControlled ? wc.id : wc[0]}>{isControlled ? wc.label : wc[1]}</option>)}
