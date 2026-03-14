@@ -1,7 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useSearchParams } from 'react-router-dom';
-import { AlertCircle, Plus } from 'lucide-react';
+import { AlertCircle, Plus, Search, X, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+
+// ─── Helpers filtre secundare ────────────────────────────────────────────────
+const useDebounce = (value, delay) => {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+};
+
+const SortIconTmb = ({ field, sortBy, sortDir, color = 'slate' }) => {
+  const colorMap = { slate: 'text-slate-600', amber: 'text-amber-600' };
+  const cls = colorMap[color] || 'text-slate-600';
+  if (sortBy !== field) return <ChevronsUpDown className="w-3.5 h-3.5 ml-1 opacity-30" />;
+  return sortDir === 'asc'
+    ? <ChevronUp className={`w-3.5 h-3.5 ml-1 ${cls}`} />
+    : <ChevronDown className={`w-3.5 h-3.5 ml-1 ${cls}`} />;
+};
 import ReportsFilters from './ReportsFilters';
 import ReportsTmbSidebar from './ReportsTmbSidebar';
 import RecyclingSidebar from './RecyclingSidebar';
@@ -76,6 +95,61 @@ const ReportTMB = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
+  // ── Filtre secundare server-side (per tab) ──────────────────────────────
+  const [secSearch, setSecSearch] = useState('');
+  const [secSupplierId, setSecSupplierId] = useState('');
+  const [secOperatorId, setSecOperatorId] = useState('');   // TMB: operator
+  const [secRecipientId, setSecRecipientId] = useState(''); // Recycling/Recovery/Disposal: recipient
+  const [secWasteCodeId, setSecWasteCodeId] = useState('');
+  const [secGeneratorType, setSecGeneratorType] = useState('');
+  const [secSortBy, setSecSortBy] = useState('ticket_date');
+  const [secSortDir, setSecSortDir] = useState('desc');
+
+  // Opțiuni dropdown populate din response
+  const [supplierOptions, setSupplierOptions] = useState([]);
+  const [operatorOptions, setOperatorOptions] = useState([]);  // operator/recipient
+  const [wasteCodeOptions, setWasteCodeOptions] = useState([]);
+  const [generatorTypeOptions, setGeneratorTypeOptions] = useState([]);
+
+  const secSearchDebounced = useDebounce(secSearch, 400);
+
+  const resetSecondaryFilters = useCallback(() => {
+    setSecSearch('');
+    setSecSupplierId('');
+    setSecOperatorId('');
+    setSecRecipientId('');
+    setSecWasteCodeId('');
+    setSecGeneratorType('');
+    setSecSortBy('ticket_date');
+    setSecSortDir('desc');
+  }, []);
+
+  const hasSecFilters = secSearch || secSupplierId || secOperatorId || secRecipientId || secWasteCodeId || secGeneratorType;
+
+  // Reset filtre secundare la schimbare tab sau filtre primare
+  const prevTabRef = useRef(activeTab);
+  const prevFiltersRef = useRef(filters);
+  useEffect(() => {
+    const tabChanged = prevTabRef.current !== activeTab;
+    const prev = prevFiltersRef.current;
+    const primaryChanged = prev?.from !== filters?.from || prev?.to !== filters?.to ||
+        prev?.sector_id !== filters?.sector_id || prev?.year !== filters?.year;
+    if (tabChanged || primaryChanged) {
+      resetSecondaryFilters();
+    }
+    prevTabRef.current = activeTab;
+    prevFiltersRef.current = filters;
+  }, [activeTab, filters, resetSecondaryFilters]);
+
+  // Reset page când se schimbă search debounced
+  const prevSearchRef = useRef(secSearchDebounced);
+  useEffect(() => {
+    if (prevSearchRef.current !== secSearchDebounced) {
+      setFilters(prev => ({ ...prev, page: 1 }));
+      prevSearchRef.current = secSearchDebounced;
+    }
+  }, [secSearchDebounced]);
+
   const formatNumberRO = (number) => {
     if (!number && number !== 0) return '0,00';
     const num = typeof number === 'string' ? parseFloat(number) : number;
@@ -113,7 +187,7 @@ const ReportTMB = () => {
 
   useEffect(() => {
     fetchReports();
-  }, [filters, activeTab]);
+  }, [filters, activeTab, secSearchDebounced, secSupplierId, secOperatorId, secRecipientId, secWasteCodeId, secGeneratorType, secSortBy, secSortDir]);
 
   const fetchAuxiliaryData = async () => {
     try {
@@ -133,35 +207,43 @@ const ReportTMB = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📊 Fetching TMB reports with filters:', filters);
-      console.log('📊 Filter breakdown:', {
-        year: filters.year,
-        from: filters.from,
-        to: filters.to,
-        sector_id: filters.sector_id,
-        page: filters.page,
-        per_page: filters.per_page
-      });
+      // Construim filtrele complete incluzând filtrele secundare
+      const apiFilters = {
+        ...filters,
+        ...(secSearchDebounced?.trim() && { search: secSearchDebounced.trim() }),
+        ...(secSupplierId && { supplier_id: secSupplierId }),
+        ...(secWasteCodeId && { waste_code_id: secWasteCodeId }),
+        sort_by: secSortBy,
+        sort_dir: secSortDir,
+      };
+
+      // Parametri specifici per tab
+      if (activeTab === 'tmb') {
+        if (secOperatorId) apiFilters.operator_id = secOperatorId;
+        if (secGeneratorType) apiFilters.generator_type = secGeneratorType;
+      } else {
+        if (secRecipientId) apiFilters.recipient_id = secRecipientId;
+      }
 
       let response;
       switch (activeTab) {
         case 'tmb':
-          response = await getTmbReports(filters);
+          response = await getTmbReports(apiFilters);
           break;
         case 'recycling':
-          response = await getRecyclingReports(filters);
+          response = await getRecyclingReports(apiFilters);
           break;
         case 'recovery':
-          response = await getRecoveryReports(filters);
+          response = await getRecoveryReports(apiFilters);
           break;
         case 'disposal':
-          response = await getDisposalReports(filters);
+          response = await getDisposalReports(apiFilters);
           break;
         case 'rejected':
           response = await getRejectedReports(filters);
           break;
         default:
-          response = await getTmbReports(filters);
+          response = await getTmbReports(apiFilters);
       }
       
       if (response.success && response.data) {
@@ -212,8 +294,33 @@ const ReportTMB = () => {
         setSummaryData(summary);
         setAvailableYears(response.data.available_years || [currentYear]);
         const allSectors = response.data.all_sectors || [];
-        console.log('🔵 all_sectors received from backend:', allSectors);
         setSectors(allSectors);
+
+        // Populate dropdown options din datele contextuale returnate de API
+        const suppliersRaw = response.data.suppliers || [];
+        const uniqueSuppliers = [...new Map(suppliersRaw.map(s => [s.supplier_id || s.name, s])).values()]
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setSupplierOptions(uniqueSuppliers);
+
+        // Operatori/recipienți per tab
+        if (activeTab === 'tmb') {
+          const opsRaw = response.data.operators || [];
+          const uniqueOps = [...new Map(opsRaw.map(o => [o.operator_id || o.name, o])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setOperatorOptions(uniqueOps);
+          // Generator types din tichete
+          const gtypes = [...new Set((response.data.items || []).map(t => t.generator_type).filter(Boolean))].sort();
+          if (gtypes.length) setGeneratorTypeOptions(gtypes);
+        } else {
+          const recipRaw = response.data.clients || response.data.operators || [];
+          const uniqueRecip = [...new Map(recipRaw.map(r => [r.recipient_id || r.operator_id || r.name, r])).values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setOperatorOptions(uniqueRecip);
+        }
+
+        // Coduri deșeuri
+        const codesRaw = response.data.waste_codes || [];
+        setWasteCodeOptions(codesRaw.map(wc => ({ id: wc.id || wc.code, label: wc.code || wc.waste_code })));
       } else {
         throw new Error(response.message || 'Failed to fetch reports');
       }
@@ -228,22 +335,25 @@ const ReportTMB = () => {
   };
 
   const handleFilterChange = (newFilters) => {
-    console.log('🔄 handleFilterChange received:', newFilters);
-    setFilters(prev => {
-      const updated = {
-        ...prev, 
-        ...newFilters,
-        page: 1
-      };
-      console.log('📝 Updated filters state:', updated);
-      return updated;
-    });
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+    // Reset filtre secundare la schimbare filtre primare
+    resetSecondaryFilters();
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= (pagination?.total_pages || 1)) {
       setFilters(prev => ({ ...prev, page: newPage }));
     }
+  };
+
+  const handleSecSort = (field) => {
+    if (secSortBy === field) {
+      setSecSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSecSortBy(field);
+      setSecSortDir('asc');
+    }
+    setFilters(prev => ({ ...prev, page: 1 }));
   };
 
   const handlePerPageChange = (newPerPage) => {
@@ -620,55 +730,81 @@ const ReportTMB = () => {
       )}
 
       {/* TABEL TMB */}
-      {activeTab === 'tmb' && (
+      {activeTab === 'tmb' && (() => {
+        const thS = "px-4 py-3 text-left cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors";
+        const selCls = "h-8 px-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-slate-500 focus:border-slate-500 transition-colors";
+        const tmbTickets = tickets || [];
+
+        return (
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tichete TMB ({pagination?.total_count || 0})
+        {/* BARA TITLU + FILTRE SERVER-SIDE + BUTOANE */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+              Tichete TMB
+              <span className="ml-1.5 text-sm font-normal text-gray-500 dark:text-gray-400">
+                ({pagination?.total_count || 0})
+              </span>
             </h3>
-            <div className="flex gap-3">
-              {canCreateData && (
-              <button
-                onClick={handleCreate}
-                className="px-4 py-2 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Adaugă tichet
-              </button>
-              )}
-              <ExportDropdown
-                onExport={handleExportClick}
-                disabled={exporting || !tickets || tickets.length === 0}
-                loading={exporting}
-              />
+            <div className="h-5 w-px bg-gray-300 dark:bg-gray-600 hidden sm:block mx-1" />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input type="text" value={secSearch} onChange={e => setSecSearch(e.target.value)}
+                placeholder="Nr. tichet / nr. auto..."
+                className="h-8 pl-8 pr-3 w-[190px] text-xs bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:ring-1 focus:ring-slate-500 focus:border-slate-500 transition-colors" />
             </div>
+            <select value={secSupplierId} onChange={e => { setSecSupplierId(e.target.value); setFilters(p=>({...p,page:1})); }} className={selCls}>
+              <option value="">Toți furnizorii</option>
+              {supplierOptions.map((s,i) => <option key={i} value={s.supplier_id || s.name}>{s.name}</option>)}
+            </select>
+            <select value={secGeneratorType} onChange={e => { setSecGeneratorType(e.target.value); setFilters(p=>({...p,page:1})); }} className={selCls}>
+              <option value="">Toți generatorii</option>
+              {generatorTypeOptions.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select value={secOperatorId} onChange={e => { setSecOperatorId(e.target.value); setFilters(p=>({...p,page:1})); }} className={selCls}>
+              <option value="">Toți prestatorii</option>
+              {operatorOptions.map((o,i) => <option key={i} value={o.operator_id || o.name}>{o.name}</option>)}
+            </select>
+            {hasSecFilters && (
+              <button onClick={resetSecondaryFilters}
+                className="h-8 px-2.5 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 border border-gray-300 dark:border-gray-600 hover:border-red-300 dark:hover:border-red-700 rounded-md bg-white dark:bg-gray-800 transition-colors">
+                <X className="w-3 h-3" /> Reset
+              </button>
+            )}
+            <div className="flex-1" />
+            {canCreateData && (
+              <button onClick={handleCreate} className="h-8 px-4 text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap">
+                <Plus className="w-4 h-4" /> Adaugă tichet
+              </button>
+            )}
+            <ExportDropdown onExport={handleExportClick} disabled={exporting || !tmbTickets.length} loading={exporting} />
           </div>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               <tr className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                <th className="px-4 py-3 text-left">Tichet Cântar</th>
-                <th className="px-4 py-3 text-left">Data</th>
+                <th className={thS} onClick={()=>handleSecSort('ticket_number')}><span className="flex items-center">Tichet Cântar <SortIconTmb field="ticket_number" sortBy={secSortBy} sortDir={secSortDir} /></span></th>
+                <th className={thS} onClick={()=>handleSecSort('ticket_date')}><span className="flex items-center">Data <SortIconTmb field="ticket_date" sortBy={secSortBy} sortDir={secSortDir} /></span></th>
                 <th className="px-4 py-3 text-left">Furnizor</th>
                 <th className="px-4 py-3 text-left">Cod Deșeu</th>
                 <th className="px-4 py-3 text-left">Proveniență</th>
                 <th className="px-4 py-3 text-left">Generator</th>
                 <th className="px-4 py-3 text-left">Nr. Auto</th>
-                <th className="px-4 py-3 text-left">Tone Net</th>
+                <th className={thS} onClick={()=>handleSecSort('net_weight_tons')}><span className="flex items-center">Tone Net <SortIconTmb field="net_weight_tons" sortBy={secSortBy} sortDir={secSortDir} /></span></th>
                 <th className="px-4 py-3 text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {tickets.length === 0 ? (
+              {tmbTickets.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Nu există tichete în perioada selectată
+                    {hasSecFilters ? 'Niciun rezultat pentru filtrele aplicate' : 'Nu există tichete în perioada selectată'}
                   </td>
                 </tr>
               ) : (
-                tickets.map((ticket) => (
+                tmbTickets.map((ticket) => (
                   <React.Fragment key={ticket.id}>
                     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">{ticket.ticket_number}</td>
@@ -823,7 +959,8 @@ const ReportTMB = () => {
           </div>
         )}
       </div>
-      )}
+        );
+      })()}
 
       {/* RECYCLING VIEW */}
       {activeTab === 'recycling' && (
@@ -833,15 +970,7 @@ const ReportTMB = () => {
           summaryData={summaryData}
           pagination={pagination}
           expandedRows={expandedRows}
-          onToggleExpand={(id) => {
-            setExpandedRows(prev => {
-              const newSet = new Set();
-              if (!prev.has(id)) {
-                newSet.add(id);
-              }
-              return newSet;
-            });
-          }}
+          onToggleExpand={(id) => { setExpandedRows(prev => { const n=new Set(); if(!prev.has(id)) n.add(id); return n; }); }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onCreate={handleCreate}
@@ -856,6 +985,17 @@ const ReportTMB = () => {
           sectors={sectors}
           formatNumberRO={formatNumberRO}
           groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+          secFilters={{
+            search: secSearch, setSearch: setSecSearch,
+            supplierId: secSupplierId, setSupplierId: setSecSupplierId,
+            recipientId: secRecipientId, setRecipientId: setSecRecipientId,
+            wasteCodeId: secWasteCodeId, setWasteCodeId: setSecWasteCodeId,
+            sortBy: secSortBy, sortDir: secSortDir,
+            handleSort: handleSecSort,
+            hasActive: hasSecFilters, reset: resetSecondaryFilters,
+            supplierOptions, operatorOptions, wasteCodeOptions,
+            setPage: (p) => setFilters(prev => ({...prev, page: p})),
+          }}
         />
       )}
 
@@ -867,15 +1007,7 @@ const ReportTMB = () => {
           summaryData={summaryData}
           pagination={pagination}
           expandedRows={expandedRows}
-          onToggleExpand={(id) => {
-            setExpandedRows(prev => {
-              const newSet = new Set();
-              if (!prev.has(id)) {
-                newSet.add(id);
-              }
-              return newSet;
-            });
-          }}
+          onToggleExpand={(id) => { setExpandedRows(prev => { const n=new Set(); if(!prev.has(id)) n.add(id); return n; }); }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onCreate={handleCreate}
@@ -890,6 +1022,17 @@ const ReportTMB = () => {
           sectors={sectors}
           formatNumberRO={formatNumberRO}
           groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+          secFilters={{
+            search: secSearch, setSearch: setSecSearch,
+            supplierId: secSupplierId, setSupplierId: setSecSupplierId,
+            recipientId: secRecipientId, setRecipientId: setSecRecipientId,
+            wasteCodeId: secWasteCodeId, setWasteCodeId: setSecWasteCodeId,
+            sortBy: secSortBy, sortDir: secSortDir,
+            handleSort: handleSecSort,
+            hasActive: hasSecFilters, reset: resetSecondaryFilters,
+            supplierOptions, operatorOptions, wasteCodeOptions,
+            setPage: (p) => setFilters(prev => ({...prev, page: p})),
+          }}
         />
       )}
 
@@ -901,15 +1044,7 @@ const ReportTMB = () => {
           summaryData={summaryData}
           pagination={pagination}
           expandedRows={expandedRows}
-          onToggleExpand={(id) => {
-            setExpandedRows(prev => {
-              const newSet = new Set();
-              if (!prev.has(id)) {
-                newSet.add(id);
-              }
-              return newSet;
-            });
-          }}
+          onToggleExpand={(id) => { setExpandedRows(prev => { const n=new Set(); if(!prev.has(id)) n.add(id); return n; }); }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onCreate={handleCreate}
@@ -924,6 +1059,17 @@ const ReportTMB = () => {
           sectors={sectors}
           formatNumberRO={formatNumberRO}
           groupRowsByNameWithCodes={groupRowsByNameWithCodes}
+          secFilters={{
+            search: secSearch, setSearch: setSecSearch,
+            supplierId: secSupplierId, setSupplierId: setSecSupplierId,
+            recipientId: secRecipientId, setRecipientId: setSecRecipientId,
+            wasteCodeId: secWasteCodeId, setWasteCodeId: setSecWasteCodeId,
+            sortBy: secSortBy, sortDir: secSortDir,
+            handleSort: handleSecSort,
+            hasActive: hasSecFilters, reset: resetSecondaryFilters,
+            supplierOptions, operatorOptions, wasteCodeOptions,
+            setPage: (p) => setFilters(prev => ({...prev, page: p})),
+          }}
         />
       )}
 

@@ -35,18 +35,22 @@ export const getLandfillReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      limit: filters.per_page  // ✅ SCHIMBAT din per_page în limit
+      limit: filters.per_page,
     });
-    
-    if (filters.sector_id) {
-      params.append('sector_id', filters.sector_id);
-    }
+
+    if (filters.sector_id)      params.append('sector_id',      filters.sector_id);
+    if (filters.supplier_id)    params.append('supplier_id',    filters.supplier_id);
+    if (filters.waste_code_id)  params.append('waste_code_id',  filters.waste_code_id);
+    if (filters.contract_type)  params.append('contract_type',  filters.contract_type);
+    if (filters.search?.trim()) params.append('search',         filters.search.trim());
+    if (filters.sort_by)        params.append('sort_by',        filters.sort_by);
+    if (filters.sort_dir)       params.append('sort_dir',       filters.sort_dir);
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/landfill?${params}`,
       headers
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('❌ getLandfillReports error:', error);
@@ -145,20 +149,21 @@ export const getTmbReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      limit: filters.per_page
+      limit: filters.per_page,
     });
-    
-    if (filters.sector_id) {
-      params.append('sector_id', filters.sector_id);
-    }
-
-    console.log('🔵 getTmbReports sending params:', Object.fromEntries(params));
+    if (filters.sector_id)     params.append('sector_id',    filters.sector_id);
+    if (filters.supplier_id)   params.append('supplier_id',  filters.supplier_id);
+    if (filters.operator_id)   params.append('operator_id',  filters.operator_id);
+    if (filters.waste_code_id) params.append('waste_code_id',filters.waste_code_id);
+    if (filters.generator_type)params.append('generator_type',filters.generator_type);
+    if (filters.search?.trim())params.append('search',       filters.search.trim());
+    if (filters.sort_by)       params.append('sort_by',      filters.sort_by);
+    if (filters.sort_dir)      params.append('sort_dir',     filters.sort_dir);
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/tmb?${params}`,
       headers
     );
-    
     return response.data;
   } catch (error) {
     console.error('❌ getTmbReports error:', error);
@@ -174,29 +179,20 @@ export const getRecyclingReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      limit: filters.per_page
+      limit: filters.per_page,
     });
-    
-    if (filters.sector_id) {
-      params.append('sector_id', filters.sector_id);
-    }
-
-    console.log('🟢 getRecyclingReports sending params:', Object.fromEntries(params));
+    if (filters.sector_id)     params.append('sector_id',    filters.sector_id);
+    if (filters.supplier_id)   params.append('supplier_id',  filters.supplier_id);
+    if (filters.recipient_id)  params.append('recipient_id', filters.recipient_id);
+    if (filters.waste_code_id) params.append('waste_code_id',filters.waste_code_id);
+    if (filters.search?.trim())params.append('search',       filters.search.trim());
+    if (filters.sort_by)       params.append('sort_by',      filters.sort_by);
+    if (filters.sort_dir)      params.append('sort_dir',     filters.sort_dir);
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/recycling?${params}`,
       headers
     );
-    
-    console.log('🟢 getRecyclingReports received response:', {
-      success: response.data.success,
-      total_tickets: response.data.data?.summary?.total_tickets,
-      items_count: response.data.data?.items?.length,
-      first_ticket_number: response.data.data?.items?.[0]?.ticket_number,
-      first_ticket_sector: response.data.data?.items?.[0]?.sector_name,
-      all_ticket_numbers: response.data.data?.items?.map(t => `${t.ticket_number} (${t.sector_name})`)
-    });
-    
     return response.data;
   } catch (error) {
     console.error('❌ getRecyclingReports error:', error);
@@ -212,18 +208,20 @@ export const getRecoveryReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      limit: filters.per_page
+      limit: filters.per_page,
     });
-    
-    if (filters.sector_id) {
-      params.append('sector_id', filters.sector_id);
-    }
+    if (filters.sector_id)     params.append('sector_id',    filters.sector_id);
+    if (filters.supplier_id)   params.append('supplier_id',  filters.supplier_id);
+    if (filters.recipient_id)  params.append('recipient_id', filters.recipient_id);
+    if (filters.waste_code_id) params.append('waste_code_id',filters.waste_code_id);
+    if (filters.search?.trim())params.append('search',       filters.search.trim());
+    if (filters.sort_by)       params.append('sort_by',      filters.sort_by);
+    if (filters.sort_dir)      params.append('sort_dir',     filters.sort_dir);
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/recovery?${params}`,
       headers
     );
-    
     return response.data;
   } catch (error) {
     console.error('❌ getRecoveryReports error:', error);
@@ -292,18 +290,20 @@ export const getDisposalReports = async (filters) => {
       from: filters.from,
       to: filters.to,
       page: filters.page,
-      limit: filters.per_page
+      limit: filters.per_page,
     });
-    
-    if (filters.sector_id) {
-      params.append('sector_id', filters.sector_id);
-    }
+    if (filters.sector_id)     params.append('sector_id',    filters.sector_id);
+    if (filters.supplier_id)   params.append('supplier_id',  filters.supplier_id);
+    if (filters.recipient_id)  params.append('recipient_id', filters.recipient_id);
+    if (filters.waste_code_id) params.append('waste_code_id',filters.waste_code_id);
+    if (filters.search?.trim())params.append('search',       filters.search.trim());
+    if (filters.sort_by)       params.append('sort_by',      filters.sort_by);
+    if (filters.sort_dir)      params.append('sort_dir',     filters.sort_dir);
 
     const response = await axios.get(
       `${API_BASE_URL}/reports/tmb/disposal?${params}`,
       headers
     );
-    
     return response.data;
   } catch (error) {
     console.error('❌ getDisposalReports error:', error);
